@@ -13,7 +13,7 @@ class BootstrapTest extends IntegrationTest {
     private RestTestClient restClient;
 
     @Test
-    void startsWithPostgresLiquibaseJpaAndHealthyActuator() {
+    void startsAndReportsHealthy() {
         restClient.get().uri("/actuator/health")
                 .exchange()
                 .expectStatus().isOk()
