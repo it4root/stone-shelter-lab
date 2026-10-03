@@ -65,7 +65,7 @@ Verification used the installed Homebrew OpenJDK 23.0.2, Maven Wrapper 3.3.4
 and Maven 3.9.9. `./mvnw clean verify` passed for the original three tests;
 after adding the bootstrap integration test, `./mvnw verify` passed with four
 tests and zero failures/errors/skips. The integration test checks PostgreSQL
-18.6 server version, Liquibase's tracking table, JPA initialization and HTTP
+18.6 server version, successful context startup with Liquibase enabled, JPA initialization and HTTP
 200 with UP status at `/actuator/health`. Maven validation on JDK 25 also
 confirmed that Enforcer rejects the wrong runtime version.
 

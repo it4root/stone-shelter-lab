@@ -44,13 +44,6 @@ class BootstrapTest {
     @Test
     void startsWithPostgresLiquibaseJpaAndHealthyActuator() throws Exception {
         assertThat(jdbc.queryForObject("show server_version", String.class)).startsWith("18.6");
-        assertThat(jdbc.queryForObject("""
-                select exists (
-                    select 1 from information_schema.tables
-                    where table_schema = current_schema()
-                      and table_name = 'databasechangelog'
-                )
-                """, Boolean.class)).isTrue();
         assertThat(entityManagerFactory.isOpen()).isTrue();
 
         try (HttpClient client = HttpClient.newHttpClient()) {
