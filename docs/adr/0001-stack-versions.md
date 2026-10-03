@@ -2,25 +2,25 @@
 
 Date: 2026-10-03
 
-Status: Accepted; project runtime changed to Java 25 by explicit user instruction.
+Status: Accepted; project runtime changed to JDK 23.0.2 by explicit user instruction.
 
 ## Context
 
 The constitution requires concrete stack versions to be recorded here. The
 [bootstrap specification](../../specs/0001-project-bootstrap/spec.md) currently
-requires Java 25 and Spring Boot 4.1.1. The user selected Java 25 instead of
-Java 27 to stay within Boot's supported range. This decision records stable
+requires JDK 23.0.2 and Spring Boot 4.1.1. The user selected JDK 23.0.2 instead
+of Java 25. This decision records stable
 upstream releases, excluding milestones, release candidates, snapshots, nightly
 builds, and betas. It does not authorize implementing AI features.
 
 ## Decision
 
-Use these project versions. Java 25 is an intentional selection rather than
+Use these project versions. JDK 23.0.2 is an intentional selection rather than
 the newest GA Java release; the other releases were verified on 2026-10-03:
 
 | Component | Selected version | Official source |
 | --- | --- | --- |
-| Java / JDK | 25 | [Spring Boot Java requirements](https://docs.spring.io/spring-boot/system-requirements.html) |
+| Java / JDK | 23.0.2 | [Spring Boot Java requirements](https://docs.spring.io/spring-boot/system-requirements.html) |
 | Spring Boot | 4.1.1 | [Spring Boot reference and stable releases](https://docs.spring.io/spring-boot/) |
 | Spring AI | 2.0.1 | [Spring AI reference and stable releases](https://docs.spring.io/spring-ai/reference/) |
 | PostgreSQL | 18.6 | [PostgreSQL latest releases](https://www.postgresql.org/) |
@@ -35,7 +35,8 @@ compatibility requirement. No Boot downgrade is necessary.
 
 Spring Boot 4.1.1 documents compatibility with Java 17 through 26 in its [system
 requirements](https://docs.spring.io/spring-boot/system-requirements.html).
-Java 25 is within this range. The specification is updated before the Maven
+Java 23 is within this range. Maven compiles with release 23; Maven Enforcer
+3.5.0 requires the actual build JDK to be exactly 23.0.2. The specification is updated before the Maven
 configuration. Documented support is distinct from a successful project build.
 
 T002 supporting build pins: Maven 3.9.9, Maven Wrapper 3.3.4 (official
@@ -47,43 +48,43 @@ is explicitly pinned over Boot's managed 5.0.3 to follow this ADR. Maven 3.9.9
 matches the locally installed Maven version. Spring AI is not added in T002
 because the bootstrap specification contains no AI integration requirement.
 
-### Compatibility review after selecting Java 25
+### Compatibility review after selecting JDK 23.0.2
 
 | Dependency group | Review result |
 | --- | --- |
-| Boot Web MVC, Actuator, Data JPA, Liquibase starter, test starter and Maven plugin 4.1.1 | Same Boot release throughout the resolved tree; Java 25 is supported. |
+| Boot Web MVC, Actuator, Data JPA, Liquibase starter, test starter and Maven plugin 4.1.1 | Same Boot release throughout the project; Java 23 is supported and bootstrap integration passes on JDK 23.0.2. |
 | Spring Framework 7.0.9, Spring Data JPA 4.1.1, Hibernate 7.4.5.Final, Tomcat 11.0.24, Jackson 3.1.5 | Resolved through Boot's dependency management; no independent overrides introduced. |
-| PostgreSQL JDBC 42.7.13 | Matches Boot's managed version and resolves successfully; a live PostgreSQL connection was not tested. |
-| Liquibase Community 5.0.4 | Resolves successfully as an explicit patch override of Boot's managed 5.0.3; migration execution remains untested. |
-| Testcontainers 2.0.5, including PostgreSQL and JUnit Jupiter modules | Matches Boot's managed version; all resolved Testcontainers modules use 2.0.5. Container execution remains untested. |
+| PostgreSQL JDBC 42.7.13 | Matches Boot's managed version; connects to PostgreSQL 18.6 in the bootstrap test. |
+| Liquibase Community 5.0.4 | Explicit patch override of Boot's managed 5.0.3; processes the empty root changelog and creates its tracking table with PostgreSQL 18.6. |
+| Testcontainers 2.0.5, including PostgreSQL and JUnit Jupiter modules | Starts and cleans up the PostgreSQL 18.6 test container on JDK 23.0.2. |
 | JUnit Jupiter and Platform 6.0.3 | Managed by Boot; [requires Java 17 or newer](https://docs.junit.org/6.0.3/overview.html). |
-| ArchUnit JUnit 6 integration 1.5.1 | The [1.5 release line](https://github.com/TNG/ArchUnit/releases) supports JUnit 6 and is built/tested with JDK 25; three architecture checks passed locally. |
+| ArchUnit JUnit 6 integration 1.5.1 | The [1.5 release line](https://github.com/TNG/ArchUnit/releases) supports JUnit 6; three architecture checks pass on JDK 23.0.2. |
 | Spring AI 2.0.1 | Documented Boot 4.1.x compatibility; absent from the project's dependency tree, so no integration was tested. |
 
-Verification used a temporary Oracle JDK 25.0.4.1, Maven Wrapper 3.3.4 and
-Maven 3.9.9. `./mvnw verify` and dependency-tree generation completed
-successfully: three tests, zero failures/errors/skips. The resolved tree is
-generated under `stone-shelter-api/target/dependency-tree.txt` (not committed).
+Verification used the installed Homebrew OpenJDK 23.0.2, Maven Wrapper 3.3.4
+and Maven 3.9.9. `./mvnw clean verify` passed for the original three tests;
+after adding the bootstrap integration test, `./mvnw verify` passed with four
+tests and zero failures/errors/skips. The integration test checks PostgreSQL
+18.6 server version, Liquibase's tracking table, JPA initialization and HTTP
+200 with UP status at `/actuator/health`. Maven validation on JDK 25 also
+confirmed that Enforcer rejects the wrong runtime version.
 
-Full database compatibility is not established: Docker's daemon was unavailable,
-so PostgreSQL 18.6, Liquibase migrations and Testcontainers were not exercised
-together. In addition, the [Liquibase Community 5.0.4 PostgreSQL support
+The [Liquibase Community 5.0.4 PostgreSQL support
 page](https://docs.liquibase.com/community/integration-guide-5-0-4/what-support-does-liquibase-have-for-postgresql)
-lists verified PostgreSQL versions only through 17, not 18. This is a documented
-verification gap, not proof of incompatibility. Keep the selected database and
-Liquibase versions pending an integration check rather than silently changing them.
+lists vendor-verified PostgreSQL versions only through 17, not 18. The local
+bootstrap test now demonstrates this project's empty root changelog works with
+18.6; it does not establish support for every future migration or Liquibase command.
 
 ## Consequences
 
 - Future dependency and container configuration must use concrete versions and
   agree with the approved project selections recorded here.
-- Java 25 replaces Java 27 in the project pins. The remaining bootstrap task
+- JDK 23.0.2 replaces Java 25 in the project pins. The remaining bootstrap task
   checklist is unchanged by this compatibility review.
 - Spring AI can be selected at 2.0.1 with Boot 4.1.1 when a feature specification
   actually calls for it; recording its version does not add a dependency.
-- Dependency resolution, compilation and the existing architecture tests pass on
-  Java 25. PostgreSQL integration and migration execution still need verification,
-  especially the Liquibase Community/PostgreSQL 18 verification gap above.
+- Compilation, architecture tests and PostgreSQL bootstrap integration pass on
+  JDK 23.0.2. Future schema changes still require their own integration tests.
 - Release inventory is a dated snapshot and requires deliberate review when
   upgrading. PostgreSQL 19 beta and Spring preview releases are excluded.
 
@@ -93,7 +94,7 @@ Liquibase versions pending an integration check rather than silently changing th
   stable Spring AI 2.0.x line supports Boot 4.1.x. Any future downgrade requires
   explicit user approval.
 - Retain Java 27: rejected by the user; it exceeds Boot's documented range.
-- Retain Java 23: superseded by the user's Java 25 selection.
+- Retain Java 25: superseded by the user's JDK 23.0.2 selection.
 - Use prereleases or floating `latest` versions: rejected because they do not
   satisfy the stable-release request or the repository's explicit-version rule.
 - Use Boot-managed dependency versions automatically: may simplify integration,

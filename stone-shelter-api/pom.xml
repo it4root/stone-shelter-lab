@@ -12,7 +12,8 @@
   <version>0.0.1-SNAPSHOT</version>
   <name>Stone Shelter API</name>
   <properties>
-    <java.version>25</java.version>
+    <java.version>23</java.version>
+    <java.runtime.version>23.0.2</java.runtime.version>
     <liquibase.version>5.0.4</liquibase.version>
     <testcontainers.version>2.0.5</testcontainers.version>
     <archunit.version>1.5.1</archunit.version>
@@ -76,6 +77,27 @@
   </dependencies>
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <id>require-project-jdk</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireJavaVersion>
+                  <version>[${java.runtime.version}]</version>
+                  <message>Build Stone Shelter with JDK ${java.runtime.version}.</message>
+                </requireJavaVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>

@@ -1,7 +1,7 @@
 # Backend conventions
 
 Read the root AGENTS.md, constitution, current feature spec, tasks and ADR first.
-Use the pinned ADR-0001 versions, including Java 25.
+Use the pinned ADR-0001 versions, including JDK 23.0.2 (Java release 23).
 Do not change versions silently.
 
 - Packages: lab.stoneshelter.api, domain, persistence, config.
