@@ -129,6 +129,8 @@ Backend:
 
 The bootstrap integration test must start against a fresh PostgreSQL container
 with Liquibase enabled and verify successful application startup and health.
+Use an auto-configured Spring Boot RestTestClient with RANDOM_PORT to check
+HTTP 200 and the JSON status UP at `/actuator/health`.
 Liquibase initialization failures must fail context startup; the test must not
 assert details of Liquibase's internal tracking tables.
 

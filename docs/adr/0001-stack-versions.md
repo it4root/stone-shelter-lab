@@ -48,6 +48,11 @@ is explicitly pinned over Boot's managed 5.0.3 to follow this ADR. Maven 3.9.9
 matches the locally installed Maven version. Spring AI is not added in T002
 because the bootstrap specification contains no AI integration requirement.
 
+The bootstrap HTTP test uses the test-scoped `spring-boot-resttestclient` module
+4.1.1 with `@AutoConfigureRestTestClient`, following the [Boot running-server
+test guidance](https://docs.spring.io/spring-boot/reference/testing/spring-boot-applications.html#testing.spring-boot-applications.with-running-server).
+The general test starter does not supply this auto-configuration module.
+
 ### Compatibility review after selecting JDK 23.0.2
 
 | Dependency group | Review result |
@@ -64,8 +69,8 @@ because the bootstrap specification contains no AI integration requirement.
 Verification used the installed Homebrew OpenJDK 23.0.2, Maven Wrapper 3.3.4
 and Maven 3.9.9. `./mvnw clean verify` passed for the original three tests;
 after adding the bootstrap integration test, `./mvnw verify` passed with four
-tests and zero failures/errors/skips. The integration test checks PostgreSQL
-18.6 server version, successful context startup with Liquibase enabled, JPA initialization and HTTP
+tests and zero failures/errors/skips. The integration test checks successful
+context startup with PostgreSQL 18.6 and Liquibase enabled, JPA initialization and HTTP
 200 with UP status at `/actuator/health`. Maven validation on JDK 25 also
 confirmed that Enforcer rejects the wrong runtime version.
 
