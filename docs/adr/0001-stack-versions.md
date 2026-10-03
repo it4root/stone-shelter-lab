@@ -53,6 +53,15 @@ The bootstrap HTTP test uses the test-scoped `spring-boot-resttestclient` module
 test guidance](https://docs.spring.io/spring-boot/reference/testing/spring-boot-applications.html#testing.spring-boot-applications.with-running-server).
 The general test starter does not supply this auto-configuration module.
 
+PostgreSQL integration tests share the singleton container in
+`PostgresIntegrationTest` within one test JVM, using the [official singleton
+lifecycle pattern](https://java.testcontainers.org/test_framework_integration/manual_lifecycle_control/#singleton-containers).
+JUnit does not manage its lifecycle; Ryuk cleans it up on JVM exit. Shared
+datasource registration permits Spring context caching when the remaining
+context configuration matches. This does not isolate test data or share a
+container between JVM forks. With only one integration class, no performance
+gain is claimed.
+
 ### Compatibility review after selecting JDK 23.0.2
 
 | Dependency group | Review result |

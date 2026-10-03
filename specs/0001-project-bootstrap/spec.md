@@ -127,7 +127,14 @@ Backend:
 
 `./mvnw verify`
 
-The bootstrap integration test must start against a fresh PostgreSQL container
+PostgreSQL integration tests must inherit a common test base that starts one
+PostgreSQL 18.6 container per test JVM and registers its datasource properties.
+The container must remain available between test classes and be cleaned up by
+Testcontainers at JVM exit. Do not reuse it across separate test runs.
+Tests that modify data must isolate or clean up their own data; shared container
+state does not imply test isolation.
+
+The bootstrap integration test must start against this PostgreSQL container
 with Liquibase enabled and verify successful application startup and health.
 Use an auto-configured Spring Boot RestTestClient with RANDOM_PORT to check
 HTTP 200 and the JSON status UP at `/actuator/health`.
