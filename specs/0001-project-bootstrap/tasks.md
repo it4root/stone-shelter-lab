@@ -5,6 +5,6 @@
   without asking.
 - [x] T002 Bootstrap Spring Boot backend using versions from ADR-0001 Create stone-shelter-api Spring Boot application.
   Use the exact versions recorded in ADR-0001. Packages: lab.stoneshelter.{api,domain,persistence,config}
-- [ ] T003 Verify backend build
+- [x] T003 Verify backend build
 - [ ] T004 Add Dockerfile
 - [ ] T005 Add PostgreSQL to Compose
