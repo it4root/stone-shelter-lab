@@ -1,0 +1,153 @@
+# Task: Bootstrap Stone Shelter repository
+Implement project bootstrap only.
+Do not implement any business feature.
+
+## Goal
+Prepare a working development foundation for subsequent spec-driven features.
+The result must contain a runnable Spring Boot backend, a runnable React frontend, and local Docker infrastructure.
+
+## Backend
+Create `stone-shelter-api` as a Maven Spring Boot application.
+Use:
+- Java 27 (exact ADR-0001 version requested for T002; Boot compatibility is not yet verified)
+- Spring Boot 4.1.1
+- Spring Web
+- Spring Boot Actuator
+- Spring Data JPA
+- PostgreSQL driver
+- Liquibase
+- JUnit
+- Testcontainers
+- ArchUnit
+
+Requirements:
+
+- provide Maven Wrapper;
+- application must compile;
+- tests must run;
+- expose Spring Boot Actuator health endpoint;
+- configure PostgreSQL using environment variables;
+- Liquibase must be enabled;
+- create an initial empty/root Liquibase changelog if necessary;
+- application must start successfully against PostgreSQL.
+
+
+## Backend Docker
+
+Create a multi-stage `Dockerfile` for `stone-shelter-api`.
+
+The Docker image must:
+
+- build the application;
+- run the packaged application;
+- not require Maven to be installed on the host.
+
+## Local infrastructure
+
+Create root `compose.yaml`.
+
+For now it must contain:
+
+- PostgreSQL;
+- stone-shelter-api.
+
+Configure:
+
+- database;
+- user;
+- password;
+- networking;
+- backend database connection through environment variables;
+- health checks where appropriate.
+
+Running:
+
+`docker compose up --build`
+
+must result in a healthy PostgreSQL instance and a running backend application.
+
+The backend health endpoint must respond successfully.
+
+## Frontend
+
+Create `stone-shelter-ui` using:
+
+- React
+- TypeScript
+- Vite
+
+Do not implement the catalog.
+
+Remove unnecessary template/demo content.
+
+Create only a minimal application shell displaying:
+
+`Stone Shelter`
+
+The frontend must support:
+
+- local development;
+- production build;
+- linting;
+- tests.
+
+Do not connect frontend to backend yet.
+
+Do not add UI frameworks unless explicitly required.
+
+## Agent instructions
+
+Create:
+
+- root `AGENTS.md`;
+- `stone-shelter-api/AGENTS.md`;
+- `stone-shelter-ui/AGENTS.md`.
+
+Keep instructions concise.
+
+Root instructions must describe:
+
+- spec-driven workflow;
+- repository structure;
+- verification requirements;
+- prohibition against implementing undocumented functionality.
+
+Backend instructions must contain backend-specific conventions.
+
+Frontend instructions must contain frontend-specific conventions.
+
+## Verification
+
+Before completing the task, run all applicable verification commands.
+
+At minimum verify:
+
+Backend:
+
+`./mvnw verify`
+
+Frontend:
+
+`npm test`
+`npm run lint`
+`npm run build`
+
+Docker:
+
+`docker compose up --build`
+
+Verify that the backend health endpoint responds successfully.
+
+If any verification fails, fix the problem and rerun verification.
+
+## Completion report
+
+When finished, report:
+
+1. files/directories created;
+2. important technical decisions made;
+3. commands executed;
+4. verification results;
+5. anything deliberately not implemented.
+
+Do not proceed to the Rock Catalog feature.
