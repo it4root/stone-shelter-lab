@@ -9,7 +9,7 @@ The result must contain a runnable Spring Boot backend, a runnable React fronten
 ## Backend
 Create `stone-shelter-api` as a Maven Spring Boot application.
 Use:
-- Java 27 (exact ADR-0001 version requested for T002; Boot compatibility is not yet verified)
+- Java 25 (selected in ADR-0001; within Spring Boot's supported Java range)
 - Spring Boot 4.1.1
 - Spring Web
 - Spring Boot Actuator

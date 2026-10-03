@@ -2,24 +2,25 @@
 
 Date: 2026-10-03
 
-Status: Accepted for T002 bootstrap; Java 27 runtime compatibility remains unverified.
+Status: Accepted; project runtime changed to Java 25 by explicit user instruction.
 
 ## Context
 
 The constitution requires concrete stack versions to be recorded here. The
 [bootstrap specification](../../specs/0001-project-bootstrap/spec.md) currently
-requires Java 27 and Spring Boot 4.1.1 following the explicit T002 instruction
-to use the exact ADR versions. This decision records current stable
+requires Java 25 and Spring Boot 4.1.1. The user selected Java 25 instead of
+Java 27 to stay within Boot's supported range. This decision records stable
 upstream releases, excluding milestones, release candidates, snapshots, nightly
 builds, and betas. It does not authorize implementing AI features.
 
 ## Decision
 
-Record the following latest stable releases verified on 2026-10-03:
+Use these project versions. Java 25 is an intentional selection rather than
+the newest GA Java release; the other releases were verified on 2026-10-03:
 
-| Component | Stable version | Official source |
+| Component | Selected version | Official source |
 | --- | --- | --- |
-| Java / JDK | 27 | [Oracle JDK 27 release announcement](https://blogs.oracle.com/java/the-arrival-of-java-27) |
+| Java / JDK | 25 | [Spring Boot Java requirements](https://docs.spring.io/spring-boot/system-requirements.html) |
 | Spring Boot | 4.1.1 | [Spring Boot reference and stable releases](https://docs.spring.io/spring-boot/) |
 | Spring AI | 2.0.1 | [Spring AI reference and stable releases](https://docs.spring.io/spring-ai/reference/) |
 | PostgreSQL | 18.6 | [PostgreSQL latest releases](https://www.postgresql.org/) |
@@ -32,12 +33,10 @@ documentation](https://docs.spring.io/spring-ai/reference/getting-started.html).
 Therefore Spring AI 2.0.1 and Spring Boot 4.1.1 satisfy the documented
 compatibility requirement. No Boot downgrade is necessary.
 
-Java 27 is the current GA release, but Spring Boot 4.1.1 documents compatibility
-only with Java 17 through 26 in its [system
+Spring Boot 4.1.1 documents compatibility with Java 17 through 26 in its [system
 requirements](https://docs.spring.io/spring-boot/system-requirements.html).
-The explicit T002 instruction selects Java 27 for the bootstrap. The feature
-specification is updated before implementation. This selection does not establish
-runtime compatibility; do not claim the entire newest-release combination is supported.
+Java 25 is within this range. The specification is updated before the Maven
+configuration. Documented support is distinct from a successful project build.
 
 T002 supporting build pins: Maven 3.9.9, Maven Wrapper 3.3.4 (official
 only-script distribution), PostgreSQL JDBC 42.7.13 and JUnit 6.0.3 (the
@@ -48,18 +47,43 @@ is explicitly pinned over Boot's managed 5.0.3 to follow this ADR. Maven 3.9.9
 matches the locally installed Maven version. Spring AI is not added in T002
 because the bootstrap specification contains no AI integration requirement.
 
+### Compatibility review after selecting Java 25
+
+| Dependency group | Review result |
+| --- | --- |
+| Boot Web MVC, Actuator, Data JPA, Liquibase starter, test starter and Maven plugin 4.1.1 | Same Boot release throughout the resolved tree; Java 25 is supported. |
+| Spring Framework 7.0.9, Spring Data JPA 4.1.1, Hibernate 7.4.5.Final, Tomcat 11.0.24, Jackson 3.1.5 | Resolved through Boot's dependency management; no independent overrides introduced. |
+| PostgreSQL JDBC 42.7.13 | Matches Boot's managed version and resolves successfully; a live PostgreSQL connection was not tested. |
+| Liquibase Community 5.0.4 | Resolves successfully as an explicit patch override of Boot's managed 5.0.3; migration execution remains untested. |
+| Testcontainers 2.0.5, including PostgreSQL and JUnit Jupiter modules | Matches Boot's managed version; all resolved Testcontainers modules use 2.0.5. Container execution remains untested. |
+| JUnit Jupiter and Platform 6.0.3 | Managed by Boot; [requires Java 17 or newer](https://docs.junit.org/6.0.3/overview.html). |
+| ArchUnit JUnit 6 integration 1.5.1 | The [1.5 release line](https://github.com/TNG/ArchUnit/releases) supports JUnit 6 and is built/tested with JDK 25; three architecture checks passed locally. |
+| Spring AI 2.0.1 | Documented Boot 4.1.x compatibility; absent from the project's dependency tree, so no integration was tested. |
+
+Verification used a temporary Oracle JDK 25.0.4.1, Maven Wrapper 3.3.4 and
+Maven 3.9.9. `./mvnw verify` and dependency-tree generation completed
+successfully: three tests, zero failures/errors/skips. The resolved tree is
+generated under `stone-shelter-api/target/dependency-tree.txt` (not committed).
+
+Full database compatibility is not established: Docker's daemon was unavailable,
+so PostgreSQL 18.6, Liquibase migrations and Testcontainers were not exercised
+together. In addition, the [Liquibase Community 5.0.4 PostgreSQL support
+page](https://docs.liquibase.com/community/integration-guide-5-0-4/what-support-does-liquibase-have-for-postgresql)
+lists verified PostgreSQL versions only through 17, not 18. This is a documented
+verification gap, not proof of incompatibility. Keep the selected database and
+Liquibase versions pending an integration check rather than silently changing them.
+
 ## Consequences
 
 - Future dependency and container configuration must use concrete versions and
   agree with the approved project selections recorded here.
-- Java 27 is pinned as requested for T002, with compatibility outside Boot's
-  documented range remaining unverified. Build verification belongs to T003.
+- Java 25 replaces Java 27 in the project pins. The remaining bootstrap task
+  checklist is unchanged by this compatibility review.
 - Spring AI can be selected at 2.0.1 with Boot 4.1.1 when a feature specification
   actually calls for it; recording its version does not add a dependency.
-- These are upstream release checks and documented compatibility checks, not
-  evidence from compiling or running the combined stack. Backend implementation
-  must verify dependency resolution, migrations, and PostgreSQL integration,
-  including any differences from Boot-managed Liquibase/Testcontainers versions.
+- Dependency resolution, compilation and the existing architecture tests pass on
+  Java 25. PostgreSQL integration and migration execution still need verification,
+  especially the Liquibase Community/PostgreSQL 18 verification gap above.
 - Release inventory is a dated snapshot and requires deliberate review when
   upgrading. PostgreSQL 19 beta and Spring preview releases are excluded.
 
@@ -68,10 +92,8 @@ because the bootstrap specification contains no AI integration requirement.
 - Downgrade Spring Boot for Spring AI compatibility: unnecessary because the
   stable Spring AI 2.0.x line supports Boot 4.1.x. Any future downgrade requires
   explicit user approval.
-- Retain Java 23: superseded by the explicit T002 exact-version instruction;
-  Java 27 still exceeds Boot's documented compatibility range.
-- Choose a supported LTS JDK instead of the newest GA JDK: a possible separate
-  runtime decision, requiring a specification update before implementation.
+- Retain Java 27: rejected by the user; it exceeds Boot's documented range.
+- Retain Java 23: superseded by the user's Java 25 selection.
 - Use prereleases or floating `latest` versions: rejected because they do not
   satisfy the stable-release request or the repository's explicit-version rule.
 - Use Boot-managed dependency versions automatically: may simplify integration,

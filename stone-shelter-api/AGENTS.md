@@ -1,8 +1,8 @@
 # Backend conventions
 
 Read the root AGENTS.md, constitution, current feature spec, tasks and ADR first.
-Use the pinned ADR-0001 versions. T002 selects Java 27; Boot support for this
-runtime is unverified. Do not change versions silently.
+Use the pinned ADR-0001 versions, including Java 25.
+Do not change versions silently.
 
 - Packages: lab.stoneshelter.api, domain, persistence, config.
 - Controllers live in api, services in domain, repositories/entities in persistence.
