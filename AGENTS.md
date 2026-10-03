@@ -19,6 +19,8 @@ For every feature:
 5. Implement.
 6. Run verification.
 7. Check implementation against acceptance criteria.
+8. Do not create commits unless explicitly requested
+9. Do not push unless explicitly requested.
 
 ## Repository structure
 

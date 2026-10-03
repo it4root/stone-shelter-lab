@@ -69,32 +69,6 @@ must result in a healthy PostgreSQL instance and a running backend application.
 
 The backend health endpoint must respond successfully.
 
-## Frontend
-
-Create `stone-shelter-ui` using:
-
-- React
-- TypeScript
-- Vite
-
-Do not implement the catalog.
-
-Remove unnecessary template/demo content.
-
-Create only a minimal application shell displaying:
-
-`Stone Shelter`
-
-The frontend must support:
-
-- local development;
-- production build;
-- linting;
-- tests.
-
-Do not connect frontend to backend yet.
-
-Do not add UI frameworks unless explicitly required.
 
 ## Agent instructions
 
@@ -102,7 +76,6 @@ Create:
 
 - root `AGENTS.md`;
 - `stone-shelter-api/AGENTS.md`;
-- `stone-shelter-ui/AGENTS.md`.
 
 Keep instructions concise.
 

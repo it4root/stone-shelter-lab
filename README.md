@@ -3,6 +3,15 @@
 Pet project for practising spec-driven development, AI-first workflow and a
 layered Spring Boot + React stack. Not production software.
 
+Phase 1
+Single coding agent + human review
+
+Phase 2
+Multi-agent development + UI QA
+
+Phase 3
+Agentic product features with Spring AI
+
 ## Run API
 
 On first launch, copy the local environment template from the repository root:
