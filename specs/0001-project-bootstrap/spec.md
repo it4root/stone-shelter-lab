@@ -127,6 +127,10 @@ Backend:
 
 `./mvnw verify`
 
+The bootstrap integration test must start against a fresh PostgreSQL container
+and verify that Liquibase's `databasechangelog` table exists after application
+initialization, without requiring it to contain zero applied changesets.
+
 Frontend:
 
 `npm test`
