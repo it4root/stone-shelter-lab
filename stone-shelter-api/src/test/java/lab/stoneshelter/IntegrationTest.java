@@ -3,7 +3,7 @@ package lab.stoneshelter;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
-abstract class PostgresIntegrationTest {
+abstract class IntegrationTest {
     @ServiceConnection
     private static final PostgreSQLContainer DATABASE = new PostgreSQLContainer("postgres:18.6");
 

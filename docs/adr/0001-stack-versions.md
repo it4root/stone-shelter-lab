@@ -54,7 +54,7 @@ test guidance](https://docs.spring.io/spring-boot/reference/testing/spring-boot-
 The general test starter does not supply this auto-configuration module.
 
 PostgreSQL integration tests share the singleton container in
-`PostgresIntegrationTest` within one test JVM, using the [official singleton
+`IntegrationTest` within one test JVM, using the [official singleton
 lifecycle pattern](https://java.testcontainers.org/test_framework_integration/manual_lifecycle_control/#singleton-containers).
 JUnit does not manage its lifecycle; Ryuk cleans it up on JVM exit. Shared
 `@ServiceConnection` supplies JDBC and Liquibase connection details from the

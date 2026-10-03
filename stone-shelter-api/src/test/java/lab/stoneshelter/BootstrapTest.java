@@ -8,7 +8,7 @@ import org.springframework.test.web.servlet.client.RestTestClient;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
-class BootstrapTest extends PostgresIntegrationTest {
+class BootstrapTest extends IntegrationTest {
     @Autowired
     private RestTestClient restClient;
 
