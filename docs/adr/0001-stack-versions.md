@@ -57,7 +57,11 @@ PostgreSQL integration tests share the singleton container in
 `PostgresIntegrationTest` within one test JVM, using the [official singleton
 lifecycle pattern](https://java.testcontainers.org/test_framework_integration/manual_lifecycle_control/#singleton-containers).
 JUnit does not manage its lifecycle; Ryuk cleans it up on JVM exit. Shared
-datasource registration permits Spring context caching when the remaining
+`@ServiceConnection` supplies JDBC and Liquibase connection details from the
+shared PostgreSQL container, using the test-scoped `spring-boot-testcontainers`
+module 4.1.1 as required by [Boot's service connection support](https://docs.spring.io/spring-boot/reference/testing/testcontainers.html#testing.testcontainers.service-connections).
+The unused JUnit Testcontainers extension dependency is removed. This shared
+configuration permits Spring context caching when the remaining
 context configuration matches. This does not isolate test data or share a
 container between JVM forks. With only one integration class, no performance
 gain is claimed.

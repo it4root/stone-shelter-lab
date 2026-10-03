@@ -128,7 +128,8 @@ Backend:
 `./mvnw verify`
 
 PostgreSQL integration tests must inherit a common test base that starts one
-PostgreSQL 18.6 container per test JVM and registers its datasource properties.
+PostgreSQL 18.6 container per test JVM and supplies connection details through
+Spring Boot's `@ServiceConnection`, rather than manual datasource properties.
 The container must remain available between test classes and be cleaned up by
 Testcontainers at JVM exit. Do not reuse it across separate test runs.
 Tests that modify data must isolate or clean up their own data; shared container
