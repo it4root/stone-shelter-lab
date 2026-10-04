@@ -64,3 +64,25 @@ For every feature:
 `stone-shelter-api/AGENTS.md` and `stone-shelter-ui/AGENTS.md` hold additions
 specific to each side. They extend this file, they do not replace it.
 
+## Task execution boundaries
+
+When asked to execute a specific task, execute only that task.
+
+After completing the requested task:
+- stop;
+- report what was done;
+- report verification results;
+- do not automatically continue with the next task.
+
+Do not execute additional tasks from the task list unless the user explicitly asks to continue.
+
+Examples:
+
+- `Execute T003` → execute only T003, then stop.
+- `Execute T003 and T004` → execute only T003 and T004, then stop.
+- `Execute all remaining tasks` → tasks may be executed sequentially until the list is complete.
+- `Continue` → execute the next logical task only, then stop again unless the user explicitly requests continuous execution.
+
+Default behavior is **one requested task at a time**.
+
+Never interpret the existence of subsequent tasks in `tasks.md` as permission to execute them.

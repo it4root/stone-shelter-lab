@@ -139,4 +139,4 @@ When finished, report:
 4. verification results;
 5. anything deliberately not implemented.
 
-Do not proceed to the Rock Catalog feature.
+Do not proceed to the Stone Catalog feature.

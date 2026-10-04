@@ -39,7 +39,7 @@ Create routes:
 
 / — simple home placeholder;
 
-/rocks — placeholder page containing Rock Catalog;
+/Stones — placeholder page containing Stone Catalog;
 
 fallback 404 route.
 

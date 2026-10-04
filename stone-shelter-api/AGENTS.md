@@ -22,3 +22,4 @@ Do not change versions silently.
 - Tests must not depend on data created by other tests.
 - Tests must not depend on test execution order.
 - Shared database infrastructure is allowed, but shared mutable test data is not.
+- After implementation, verify that all created or modified source files are located under the correct module source roots and are included in the build.
