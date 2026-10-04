@@ -1,0 +1,6 @@
+- figure out how to test the tests and split them between JUnit and integration tests — do not review tests manually and do not fix them by hand
+- later add a layer for generating OpenAPI documentation
+- figure out how to create tasks before feature implementation and how large those tasks should be
+- figure out how to work within the repository and how large a feature can reasonably be done at once
+- somehow bring in and draw the UI design
+- today I only managed to train the controller layer — tomorrow I’ll work on the JPA layer and teach the agent the rules for it
