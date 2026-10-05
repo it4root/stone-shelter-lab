@@ -12,7 +12,7 @@ Educational project for practicing:
 
 For every feature:
 
-1. Read the feature specification.
+1. Read the feature specification and its sibling `acceptance.md`.
 2. Do not implement undocumented requirements.
 3. Update specification before implementation if behavior changes.
 4. Define or update HTTP contract requirements in the specification before implementation. The generated OpenAPI document is the source of truth; do not maintain a separate handwritten HTTP contract. Define or update AsyncAPI contracts before Kafka implementation.
@@ -28,6 +28,7 @@ For every feature:
 |--------------------------------------|----------------------------------------|
 | `.specify/memory/constitution.md`    | Non-negotiable rules. Read this FIRST  |
 | `specs/NNN-*/spec.md`                | Feature spec: what and why             |
+| `specs/NNN-*/acceptance.md`          | Feature acceptance criteria            |
 | `specs/NNN-*/plan.md`                | Technical decisions for the feature    |
 | `specs/NNN-*/tasks.md`               | Task checklist for the feature         |
 | Generated `/v3/api-docs` and `/v3/api-docs.yaml` | HTTP API contract source of truth |
@@ -45,6 +46,7 @@ For every feature:
 
 ## Rules
 
+- Store acceptance criteria for every feature exclusively in its `specs/NNN-*/acceptance.md`. Link to that file from `spec.md`; do not duplicate criteria in `spec.md`, `plan.md` or `tasks.md`. Read and update `acceptance.md` alongside the specification before implementation when requirements change, and verify implementation against it.
 - Generated OpenAPI is the source of truth for HTTP API contracts. Generate it from Spring MVC controllers and shared DTOs; do not maintain a separate handwritten OpenAPI contract.
 - AsyncAPI is the source of truth for Kafka contracts.
 - Database schema changes require Liquibase migrations.
