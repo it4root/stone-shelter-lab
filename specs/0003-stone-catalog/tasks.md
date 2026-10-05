@@ -190,3 +190,35 @@
     20 architecture, 1 bootstrap) with PostgreSQL Testcontainers. Application
     component scanning, repository/entity discovery, package paths and
     git diff --check pass; no HTTP behavior changes.
+
+  - Follow-up: document direct forwarding of single-use intermediate results
+    and remove the page binding from StoneService.search.
+  - Direct result forwarding verification (2026-10-05): Maven verify on
+    JDK 23.0.2 passes all 124 tests with PostgreSQL Testcontainers;
+    git diff --check passes.
+
+  - Follow-up: remove remaining single-use forwarding bindings in StoneService
+    create/search and the single-use descending value; preserve mutable/reused locals.
+  - Service direct forwarding verification (2026-10-05): Maven verify on
+    JDK 23.0.2 passes all 124 tests with PostgreSQL Testcontainers;
+    git diff --check passes.
+
+  - Follow-up: consume replace's return value in StoneService.update; make
+    populateEntity return the resulting entity and forward it from the abstract
+    mapper methods. Preserve shared null handling and managed entity updates.
+  - Mapper update result verification (2026-10-05): Maven verify on JDK 23.0.2
+    passes all 124 tests with PostgreSQL Testcontainers, including update API
+    behavior and mapper null contracts. git diff --check passes.
+
+  - Follow-up: rename AbstractEntityMapper.replace(entity, source) to
+    toEntity(entity, source); update service calls and mapper contract tests.
+    Preserve both overloads and their existing null policies.
+  - toEntity overload rename verification (2026-10-05): Maven verify on
+    JDK 23.0.2 passes all 124 tests with PostgreSQL Testcontainers;
+    git diff --check passes.
+
+  - Follow-up: document descriptive service method naming and rename the
+    require lookup helper to findById, preserving not-found error handling.
+  - Service lookup naming verification (2026-10-05): Maven verify on
+    JDK 23.0.2 passes all 124 tests with PostgreSQL Testcontainers, including
+    missing-resource HTTP 404 checks; git diff --check passes.

@@ -246,13 +246,13 @@ Services use toDto for both direct calls and search-result method references.
 
 ## Mapper null contracts
 
-Entity-target mappers extend AbstractEntityMapper. Its final toEntity and replace
+Entity-target mappers extend AbstractEntityMapper. Its final toEntity(source) and toEntity(entity, source)
 methods return null for a null source, without creating or changing an entity.
 Replacing a non-null request requires a non-null target entity.
 DTO-target mappers extend AbstractDtoMapper. Its final toDto validates the source
 before conversion: null raises MapperValidationException, handled as HTTP 500
 with standard ProblemDetail. This is a technical source check, not business or
-Bean Validation. Missing Stones still return 404 in StoneService.require.
+Bean Validation. Missing Stones still return 404 in StoneService.findById.
 Concrete mappers are Spring components injected into StoneService; conversion
 hooks use getters and setters. No field-level validation is added.
 
@@ -260,8 +260,9 @@ hooks use getters and setters. No field-level validation is added.
 
 Services obtain all ready Response DTOs through dedicated source-to-target
 mappers. Do not instantiate or populate response objects in services, including
-StonesSearchResponse pagination wrappers and StoneDeleteResponse identifier
-responses. Pagination mappers own content conversion and page metadata mapping;
+StonesSearchResponse pagination wrappers. Exception: a simple scalar id may be
+used directly to construct StoneDeleteResponse in delete(long id); no mapper is
+required for that scalar-to-response operation. Pagination mappers own content conversion and page metadata mapping;
 services delegate response assembly to the mapper. Class targets use getters
 and setters; record targets with at most four fields may use constructors inside
 mappers. HTTP schemas and business behavior remain unchanged.
@@ -272,8 +273,8 @@ content through StoneEntityToStoneSearchResponseMapper and copies page metadata.
 StoneService.search delegates the repository page directly to this mapper.
 
 StoneService.search delegates criteria preparation to a private
-prepareSearchCriteria method. Compute the selected field and direction in local
-variables before populating StoneSearchCriteria; preserve all current defaults and filters.
+prepareSearchCriteria method. Compute the reused selected field in a local variable and pass the direction
+expression directly to setDescending when populating StoneSearchCriteria; preserve all current defaults and filters.
 
 ## Packages by responsibility
 
@@ -284,3 +285,30 @@ for StoneCatalogController and handlers for ApiExceptionHandler. Keep DTOs in
 shared and mappers in mappers.entities / mappers.dtos. The application bootstrap
 remains in lab.stoneshelter. Preserve service/repository/mapper boundaries and
 HTTP behavior; update ArchUnit package restrictions to the new layout.
+
+Avoid an intermediate page binding in StoneService.search: pass
+repository.search(stoneSearchCriteria) directly to searchResponseMapper.toDto.
+Keep prepared criteria available for repository input. Behavior is unchanged.
+
+Apply direct forwarding throughout StoneService: inline the create mapper
+result into repository.save, prepared search criteria into repository.search
+and the single-use direction expression into setDescending. Retain variables
+that are mutated or reused, including the update entity and selected sort field.
+
+Object-changing mapper operations return the resulting entity, and callers use
+that result. populateEntity returns StoneEntity; AbstractEntityMapper forwards
+its result from both toEntity overloads. StoneService.update passes toEntity(findById(id),
+request) directly to the response mapper. Null-source results are therefore
+validated by the DTO mapper instead of silently ignored. Managed entity updates
+and missing-resource 404 behavior remain unchanged. Conventional setters retain
+their existing contract.
+
+AbstractEntityMapper uses overloaded toEntity methods for creation and updating
+an existing target; the two-argument overload retains the entity-first order.
+
+Name the service entity lookup helper findById to match repository.findById.
+It still translates Optional.empty to StoneNotFoundException; update its callers
+without changing lookup or HTTP behavior.
+
+The scalar-response exception, toDto/toEntity method naming and lowerCamelCase
+local object names derived from their types are now explicit constitution rules.

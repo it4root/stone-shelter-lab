@@ -51,31 +51,26 @@ public class StoneService {
     }
 
     public StoneCreateResponse create(StoneCreateRequest request) {
-        var entity = createRequestMapper.toEntity(request);
-        return createResponseMapper.toDto(repository.save(entity));
+        return createResponseMapper.toDto(repository.save(createRequestMapper.toEntity(request)));
     }
 
     @Transactional(readOnly = true)
     public StoneResponse get(long id) {
-        return responseMapper.toDto(require(id));
+        return responseMapper.toDto(findById(id));
     }
 
     public StoneUpdateResponse update(long id, StoneUpdateRequest request) {
-        var entity = require(id);
-        updateRequestMapper.replace(entity, request);
-        return updateResponseMapper.toDto(entity);
+        return updateResponseMapper.toDto(updateRequestMapper.toEntity(findById(id), request));
     }
 
     public StoneDeleteResponse delete(long id) {
-        repository.delete(require(id));
+        repository.delete(findById(id));
         return new StoneDeleteResponse(id);
     }
 
     @Transactional(readOnly = true)
     public StonesSearchResponse search(StonesSearchRequest request) {
-        var stoneSearchCriteria = prepareSearchCriteria(request);
-        var page = repository.search(stoneSearchCriteria);
-        return searchResponseMapper.toDto(page);
+        return searchResponseMapper.toDto(repository.search(prepareSearchCriteria(request)));
     }
 
     private StoneSearchCriteria prepareSearchCriteria(StonesSearchRequest request) {
@@ -84,9 +79,6 @@ public class StoneService {
         var field = sort == null || sort.field() == null
                 ? StoneSortField.ADMISSION_DATE
                 : StoneSortField.fromValue(sort.field());
-        var descending = sort == null || sort.direction() == null
-                ? field == StoneSortField.ADMISSION_DATE
-                : "desc".equals(sort.direction());
 
         var stoneSearchCriteria = new StoneSearchCriteria();
         stoneSearchCriteria.setStoneType(filter == null ? null : filter.stoneType());
@@ -95,11 +87,13 @@ public class StoneService {
         stoneSearchCriteria.setPage(request.page() == null ? 0 : request.page());
         stoneSearchCriteria.setSize(request.size() == null ? 12 : request.size());
         stoneSearchCriteria.setField(field);
-        stoneSearchCriteria.setDescending(descending);
+        stoneSearchCriteria.setDescending(sort == null || sort.direction() == null
+                ? field == StoneSortField.ADMISSION_DATE
+                : "desc".equals(sort.direction()));
         return stoneSearchCriteria;
     }
 
-    private StoneEntity require(long id) {
+    private StoneEntity findById(long id) {
         return repository.findById(id).orElseThrow(() -> new StoneNotFoundException(id));
     }
 

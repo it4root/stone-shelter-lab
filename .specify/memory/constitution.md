@@ -69,15 +69,21 @@
     services own business validation and normalization.
     Services must obtain ready Response DTOs through mappers rather than
     constructing or populating them directly. This includes collection and
-    pagination wrappers and identifier-only responses. Constructors, setters
-    and collection item conversion used to build responses belong inside
-    mappers. Class-based DTO targets use no-argument constructors and setters;
+    pagination wrappers. Exception: mapping a simple scalar value such as an
+    identifier does not require a mapper. A service operation such as delete(long id)
+    may construct an identifier-only response directly from that id. This exception
+    covers scalar-to-response construction; mapping entities, structured request
+    objects or collections still belongs in mappers. Constructors, setters and
+    collection item conversion used to build other responses belong inside mappers. Class-based DTO targets use no-argument constructors and setters;
     records with at most four fields may use their constructors inside mappers.
     Put mappers targeting entities (including names ending in EntityMapper) in
     `lab.stoneshelter.mappers.entities`. Put mappers targeting DTOs (including
     names ending in DtoMapper or ResponseMapper) in `lab.stoneshelter.mappers.dtos`.
     Entity mappers and DTO mappers may access persistence entities; controllers
     must not depend on either mapper package.
+    Name DTO conversion methods toDto. Name entity conversion methods toEntity:
+    toEntity(source) creates a target; toEntity(entity, source) updates an existing
+    target and returns the result. Keep the entity-first order in the update overload.
     Entity-target mappers extend AbstractEntityMapper: null source returns null.
     DTO-target mappers extend AbstractDtoMapper: null source raises
     MapperValidationException, translated to standard HTTP 500 ProblemDetail.
@@ -97,6 +103,31 @@
     fields must be classes with private fields, a no-argument constructor and public
     getters/setters. Mappers create class targets with the no-argument constructor
     and populate them using setters, reading source classes through getters.
+
+19. Avoid temporary variables that only hold a value for a single immediate call
+    and require no further processing. Pass the expression directly to that call,
+    for example `return searchResponseMapper.toDto(repository.search(stoneSearchCriteria));`.
+    Keep local variables when needed for mutation, reuse or intermediate computation.
+    This rule concerns local bindings; assigning a method result to a variable does
+    not itself create an additional object.
+
+20. Object transformation methods in application and mapper APIs must return the
+    resulting object, including protected mapping hooks. Callers must use that result
+    rather than ignore it and rely only on mutation of an input reference. Forward
+    single-use results directly to the next method. Conventional field setters keep
+    their existing setter contract; framework command APIs are not redefined.
+
+21. Service method names should match the corresponding repository method names
+    where practical, or contain a verb that clearly describes the method's function.
+    Name identifier lookup helpers findById rather than vague names such as require.
+    A service findById helper may translate an empty repository Optional into the
+    specified not-found exception; matching names does not require matching return types.
+
+22. Name local object variables descriptively using their type name in lowerCamelCase,
+    for example StoneSearchCriteria -> stoneSearchCriteria. Avoid vague or shortened
+    names such as criteria when the concrete type provides a clearer name. This
+    convention does not require introducing variables for single-use results;
+    direct forwarding under rule 19 still applies.
 
 ## Process
 1. Spec → plan → tasks → code. No spec, no code.

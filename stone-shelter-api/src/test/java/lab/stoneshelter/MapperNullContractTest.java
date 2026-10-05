@@ -47,8 +47,8 @@ class MapperNullContractTest {
         entity.setName("Original");
         entity.setPhoto("");
         assertThat(mapper.toEntity(null)).isNull();
-        assertThat(mapper.replace(entity, null)).isNull();
-        assertThat(mapper.replace(null, null)).isNull();
+        assertThat(mapper.toEntity(entity, null)).isNull();
+        assertThat(mapper.toEntity(null, null)).isNull();
         assertThat(entity.getName()).isEqualTo("Original");
         assertThat(entity.getPhoto()).isEmpty();
     }
@@ -64,7 +64,7 @@ class MapperNullContractTest {
     @Test
     void nonNullUpdateRequiresExistingTarget() {
         var mapper = new StoneUpdateRequestToStoneEntityMapper();
-        assertThatThrownBy(() -> mapper.replace(null, new StoneUpdateRequest()))
+        assertThatThrownBy(() -> mapper.toEntity(null, new StoneUpdateRequest()))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Target entity must not be null.");
     }

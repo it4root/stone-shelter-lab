@@ -12,7 +12,7 @@ public final class StoneCreateRequestToStoneEntityMapper extends AbstractEntityM
     }
 
     @Override
-    protected void populateEntity(StoneCreateRequest request, StoneEntity entity) {
+    protected StoneEntity populateEntity(StoneCreateRequest request, StoneEntity entity) {
         entity.setName(request.getName());
         entity.setPhoto(request.getPhoto());
         entity.setStoneType(request.getStoneType());
@@ -20,5 +20,6 @@ public final class StoneCreateRequestToStoneEntityMapper extends AbstractEntityM
         entity.setAdoptionStatus(request.getAdoptionStatus());
         entity.setAdmissionDate(request.getAdmissionDate());
         entity.setStoneSize(request.getStoneSize());
+        return entity;
     }
 }

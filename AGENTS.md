@@ -121,11 +121,39 @@ Never interpret the existence of subsequent tasks in `tasks.md` as permission to
 
 - Services obtain ready Response DTOs through mappers; do not construct or
   populate responses directly in services. This includes collection/pagination
-  wrappers and identifier-only responses. Assemble response fields and map
-  collection items inside mappers. Class targets use no-argument constructors
+  wrappers. Exception: simple scalar values such as an id do not require a mapper;
+  delete(long id) may construct an identifier-only response directly. Mapping
+  entities, structured request objects and collections still requires mappers.
+  Assemble other response fields and map collection items inside mappers. Class targets use no-argument constructors
   and setters; record targets with at most four fields may use constructors
   inside mappers.
 
 - Package types by responsibility: controllers, handlers, services, enums,
   repositories, entities, criteria and exceptions under lab.stoneshelter.
   Keep shared DTOs in shared and mappers in mappers.entities / mappers.dtos.
+
+- Avoid temporary variables that only hold a value for a single immediate call
+  and require no further processing. Pass the expression directly to that call,
+  for example `return searchResponseMapper.toDto(repository.search(stoneSearchCriteria));`.
+  Keep local variables when needed for mutation, reuse or intermediate computation.
+  This rule concerns local bindings; assigning a method result to a variable does
+  not itself create an additional object.
+
+- Object transformation methods in application and mapper APIs must return the
+  resulting object, including protected mapping hooks. Callers must use that result
+  rather than ignore it and rely only on mutation of an input reference. Forward
+  single-use results directly to the next method. Conventional field setters keep
+  their existing setter contract; framework command APIs are not redefined.
+
+- Service method names should match the corresponding repository method names
+  where practical, or contain a verb that clearly describes the method's function.
+  Name identifier lookup helpers findById rather than vague names such as require.
+  A service findById helper may translate an empty repository Optional into the
+  specified not-found exception; matching names does not require matching return types.
+
+- Name DTO conversion methods toDto. Entity conversion methods are toEntity(source)
+  for creation and toEntity(entity, source) for updates; preserve entity-first order
+  in the update overload and use the returned result.
+- Name local object variables descriptively after their type in lowerCamelCase,
+  for example StoneSearchCriteria -> stoneSearchCriteria. Do not introduce a
+  single-use forwarding variable solely to satisfy this naming convention.
