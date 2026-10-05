@@ -47,3 +47,24 @@ Never skip these checks unless explicitly instructed to do so.
 - After frontend verification, keep the local UI development server running unless
   the user explicitly requests otherwise. Reuse an existing server when possible,
   verify that it responds and report its URL.
+- Define every frontend enum as a separate named type in its own file under
+  `src/enums`, using PascalCase for the type and filename (for example
+  `StoneType.ts`, `StoneSize.ts` and `AdoptionStatus.ts`). DTOs, components and
+  presentation mappings must import these types. Do not declare enum values
+  inline in DTO fields or duplicate their definitions in components or mocks.
+  Preserve the exact enum values specified by the generated backend contract.
+
+## Feature architecture
+
+- Follow [ADR-0006](../docs/adr/0006-ui-feature-architecture.md). Organize feature
+  components, hooks, services and state under src/features/{feature}.
+- Keep reusable domain UI and presentation under src/domain/{domain}; common
+  layout/UI under src/components/Common must not own feature data or state.
+- Keep API access and DTOs under src/api; fixtures and mock adapters under
+  src/mocks. Components use feature hooks/API boundaries, not mock fixtures.
+- Colocate component CSS and tests with components. Shared global styles and
+  design tokens live under src/styles.
+- Services must own application logic; do not create forwarding-only layers.
+  Keep local state local and separate server data from shared client state.
+- Create services, stores, providers, HTTP clients and routing only when required
+  by an authorized feature; their target locations do not mandate empty files.

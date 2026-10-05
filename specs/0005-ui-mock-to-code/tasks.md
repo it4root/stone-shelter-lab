@@ -63,3 +63,18 @@ Tests cover default size, complete traversal, boundary controls and size reset.
   desktop grid, preserve responsive tablet/mobile layout and run frontend checks.
 
 T0005-010 verification: lint, 6/6 tests and build passed; local UI returned HTTP 200.
+
+- [x] **T0005-011 — Extract frontend enum types.** Move StoneType, StoneSize
+  and AdoptionStatus into separate files, update DTO and presentation types,
+  run frontend checks and leave the local UI running.
+
+T0005-011 verification: lint, 6/6 tests and build passed; local UI returned HTTP 200.
+
+- [x] **T0005-012 — Apply accepted feature-oriented UI architecture.** Record
+  ADR-0006, separate layout/page/hooks/domain/API DTOs/mocks, colocate styles,
+  preserve existing behavior, verify frontend checks and leave UI running.
+
+T0005-012 verification: lint, 6/6 tests and build passed. Chrome runtime checks
+at 1440, 1024, 768, 390 and 320 pixels confirmed 12 initial cards, correct
+4/4/2/1/1 column counts, two-line biographies and no horizontal overflow.
+Desktop/mobile screenshots inspected; UI remains running at localhost:5174.

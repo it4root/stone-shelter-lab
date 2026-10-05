@@ -50,3 +50,14 @@ Verify page boundaries, complete traversal and size reset through interaction te
 Keep four grid columns at widths of 960 pixels and above; reduce the reserved
 side areas on narrower desktop to preserve card readability. Keep existing
 tablet/mobile breakpoints.
+
+Extract existing enum unions into named type exports in src/enums. Use type-only
+imports in DTOs and explicit presentation mappings; keep runtime values unchanged.
+
+## Feature Architecture Refactoring
+
+Implement ADR-0006 with synchronous mock API delegation through api/stonesApi.
+Move pagination state to useCatalog and render CatalogPage inside PageLayout.
+Split CSS by existing selector ownership while preserving breakpoint order and
+values. Move contract DTOs separately, fixtures under mocks/data and the paging
+adapter under mocks/api. Preserve existing interaction tests and startup.

@@ -1,8 +1,8 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, expect, test } from 'vitest';
 import { App } from './App';
-import { StoneCard } from '../components/StoneCard/StoneCard';
-import { mockStones } from '../mockStones';
+import { StoneCard } from '../domain/stone/components/StoneCard/StoneCard';
+import { mockStones } from '../mocks/data/stones';
 
 afterEach(cleanup);
 

@@ -1,15 +1,8 @@
-import type { StoneSearchResponse } from '../../stoneTypes';
+import type { StoneSearchResponse } from '../../../../api/dto/StoneSearchResponse';
+import { stoneSizeLabels, stoneTypeLabels } from '../../presentation/stoneLabels';
+import './StoneCard.css';
 
 const placeholder = '/placeholder-rock.png';
-
-const stoneTypeLabels: Record<StoneSearchResponse['stoneType'], string> = {
-  BASALT: 'Basalt', GRANITE: 'Granite', OBSIDIAN: 'Obsidian', PUMICE: 'Pumice',
-  LIMESTONE: 'Limestone', SANDSTONE: 'Sandstone', SHALE: 'Shale', MARBLE: 'Marble',
-  GNEISS: 'Gneiss', SLATE: 'Slate',
-};
-const stoneSizeLabels: Record<StoneSearchResponse['stoneSize'], string> = {
-  SMALL: 'Small', MEDIUM: 'Medium', LARGE: 'Large',
-};
 
 export function StoneCard({ stone }: { stone: StoneSearchResponse }) {
   return (
@@ -36,4 +29,3 @@ export function StoneCard({ stone }: { stone: StoneSearchResponse }) {
     </article>
   );
 }
-

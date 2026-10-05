@@ -100,3 +100,18 @@ page, size and totalElements. No backend endpoint changes or live calls.
 Desktop uses four cards per row, including narrower desktop widths. Tablet
 retains two columns and mobile one column. With the default page size, desktop
 shows three rows of four cards.
+
+## Frontend Enum Types
+
+Define StoneType, StoneSize and AdoptionStatus separately in src/enums, each
+in its own PascalCase-named file. DTOs and presentation mappings import these
+types rather than declaring inline unions. Preserve backend contract values.
+
+## Feature-Oriented Architecture
+
+Follow [ADR-0006](../../docs/adr/0006-ui-feature-architecture.md), which supersedes
+the earlier component locations. Keep reusable layout in Common/PageLayout,
+catalog components and useCatalog under features/catalog, StoneCard and labels
+under domain/stone, DTOs under api/dto, and fixtures/adapters under mocks.
+Colocate component CSS and keep shared styles/tokens under styles. Preserve
+existing behavior and introduce no live HTTP calls or new dependencies.

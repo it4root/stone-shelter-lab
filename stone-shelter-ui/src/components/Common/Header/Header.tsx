@@ -1,3 +1,5 @@
+import './Header.css';
+
 const navigation = ['Stone catalog', 'How it works', 'About the shelter', 'Blog', 'Contact'];
 
 export function Header() {

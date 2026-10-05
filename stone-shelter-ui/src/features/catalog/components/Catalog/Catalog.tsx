@@ -1,6 +1,8 @@
-import type { StonesSearchResponse } from '../../stoneTypes';
-import { StoneCard } from '../StoneCard/StoneCard';
-import { Pagination } from '../Common/Pagination/Pagination';
+import type { StonesSearchResponse } from '../../../../api/dto/StonesSearchResponse';
+import { StoneCard } from '../../../../domain/stone/components/StoneCard/StoneCard';
+import { Pagination } from '../../../../components/Common/Pagination/Pagination';
+
+import './Catalog.css';
 
 interface CatalogProps {
   response: StonesSearchResponse;

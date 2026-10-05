@@ -62,3 +62,17 @@ and 12/24 size changes; frontend lint and build passed.
 
 19. Desktop widths of 960 pixels and above show four cards per row. Default
     pages show three rows; tablet/mobile retain two/one columns respectively.
+
+20. StoneType, StoneSize and AdoptionStatus each have a dedicated file under
+    src/enums. DTOs and presentation mappings reference those types, with exact
+    backend values preserved and existing frontend verification passing.
+
+21. Architecture follows ADR-0006: shared layout has no catalog data/state;
+    CatalogPage uses useCatalog; domain card/labels, DTOs and mocks are separate.
+22. Component CSS is colocated, shared styles use tokens, and existing pagination,
+    responsive layout and image fallbacks retain their behavior. No new dependency
+    or speculative HTTP/service/store implementation is introduced.
+
+Architecture verification: existing six tests, lint and build passed. Chrome
+checks at 1440, 1024, 768, 390 and 320 pixels confirmed preserved pagination
+initial count and responsive columns without overflow; screenshots inspected.

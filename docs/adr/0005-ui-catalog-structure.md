@@ -81,3 +81,10 @@ the existing backend page-size constraints. No new dependency or live API call.
 The user requested four cards per row. Desktop now retains four columns at
 960 pixels and above, superseding the three-column narrower-desktop decision.
 Tablet and mobile keep two and one columns respectively.
+
+## Amendment: Dedicated Frontend Enum Types
+
+Define each frontend enum as a named type in its own PascalCase file under
+src/enums. StoneType, StoneSize and AdoptionStatus retain the generated backend
+values. DTOs and presentation mappings import these types; mock fixtures retain
+their existing values. Use type unions without introducing runtime enum objects.
