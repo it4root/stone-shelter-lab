@@ -18,3 +18,8 @@ management:
     web:
       exposure:
         include: health
+
+springdoc:
+  packages-to-scan: lab.stoneshelter.controllers
+  paths-to-match: /api/**
+  override-with-generic-response: false

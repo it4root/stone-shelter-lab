@@ -15,7 +15,7 @@ For every feature:
 1. Read the feature specification.
 2. Do not implement undocumented requirements.
 3. Update specification before implementation if behavior changes.
-4. Define or update contracts before backend/frontend implementation.
+4. Define or update HTTP contract requirements in the specification before implementation. The generated OpenAPI document is the source of truth; do not maintain a separate handwritten HTTP contract. Define or update AsyncAPI contracts before Kafka implementation.
 5. Implement.
 6. Run verification.
 7. Check implementation against acceptance criteria.
@@ -30,7 +30,7 @@ For every feature:
 | `specs/NNN-*/spec.md`                | Feature spec: what and why             |
 | `specs/NNN-*/plan.md`                | Technical decisions for the feature    |
 | `specs/NNN-*/tasks.md`               | Task checklist for the feature         |
-| `specs/NNN-*/contracts/openapi.yaml` | API contract for the feature           |
+| Generated `/v3/api-docs` and `/v3/api-docs.yaml` | HTTP API contract source of truth |
 | `docs/adr/NNNN-*.md`                 | Decisions and their rationale          |
 | `docs/glossary.md`                   | Ubiquitous language for the domain     |
 | `stone-shelter-api/`                 | Spring Boot backend                    |
@@ -45,7 +45,7 @@ For every feature:
 
 ## Rules
 
-- OpenAPI is the source of truth for HTTP API contracts.
+- Generated OpenAPI is the source of truth for HTTP API contracts. Generate it from Spring MVC controllers and shared DTOs; do not maintain a separate handwritten OpenAPI contract.
 - AsyncAPI is the source of truth for Kafka contracts.
 - Database schema changes require Liquibase migrations.
 - Never modify an already applied Liquibase migration.

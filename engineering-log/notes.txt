@@ -4,3 +4,9 @@
 - figure out how to work within the repository and how large a feature can reasonably be done at once
 - somehow bring in and draw the UI design
 - today I only managed to train the controller layer — tomorrow I’ll work on the JPA layer and teach the agent the rules for it
+
+FUTURE
+BE
+ -add error handling and extend swagger
+ -add module structure
+ UI

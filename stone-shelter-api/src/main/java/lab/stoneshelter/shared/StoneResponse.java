@@ -1,18 +1,28 @@
 package lab.stoneshelter.shared;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import lab.stoneshelter.enums.AdoptionStatus;
 import lab.stoneshelter.enums.StoneSize;
 import lab.stoneshelter.enums.StoneType;
 
+@Schema(description = "Stone catalog entry retrieved by its identifier.")
 public class StoneResponse {
+    @Schema(description = "Unique stone identifier.")
     private Long id;
+    @Schema(description = "Stone name.")
     private String name;
+    @Schema(description = "Optional photo value, preserved as supplied.")
     private String photo;
+    @Schema(description = "Stone type.")
     private StoneType stoneType;
+    @Schema(description = "Optional stone biography.")
     private String biography;
+    @Schema(description = "Stone adoption status.")
     private AdoptionStatus adoptionStatus;
+    @Schema(description = "Stone admission timestamp.")
     private Instant admissionDate;
+    @Schema(description = "Stone size.")
     private StoneSize stoneSize;
 
     public StoneResponse() {}

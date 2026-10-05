@@ -15,7 +15,7 @@ Do not change versions silently.
 - Name mappers {FullSourceTypeName}To{FullTargetTypeName}Mapper, for example StoneCreateRequestToStoneEntityMapper and StoneEntityToStoneCreateResponseMapper.
 - Repositories work with entities and queries; services perform changes and normalization and invoke mappers. Entities never reach controllers.
 - Build JPA specifications, Criteria predicates and database ordering in repositories, not services.
-- HTTP contracts come from OpenAPI; errors use RFC 9457 ProblemDetail.
+- Generated OpenAPI is the source of truth for HTTP contracts. Generate it from Spring MVC controllers and shared DTOs; do not maintain a separate handwritten OpenAPI contract. Errors use RFC 9457 ProblemDetail.
 - Liquibase owns schema changes. Never edit a committed changeset.
 - Database configuration comes from environment variables; ddl-auto stays validate.
 - Database tests use Testcontainers with PostgreSQL 18.6; never H2.

@@ -126,3 +126,14 @@ direct dependency for StringUtils. isEmpty checks null and empty strings without
 changing whitespace. The photo normalization use case is superseded: photo
 values are now preserved unchanged and the service no longer uses StringUtils.
 The release requires Java 8 or newer and is compatible with the selected JDK.
+
+### Backend OpenAPI documentation (T0004-001, 2026-10-05)
+
+Pin `org.springdoc:springdoc-openapi-starter-webmvc-ui` to `3.1.1`. The
+[official FAQ](https://springdoc.org/faq.html) identifies springdoc 3.x as
+compatible with Spring Boot 4 and lists 3.1.1 as the current stable release.
+The [official release history](https://github.com/springdoc/springdoc-openapi/releases)
+records the 3.1.0 line's upgrade to Spring Boot 4.1.0; 3.1.1 is its stable
+patch successor. Keep the existing Spring Boot 4.1.1 and JDK 23.0.2 pins.
+This dependency provides generated OpenAPI JSON/YAML and Swagger UI without
+a handwritten contract or a separate documentation model.

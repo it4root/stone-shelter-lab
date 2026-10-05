@@ -17,9 +17,15 @@
     <liquibase.version>5.0.4</liquibase.version>
     <testcontainers.version>2.0.5</testcontainers.version>
     <commons-lang3.version>3.20.0</commons-lang3.version>
+    <springdoc.version>3.1.1</springdoc.version>
     <archunit.version>1.5.1</archunit.version>
   </properties>
   <dependencies>
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>${springdoc.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.apache.commons</groupId>
       <artifactId>commons-lang3</artifactId>
