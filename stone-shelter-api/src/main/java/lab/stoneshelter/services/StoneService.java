@@ -1,0 +1,106 @@
+package lab.stoneshelter.services;
+
+import lab.stoneshelter.enums.StoneSortField;
+import lab.stoneshelter.criteria.StoneSearchCriteria;
+import lab.stoneshelter.exceptions.StoneNotFoundException;
+import lab.stoneshelter.repositories.StoneEntityRepository;
+
+import lab.stoneshelter.shared.StoneCreateRequest;
+import lab.stoneshelter.shared.StoneCreateResponse;
+import lab.stoneshelter.shared.StoneDeleteResponse;
+import lab.stoneshelter.shared.StoneResponse;
+import lab.stoneshelter.shared.StoneUpdateRequest;
+import lab.stoneshelter.shared.StoneUpdateResponse;
+import lab.stoneshelter.shared.StonesSearchRequest;
+import lab.stoneshelter.shared.StonesSearchResponse;
+import lab.stoneshelter.entities.StoneEntity;
+import lab.stoneshelter.mappers.entities.StoneCreateRequestToStoneEntityMapper;
+import lab.stoneshelter.mappers.entities.StoneUpdateRequestToStoneEntityMapper;
+import lab.stoneshelter.mappers.dtos.StoneEntityToStoneCreateResponseMapper;
+import lab.stoneshelter.mappers.dtos.StoneEntityToStoneResponseMapper;
+import lab.stoneshelter.mappers.dtos.StoneEntityToStoneUpdateResponseMapper;
+import lab.stoneshelter.mappers.dtos.PageToStonesSearchResponseMapper;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+@Transactional
+public class StoneService {
+    private final StoneEntityRepository repository;
+    private final StoneCreateRequestToStoneEntityMapper createRequestMapper;
+    private final StoneUpdateRequestToStoneEntityMapper updateRequestMapper;
+    private final StoneEntityToStoneCreateResponseMapper createResponseMapper;
+    private final StoneEntityToStoneResponseMapper responseMapper;
+    private final StoneEntityToStoneUpdateResponseMapper updateResponseMapper;
+    private final PageToStonesSearchResponseMapper searchResponseMapper;
+
+    public StoneService(StoneEntityRepository repository,
+            StoneCreateRequestToStoneEntityMapper createRequestMapper,
+            StoneUpdateRequestToStoneEntityMapper updateRequestMapper,
+            StoneEntityToStoneCreateResponseMapper createResponseMapper,
+            StoneEntityToStoneResponseMapper responseMapper,
+            StoneEntityToStoneUpdateResponseMapper updateResponseMapper,
+            PageToStonesSearchResponseMapper searchResponseMapper) {
+        this.repository = repository;
+        this.createRequestMapper = createRequestMapper;
+        this.updateRequestMapper = updateRequestMapper;
+        this.createResponseMapper = createResponseMapper;
+        this.responseMapper = responseMapper;
+        this.updateResponseMapper = updateResponseMapper;
+        this.searchResponseMapper = searchResponseMapper;
+    }
+
+    public StoneCreateResponse create(StoneCreateRequest request) {
+        var entity = createRequestMapper.toEntity(request);
+        return createResponseMapper.toDto(repository.save(entity));
+    }
+
+    @Transactional(readOnly = true)
+    public StoneResponse get(long id) {
+        return responseMapper.toDto(require(id));
+    }
+
+    public StoneUpdateResponse update(long id, StoneUpdateRequest request) {
+        var entity = require(id);
+        updateRequestMapper.replace(entity, request);
+        return updateResponseMapper.toDto(entity);
+    }
+
+    public StoneDeleteResponse delete(long id) {
+        repository.delete(require(id));
+        return new StoneDeleteResponse(id);
+    }
+
+    @Transactional(readOnly = true)
+    public StonesSearchResponse search(StonesSearchRequest request) {
+        var stoneSearchCriteria = prepareSearchCriteria(request);
+        var page = repository.search(stoneSearchCriteria);
+        return searchResponseMapper.toDto(page);
+    }
+
+    private StoneSearchCriteria prepareSearchCriteria(StonesSearchRequest request) {
+        var filter = request.filter();
+        var sort = request.sort();
+        var field = sort == null || sort.field() == null
+                ? StoneSortField.ADMISSION_DATE
+                : StoneSortField.fromValue(sort.field());
+        var descending = sort == null || sort.direction() == null
+                ? field == StoneSortField.ADMISSION_DATE
+                : "desc".equals(sort.direction());
+
+        var stoneSearchCriteria = new StoneSearchCriteria();
+        stoneSearchCriteria.setStoneType(filter == null ? null : filter.stoneType());
+        stoneSearchCriteria.setStoneSize(filter == null ? null : filter.stoneSize());
+        stoneSearchCriteria.setAdoptionStatus(filter == null ? null : filter.adoptionStatus());
+        stoneSearchCriteria.setPage(request.page() == null ? 0 : request.page());
+        stoneSearchCriteria.setSize(request.size() == null ? 12 : request.size());
+        stoneSearchCriteria.setField(field);
+        stoneSearchCriteria.setDescending(descending);
+        return stoneSearchCriteria;
+    }
+
+    private StoneEntity require(long id) {
+        return repository.findById(id).orElseThrow(() -> new StoneNotFoundException(id));
+    }
+
+}

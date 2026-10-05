@@ -59,20 +59,31 @@ The system must support:
 
 
 ## Functional requirements
-Default sort is by name ascending, with id ascending as a tiebreaker.
-Sorting is allowed by name and size only, ascending or descending
+Default sort is by admissionDate descending (later admission dates first),
+with id ascending as a tiebreaker. This uses the client-supplied admissionDate,
+not a separate creation timestamp. If sort or sort.field is omitted or null,
+use admissionDate; its omitted direction defaults to desc. An explicitly supplied
+direction is respected. Explicit name and stoneSize sorts default to asc when
+direction is omitted. Explicit selectable sort fields remain name and stoneSize.
+Explicit sort fields are limited to name and size, ascending or descending.
 Filters combine with AND. No matches is an empty page, not an error.
 Malformed input returns 400 as RFC 9457 ProblemDetail.
 A missing stone returns 404 as RFC 9457 ProblemDetail.
+A null entity passed to a response mapper is an internal mapping contract failure
+and returns HTTP 500 as standard ProblemDetail, not a missing-resource 404.
+Use standard ProblemDetail without custom problem type URNs. The default
+about:blank type may be omitted from the JSON response.
 The list defaults to page 0, page size 12, maximum page size 24
 Allow exactly one sort criterion per request. Multiple sort criteria are not supported and should return 400. For equal values of the selected sort field, always use id ASC as the deterministic tie-breaker.
-Use one `filter` query object containing page, size, stoneType, stoneSize,
-adoptionStatus, sortBy and sortDirection, serialized as `filter[property]=value`.
-Its separate sorting properties are `sortBy` (name or stoneSize, default name)
-and `sortDirection` (asc or desc, default asc). Repeated sorting properties return 400.
+Search uses POST `/api/v1/stones/search` with a JSON body containing optional
+`filter`, `page`, `size` and one `sort` object (`field`, `direction`).
+Successful deletion returns 200 with the deleted Stone identifier under `id`.
 Photo is an optional string of at most 500 characters reserved for future
-functionality. An empty string becomes null; no URL validation or whitespace
-trimming is required at this stage.
+functionality. Preserve the supplied value unchanged, including null, empty
+strings and whitespace. Omitted photo remains null. No photo processing,
+normalization, URL validation or whitespace trimming is performed.
+Creation returns HTTP 201 with a StoneCreateResponse body and no Location header.
+The controller returns the DTO directly and uses @ResponseStatus(HttpStatus.CREATED).
 Use `/api/v1/stones` as the collection endpoint
 The client supplies `admissionDate` as an ISO-8601/RFC3339 timestamp (example "2026-10-04T08:00:00Z"). Future dates are
 invalid

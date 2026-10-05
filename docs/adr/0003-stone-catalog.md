@@ -30,21 +30,21 @@ added during this review.
   This changes catalog retrieval only: Stone creation remains POST, and
   individual Stone retrieval remains GET.
 - Keep the `/api/v1/stones` API namespace and `/api/v1/stones/{id}` for individual
-  Stones. The exact search path and request-body shape must be specified before
-  search implementation; they were not selected by this instruction.
+  Stones. Search uses POST `/api/v1/stones/search` with the approved
+  StonesSearchRequest JSON body (filter, page, size, sort).
   Exclude PATCH; PUT is full replacement, including clearing omitted optional fields.
 - Keep biography optional with a maximum of 2048 characters. Photo remains an
-  optional placeholder string of at most 500 characters: normalize `""` to
-  `null`, without URL validation or whitespace trimming.
+  optional placeholder string of at most 500 characters: preserve its value
+  unchanged, including null, empty strings and whitespace. Do not process it.
 - Replace the original calendar-date decision with a client-supplied RFC3339
   timestamp with an explicit offset. Model it as `Instant`, store it as
   `TIMESTAMP WITH TIME ZONE` and return UTC `Z`. Reject values later than the
   current instant, including later on the same day.
 - Allow one sort field only; reject multi-sort with 400. Use separate search
-  properties `sortBy` (name or stoneSize, default name) and `sortDirection`
-  (asc or desc, default asc). The previously selected GET `filter` deepObject
-  query representation is superseded by the POST search decision; the new
-  request representation remains to be defined. Retain pagination defaults,
+  properties `sort.field` (explicit name or stoneSize; omitted defaults to
+  admissionDate) and `sort.direction` (asc or desc; omitted defaults to desc
+  for admissionDate and asc for explicitly selected name or stoneSize). The previously selected GET `filter` deepObject
+  query representation is superseded by the approved POST search JSON body. Retain pagination defaults,
   supported filters and the page response envelope. Use semantic size ordering and `id ASC`
   for equal values in either direction.
 - Sort names using PostgreSQL's database collation without `lower(name)` or
@@ -59,14 +59,14 @@ added during this review.
   clarified the glossary's admission date as a moment in time.
 - Appended acceptance checks for missing/null fields, malformed JSON, empty
   catalog, optional-field clearing, distinct IDs, tiebreakers, future and invalid
-  timestamps, photo normalization, length boundaries and seed lifecycle.
+  timestamps, unchanged photo values, length boundaries and seed lifecycle.
 - Changed unverified coverage from `auto` to `none`; existing criterion IDs and
   positions were preserved. Reworked AC-35 for multi-sort and added separate
   checks for omitted direction and invalid sorting.
 - Corrected the glossary reference and duplicate task ID. Detailed requirements
   remain in the feature documents; this ADR summarizes decisions and changes.
-- The POST search path and request representation remain open decisions.
-  OpenAPI completion
+- The POST search path and request representation are resolved by the approved
+  controller and DTOs. OpenAPI completion
   originally assigned to T0003-002 is now deferred until the controller is fully
   implemented. Backend implementation and test execution remain separate tasks.
 - Contract-dependent task wording must reflect this sequence before those tasks
@@ -88,3 +88,53 @@ added during this review.
 - Additional photo validation: deferred to future photo functionality.
 - Implicit development seed or repeated insertion on startup: rejected.
 - Marking planned tests as `auto`: rejected; coverage records actual verification.
+
+## T0003-004 clarification
+
+The approved search is POST `/api/v1/stones/search`, using the existing
+StonesSearchRequest and StonesSearchResponse (`content`) DTOs. This resolves
+the earlier open path and representation decisions. Controller bodies may be
+implemented without changing signatures or DTO contracts. DELETE returns 200
+with an id response. Development seed is deferred to a separate task.
+
+Service responsibilities were clarified: services accept original controller
+Request DTOs, perform additional business validation when needed, apply changes
+and normalization, invoke mappers and return ready Response DTOs. Controllers
+only handle HTTP binding, Bean Validation, delegation, statuses and headers;
+they contain no business logic, perform no mapping and do not instantiate domain
+models or persistence entities. Repositories work with entities and database queries only.
+Entities may be used by services but never reach the controller/API boundary.
+
+By explicit user decision, supported enum values are validated by the server,
+not by database CHECK constraints. Keep string persistence and structural
+column constraints; omit the three enum-value CHECK constraints.
+
+Shared request/response DTOs and nested types live in `lab.stoneshelter.shared`,
+alongside the service/domain package rather than inside `api`. Controllers and
+services share these contracts; services have no dependency on the API package.
+This package relocation does not change HTTP request or response schemas.
+
+By explicit user decision, controllers return Response DTOs directly by default;
+ResponseEntity requires an explicit task instruction. Creation methods use
+@ResponseStatus(HttpStatus.CREATED). Stone creation no longer emits Location;
+clients identify the created Stone using the response body's id.
+
+Use standard Jackson conversion for admissionDate timestamps and serialize
+Instant responses in UTC with Z. Remove AdmissionDateJsonConfiguration: a
+field-specific requirement must not override Instant deserialization globally.
+
+Entity-target mappers live in lab.stoneshelter.mappers.entities; DTO-target
+mappers live in lab.stoneshelter.mappers.dtos. Both may access persistence
+entities through public constructors and accessors. Services invoke mappers;
+controllers and repositories do not. Existing full source-to-target names remain.
+
+Mapper null policies use abstract templates with final public conversion methods.
+Entity-target mapping returns null for null input; DTO-target mapping raises
+MapperValidationException, handled as standard HTTP 500 ProblemDetail. Absent
+records are still translated from Optional.empty to HTTP 404 in the service.
+Concrete mappers are injected Spring components rather than static utilities.
+
+Packages are grouped by responsibility: controllers, handlers, services, enums,
+repositories, entities, criteria and exceptions. shared and mappers.entities /
+mappers.dtos retain their roles. Previous api/domain/persistence locations are
+superseded; dependencies keep the same architectural boundaries.

@@ -55,6 +55,29 @@ For every feature:
 - When asked to execute a specific task ID, execute only that task. Do not automatically continue with subsequent tasks.
 - All artifacts are in English, including commit messages and comments, even when
   our conversation is in another language.
+## Backend layer responsibilities
+
+- Controllers own HTTP routes, binding, `@Valid`, statuses and headers. Pass the
+  original Request DTO to the service and return its ready Response DTO.
+  Controllers must not contain business logic, instantiate domain models or
+  persistence entities, or perform request/response mapping.
+- Services own additional business validation, changes and normalization, and
+  invoke Request-to-Entity and Entity-to-Response mappers. Do not duplicate
+  request constraints already enforced by Bean Validation.
+- Repositories accept/return entities and execute queries. Build JPA
+  specifications, Criteria predicates and database ordering in repositories.
+- Services may use entities internally; controllers must never receive entities.
+  Services must not depend on JPA query APIs. Domain models remain independent
+  of shared DTOs, while application services intentionally use Request/Response DTOs.
+  Shared DTOs and nested request/response types live in `lab.stoneshelter.shared`,
+  alongside services, outside controllers and handlers. Services must not depend on controllers or handlers.
+- Return Response DTOs directly from controllers. Use ResponseEntity only when
+  explicitly requested in the task. Creation methods use
+  @ResponseStatus(HttpStatus.CREATED). Add Location only when explicitly requested.
+- Name mappers `{FullSourceTypeName}To{FullTargetTypeName}Mapper`.
+  Entity-target mappers live in `lab.stoneshelter.mappers.entities`; DTO-target
+  mappers live in `lab.stoneshelter.mappers.dtos`. Both may access entities.
+
 ## Current constraints
 - Do not add a dependency when `pom.xml` / `package.json` already covers the need.
 - Do not create a file until there is a real reason for it.
@@ -86,3 +109,23 @@ Examples:
 Default behavior is **one requested task at a time**.
 
 Never interpret the existence of subsequent tasks in `tasks.md` as permission to execute them.
+- Use records only for types with at most four fields. Types with more than four
+  fields must be classes with private fields, a no-argument constructor and public
+  getters/setters. Mappers create class targets with the no-argument constructor
+  and populate them using setters, reading source classes through getters.
+
+- Entity-target mappers inherit null-source handling from AbstractEntityMapper
+  (return null). DTO-target mappers inherit source validation from AbstractDtoMapper
+  (throw MapperValidationException for null, translated to HTTP 500 ProblemDetail).
+  Missing-resource 404 errors remain in services; mapper checks are technical only.
+
+- Services obtain ready Response DTOs through mappers; do not construct or
+  populate responses directly in services. This includes collection/pagination
+  wrappers and identifier-only responses. Assemble response fields and map
+  collection items inside mappers. Class targets use no-argument constructors
+  and setters; record targets with at most four fields may use constructors
+  inside mappers.
+
+- Package types by responsibility: controllers, handlers, services, enums,
+  repositories, entities, criteria and exceptions under lab.stoneshelter.
+  Keep shared DTOs in shared and mappers in mappers.entities / mappers.dtos.

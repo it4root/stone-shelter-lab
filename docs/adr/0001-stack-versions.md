@@ -25,6 +25,7 @@ the newest GA Java release; the other releases were verified on 2026-10-03:
 | Spring AI | 2.0.1 | [Spring AI reference and stable releases](https://docs.spring.io/spring-ai/reference/) |
 | PostgreSQL | 18.6 | [PostgreSQL latest releases](https://www.postgresql.org/) |
 | Liquibase Community | 5.0.4 | [Liquibase releases](https://github.com/liquibase/liquibase/releases) |
+| Apache Commons Lang | 3.20.0 | [Official release download](https://commons.apache.org/proper/commons-lang/download_lang.cgi) |
 | Testcontainers for Java | 2.0.5 | [Testcontainers Java releases](https://github.com/testcontainers/testcontainers-java/releases) |
 
 Spring AI 2.0.1 belongs to the 2.0.x line, which explicitly supports Spring Boot
@@ -117,3 +118,11 @@ bootstrap test now demonstrates this project's empty root changelog works with
   satisfy the stable-release request or the repository's explicit-version rule.
 - Use Boot-managed dependency versions automatically: may simplify integration,
   but must not be presented as the latest upstream releases without verification.
+
+### Apache Commons Lang addition (2026-10-05)
+
+By explicit user choice, add org.apache.commons:commons-lang3:3.20.0 as a
+direct dependency for StringUtils. isEmpty checks null and empty strings without
+changing whitespace. The photo normalization use case is superseded: photo
+values are now preserved unchanged and the service no longer uses StringUtils.
+The release requires Java 8 or newer and is compatible with the selected JDK.
