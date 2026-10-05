@@ -66,9 +66,37 @@ This feature does not change backend HTTP endpoints or require live API calls.
 - Adoption controls and adoption flows.
 - Working header navigation and destination pages.
 - Stone detail pages and detail actions.
-- Sorting and pagination behavior are not agreed requirements for this ticket;
-  do not implement them implicitly from the reference image.
+- Sorting remains out of scope.
 
 ## Acceptance
 
 Acceptance criteria are maintained in [acceptance.md](acceptance.md).
+
+## Component Structure
+
+Keep the header, page content layout, catalog and stone card in separate React
+component files. App composes the page components. This refactoring preserves
+existing catalog behavior and styling. Add a separate semantic footer displaying ©, the current year and Stone Shelter.
+It has no links or additional functionality. Keep App limited to page composition.
+API types live outside mock data; mock data is supplied at a data-source boundary.
+Use explicit English presentation mappings for API enum values.
+
+Each React component lives in a directory named after that component. Shared
+page components Header, Footer and Content live under `src/components/Common`.
+Catalog and StoneCard live under `src/components`; App lives under `src/App`.
+
+## Catalog Pagination
+
+Show 12 cards per page by default. Offer page sizes 12 and 24; never show more
+than 24 cards per page. Provide numbered pages and Previous/Next controls with
+boundary buttons disabled. Changing page size resets the page to the first page.
+Use zero-based page indices internally and one-based labels in the UI. Display
+the total stone count from response metadata, not the current page length.
+The mock data source returns the existing StonesSearchResponse shape: content,
+page, size and totalElements. No backend endpoint changes or live calls.
+
+## Catalog Column Count
+
+Desktop uses four cards per row, including narrower desktop widths. Tablet
+retains two columns and mobile one column. With the default page size, desktop
+shows three rows of four cards.

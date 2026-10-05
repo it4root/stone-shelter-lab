@@ -32,3 +32,33 @@ Verified on 2026-10-05:
 
 The supplied placeholder bitmap contains Russian text. It is retained unchanged
 as the explicitly selected asset; application text and mock content are English.
+
+## Component Refactoring Criteria
+
+10. Header, content layout, catalog and stone card have separate component files.
+11. App composes page components; the existing four rendering tests continue
+    to pass and frontend lint and build succeed.
+
+12. A separate semantic Footer displays ©, the current year and Stone Shelter.
+13. App only composes page components; API types are separate from mock data,
+    data is supplied through the data-source boundary and enum labels are explicit.
+
+14. Every component lives in its own named directory; Header, Footer and Content
+    share the Common parent directory. Existing rendering and checks pass.
+
+## Pagination Criteria
+
+15. Initial render contains 12 cards and reports 30 stones in total.
+16. With size 12, pages contain 12, 12 and 6 stones respectively; navigation
+    reaches every stone without duplication and disables controls at boundaries.
+17. Size 24 produces pages of 24 and 6 cards. Changing size resets to page 1.
+18. Totals and page controls use response metadata; no page exceeds 24 cards.
+    Header navigation and excluded stone actions remain static/absent.
+
+These criteria supersede earlier verification of all 30 cards on one page.
+
+Pagination verification: six component tests passed, including page traversal
+and 12/24 size changes; frontend lint and build passed.
+
+19. Desktop widths of 960 pixels and above show four cards per row. Default
+    pages show three rows; tablet/mobile retain two/one columns respectively.

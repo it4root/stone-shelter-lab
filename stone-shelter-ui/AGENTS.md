@@ -28,3 +28,22 @@ If any command fails:
 - if the failure cannot be fixed within the current task scope, stop and report the failure instead of committing.
 
 Never skip these checks unless explicitly instructed to do so.
+
+
+- Mock data must never own API/domain types.
+- UI components must not import mock datasets directly.
+- Mocking must happen at the API/data-source boundary.
+- App must only compose top-level application structure.
+- Reusable domain UI elements must be separate components.
+- Pagination UI must use response metadata, including totalElements,
+  rather than deriving totals from current page content.
+- API enum values must not be formatted with generic string manipulation;
+  use explicit presentation mappings.
+- Use PascalCase for React component names and their directories. Each component
+  lives in a directory matching its name, with its implementation named
+  `{ComponentName}.tsx` (for example `StoneCard/StoneCard.tsx`).
+- Use PascalCase for component grouping directories too. Shared page components
+  belong under `src/components/Common` (for example `Common/Header/Header.tsx`).
+- After frontend verification, keep the local UI development server running unless
+  the user explicitly requests otherwise. Reuse an existing server when possible,
+  verify that it responds and report its URL.

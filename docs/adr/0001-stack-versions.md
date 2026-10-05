@@ -40,13 +40,13 @@ Java 23 is within this range. Maven compiles with release 23; Maven Enforcer
 3.5.0 requires the actual build JDK to be exactly 23.0.2. The specification is updated before the Maven
 configuration. Documented support is distinct from a successful project build.
 
-T002 supporting build pins: Maven 3.9.9, Maven Wrapper 3.3.4 (official
+T0001-002 supporting build pins: Maven 3.9.9, Maven Wrapper 3.3.4 (official
 only-script distribution), PostgreSQL JDBC 42.7.13 and JUnit 6.0.3 (the
 [Boot 4.1.1 managed coordinates](https://docs.spring.io/spring-boot/appendix/dependency-versions/coordinates.html)),
 and ArchUnit 1.5.1 with its JUnit 6 integration (the [official installation
 guide](https://www.archunit.org/userguide/html/000_Index.html)). Liquibase 5.0.4
 is explicitly pinned over Boot's managed 5.0.3 to follow this ADR. Maven 3.9.9
-matches the locally installed Maven version. Spring AI is not added in T002
+matches the locally installed Maven version. Spring AI is not added in T0001-002
 because the bootstrap specification contains no AI integration requirement.
 
 The bootstrap HTTP test uses the test-scoped `spring-boot-resttestclient` module

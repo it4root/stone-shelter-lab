@@ -46,6 +46,7 @@ For every feature:
 
 ## Rules
 
+- Use repository-wide task IDs in the format `T{specNumber:04d}-{taskNumber:03d}`, for example `T0005-001`. The spec number matches the feature directory; task numbering starts at 001 within each spec. Preserve existing IDs when adding tasks and use the full ID in references, reports and commit messages when a task is referenced.
 - Store acceptance criteria for every feature exclusively in its `specs/NNN-*/acceptance.md`. Link to that file from `spec.md`; do not duplicate criteria in `spec.md`, `plan.md` or `tasks.md`. Read and update `acceptance.md` alongside the specification before implementation when requirements change, and verify implementation against it.
 - Generated OpenAPI is the source of truth for HTTP API contracts. Generate it from Spring MVC controllers and shared DTOs; do not maintain a separate handwritten OpenAPI contract.
 - AsyncAPI is the source of truth for Kafka contracts.

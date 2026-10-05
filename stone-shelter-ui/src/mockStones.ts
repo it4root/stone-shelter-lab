@@ -1,17 +1,7 @@
+import type { StoneSearchResponse } from './stoneTypes';
+
 // Field names and enum values follow StoneSearchResponse in the generated
 // backend YAML snapshot: engineering-log/openapi.yml.
-export interface StoneSearchResponse {
-  id: number;
-  name: string;
-  photo?: string;
-  stoneType: 'BASALT' | 'GRANITE' | 'OBSIDIAN' | 'PUMICE' | 'LIMESTONE'
-    | 'SANDSTONE' | 'SHALE' | 'MARBLE' | 'GNEISS' | 'SLATE';
-  biography?: string;
-  adoptionStatus: 'AVAILABLE' | 'RESERVED' | 'ADOPTED';
-  admissionDate: string;
-  stoneSize: 'SMALL' | 'MEDIUM' | 'LARGE';
-}
-
 export const mockStones: StoneSearchResponse[] = [
   {
     "id": 1,
