@@ -16,13 +16,13 @@ test('renders the initial 12 stones with required content and total count', () =
   render(<App />);
   expect(screen.getAllByRole('article')).toHaveLength(12);
   expect(screen.getByText((_, element) => element?.textContent === 'Found 30 stones' && element.tagName === 'P').textContent).toBe('Found 30 stones');
-  for (const stone of mockStones.slice(0, 12)) {
+  for (const stone of [...mockStones].reverse().slice(0, 12)) {
     expect(screen.getByRole('heading', { name: stone.name }).textContent).toBe(stone.name);
     expect(screen.getByAltText(`Photo coming soon for ${stone.name}`).getAttribute('src')).toBe('/placeholder-rock.png');
   }
   expect(screen.getAllByText('Type')).toHaveLength(12);
   expect(screen.getAllByText('Size')).toHaveLength(12);
-  expect(screen.getAllByText(mockStones[0].biography!)).toHaveLength(10);
+  expect(screen.getAllByText(mockStones[29].biography!)).toHaveLength(10);
 });
 
 test('keeps navigation static and excludes catalog actions', () => {
@@ -52,7 +52,7 @@ test('traverses every stone across pages with boundary controls', () => {
     names.push(...screen.getAllByRole('heading', { level: 2 }).map(h => h.textContent!));
     expect(screen.getByRole('button', { name: `Page ${page}` }).getAttribute('aria-current')).toBe('page');
   }
-  expect(names).toEqual(mockStones.map(stone => stone.name));
+  expect(names).toEqual([...mockStones].reverse().map(stone => stone.name));
   expect((screen.getByRole('button', { name: 'Next' }) as HTMLButtonElement).disabled).toBe(true);
   fireEvent.click(screen.getByRole('button', { name: 'Previous' }));
   expect(screen.getByRole('heading', { name: 'Orion' })).toBeTruthy();
@@ -65,11 +65,42 @@ test('changes page size to 24 and resets to the first page', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Page 3' }));
   fireEvent.change(screen.getByLabelText('Stones per page'), { target: { value: '24' } });
   expect(screen.getAllByRole('article')).toHaveLength(24);
-  expect(screen.getByRole('heading', { name: 'Mars' })).toBeTruthy();
+  expect(screen.getByRole('heading', { name: 'Meadow' })).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Page 3' })).toBeNull();
   fireEvent.click(screen.getByRole('button', { name: 'Next' }));
   expect(screen.getAllByRole('article')).toHaveLength(6);
   fireEvent.change(screen.getByLabelText('Stones per page'), { target: { value: '12' } });
   expect(screen.getAllByRole('article')).toHaveLength(12);
-  expect(screen.getByRole('heading', { name: 'Mars' })).toBeTruthy();
+  expect(screen.getByRole('heading', { name: 'Meadow' })).toBeTruthy();
+});
+
+
+test('sort selection resets page, preserves size and remains selected during navigation', () => {
+  render(<App />);
+  const sort = screen.getByRole('combobox', { name: 'Sort stones' });
+  expect((sort as HTMLSelectElement).value).toBe('NEWEST');
+  expect(within(sort).getAllByRole('option').map(option => option.textContent)).toEqual([
+    'Newest first', 'Oldest first', 'Name: A–Z', 'Name: Z–A',
+    'Size: small to large', 'Size: large to small',
+  ]);
+  fireEvent.change(screen.getByLabelText('Stones per page'), { target: { value: '24' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  fireEvent.change(sort, { target: { value: 'OLDEST' } });
+  expect(screen.getAllByRole('article')).toHaveLength(24);
+  expect(screen.getAllByRole('heading', { level: 2 })[0].textContent).toBe('Mars');
+  expect(screen.getByRole('button', { name: 'Page 1' }).getAttribute('aria-current')).toBe('page');
+  fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+  expect(screen.getAllByRole('heading', { level: 2 })[0].textContent).toBe('Fern');
+  expect((sort as HTMLSelectElement).value).toBe('OLDEST');
+  fireEvent.change(screen.getByLabelText('Stones per page'), { target: { value: '12' } });
+  expect((sort as HTMLSelectElement).value).toBe('OLDEST');
+  expect(screen.getAllByRole('heading', { level: 2 })[0].textContent).toBe('Mars');
+  fireEvent.change(sort, { target: { value: 'NAME_ASC' } });
+  expect(screen.getAllByRole('heading', { level: 2 })[0].textContent).toBe('Ash');
+  fireEvent.change(sort, { target: { value: 'NAME_DESC' } });
+  expect(screen.getAllByRole('heading', { level: 2 })[0].textContent).toBe('Wren');
+  fireEvent.change(sort, { target: { value: 'SIZE_ASC' } });
+  expect(screen.getAllByRole('heading', { level: 2 })[0].textContent).toBe('Mars');
+  fireEvent.change(sort, { target: { value: 'SIZE_DESC' } });
+  expect(screen.getAllByRole('heading', { level: 2 })[0].textContent).toBe('Luna');
 });

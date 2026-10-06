@@ -76,3 +76,38 @@ and 12/24 size changes; frontend lint and build passed.
 Architecture verification: existing six tests, lint and build passed. Chrome
 checks at 1440, 1024, 768, 390 and 320 pixels confirmed preserved pagination
 initial count and responsive columns without overflow; screenshots inspected.
+
+## Sorting Acceptance Criteria
+
+23. An accessible English dropdown beside the catalog heading offers exactly
+    the six options specified in spec.md and initially selects Newest first.
+24. Each option orders the full mock dataset before pagination; size follows
+    SMALL/MEDIUM/LARGE, timestamps sort chronologically, and equal values use
+    id ASC. Page traversal preserves the selected order.
+25. Changing sort resets to page 1 and preserves size; changing page or size
+    preserves sort. Page sizes 12/24 and totalElements remain correct.
+26. The backend accepts explicit admissionDate asc/desc, preserves existing
+    name/stoneSize behavior, omitted-field/direction defaults and id ASC ties.
+    Unsupported fields/directions return HTTP 400 ProblemDetail.
+27. Generated OpenAPI documents the expanded whitelist. No new database field,
+    migration or altered admissionDate input/update semantics is introduced.
+28. Frontend lint, tests and build pass; backend verification passes with
+    meaningful ordering/default/invalid-input coverage. Desktop/mobile dropdown
+    layout is verified and the local UI is left running.
+
+T0005-013 backend evidence (2026-10-06): full Maven verification passed.
+Explicit admissionDate asc/desc, default/null direction, deterministic ties
+and pagination were tested; generated OpenAPI field pattern and JSON/YAML
+equivalence passed. Sorting UI criteria await T0005-014 and T0005-015.
+
+Sorting completion evidence (2026-10-06):
+
+- Criteria 23–25: 13 frontend tests passed. Tests cover all six option mappings,
+  default Newest first, timestamp ordering with offsets, domain size ordering,
+  ascending id ties, sorting before pagination, fixture immutability and
+  page/size/sort interaction.
+- Criteria 26–27: T0005-013 passed all 128 backend tests, including generated
+  OpenAPI JSON/YAML equivalence and the expanded validation whitelist.
+- Criterion 28: frontend lint/build passed; screenshots and runtime layout
+  checks at 1440, 1024, 768, 390 and 320 pixels passed. UI remains running
+  at localhost:5174. Live backend integration remains outside this feature.

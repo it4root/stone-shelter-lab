@@ -56,7 +56,8 @@ If represented as paginated responses, retain the contract's `content`, `page`,
 The local dataset contains 30 stones in total; this does not require returning
 all 30 in a single API-shaped page.
 
-This feature does not change backend HTTP endpoints or require live API calls.
+The initial catalog uses local mocks. The sorting extension below updates the
+existing backend search contract; live UI API calls remain out of scope.
 
 ## Out of Scope
 
@@ -66,7 +67,7 @@ This feature does not change backend HTTP endpoints or require live API calls.
 - Adoption controls and adoption flows.
 - Working header navigation and destination pages.
 - Stone detail pages and detail actions.
-- Sorting remains out of scope.
+- Live backend integration for the UI remains out of scope.
 
 ## Acceptance
 
@@ -115,3 +116,59 @@ catalog components and useCatalog under features/catalog, StoneCard and labels
 under domain/stone, DTOs under api/dto, and fixtures/adapters under mocks.
 Colocate component CSS and keep shared styles/tokens under styles. Preserve
 existing behavior and introduce no live HTTP calls or new dependencies.
+
+## Catalog Sorting: UI and Backend Extension
+
+Place an accessible sorting dropdown on the right of the catalog heading, as
+shown in catalog.png. On narrow screens it may wrap without horizontal overflow.
+Use these English options and exact API mappings:
+
+| Label | sort.field | sort.direction |
+| --- | --- | --- |
+| Newest first | admissionDate | desc |
+| Oldest first | admissionDate | asc |
+| Name: A–Z | name | asc |
+| Name: Z–A | name | desc |
+| Size: small to large | stoneSize | asc |
+| Size: large to small | stoneSize | desc |
+
+Default to Newest first. Changing sort resets to the first page and preserves
+the selected page size. Changing page or size preserves the selected sort.
+Sort the complete matching dataset before slicing a page; do not sort only the
+visible cards. Size order is SMALL, MEDIUM, LARGE ascending and its reverse
+descending. Name ordering uses existing backend behavior; no new case or locale
+normalization is introduced. For equal sort values always use id ascending,
+regardless of the selected direction. Preserve response totals and pagination.
+
+### Meaning of the Date
+
+Use the existing client-supplied admissionDate timestamp. Product terminology
+may call it the date added or admission date; both mean admissionDate here.
+Do not introduce createdAt, a new database column or a migration. Do not change
+how admissionDate is supplied, validated or updated. Newest/oldest refer to
+chronological timestamp order, not identifier order or record creation time.
+
+### HTTP Contract Requirements
+
+Extend the existing POST /api/v1/stones/search request sort.field whitelist to
+name, stoneSize and admissionDate. Explicit admissionDate accepts asc and desc.
+When sort or its field is omitted/null, use admissionDate; its omitted/null
+direction defaults to desc. Explicit name and stoneSize default to asc when
+direction is omitted/null. Honor any explicit valid direction. Unsupported
+fields/directions retain HTTP 400 ProblemDetail behavior. Keep a single sort
+criterion and id ASC as the deterministic tie-breaker.
+
+Keep the existing request structure and response shape (content, page, size,
+totalElements), statuses and routes. Update shared DTO validation and generated
+OpenAPI descriptions so /v3/api-docs and /v3/api-docs.yaml advertise the expanded
+whitelist; do not maintain a handwritten contract. Repository ordering remains
+in the repository layer. These requirements supersede feature 0003's explicit
+name/stoneSize-only whitelist without changing its existing defaults.
+
+### Frontend Implementation Boundaries
+
+Retain the mock API boundary and 30 stones. Pass sort parameters through the
+feature hook and API boundary to the mock adapter, which orders before paging.
+Keep selectable enum types in separate files and explicit option mappings.
+Use the accepted feature architecture and per-component directory convention.
+No sorting library, global store or live HTTP integration is required.

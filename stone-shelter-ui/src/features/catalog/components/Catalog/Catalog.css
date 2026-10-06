@@ -1,5 +1,5 @@
 .catalog { padding: 28px 0 48px; min-width: 0; }
-.catalog-heading { display: flex; align-items: center; min-height: 32px; margin-bottom: 20px; }
+.catalog-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; min-height: 32px; margin-bottom: 20px; }
 .catalog-heading p { margin: 0; font-size: 14px; }
 .catalog-heading strong { font-weight: 400; }
 .catalog-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px 14px; }

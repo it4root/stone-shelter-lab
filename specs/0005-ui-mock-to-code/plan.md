@@ -61,3 +61,18 @@ Move pagination state to useCatalog and render CatalogPage inside PageLayout.
 Split CSS by existing selector ownership while preserving breakpoint order and
 values. Move contract DTOs separately, fixtures under mocks/data and the paging
 adapter under mocks/api. Preserve existing interaction tests and startup.
+
+## Sorting Extension
+
+Use existing admissionDate; no persistence migration. Expand SearchSort field
+validation/descriptions; reuse the existing StoneSortField and repository date
+ordering. Verify generated OpenAPI and backend ordering with the existing
+PostgreSQL Testcontainers approach.
+
+Implement a feature-owned sorting component and separate selectable sort type.
+Map options explicitly to field/direction. useCatalog owns sort alongside page
+and size; adapters receive sort parameters. Sort a copy of mock entries before
+slicing, preserve fixtures, and use id ASC for ties. Add interaction/order tests
+with shuffled/tied data so they detect ordering defects rather than merely
+matching the fixture's existing insertion order. Run frontend checks, backend
+verification, responsive inspection and leave the dev server running.

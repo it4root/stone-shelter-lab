@@ -88,3 +88,19 @@ Define each frontend enum as a named type in its own PascalCase file under
 src/enums. StoneType, StoneSize and AdoptionStatus retain the generated backend
 values. DTOs and presentation mappings import these types; mock fixtures retain
 their existing values. Use type unions without introducing runtime enum objects.
+
+## Amendment: Catalog Sorting
+
+On 2026-10-06 the user accepted six explicit dropdown options: chronological
+newest/oldest, name ascending/descending and domain size ascending/descending.
+The date is the existing client-supplied admissionDate, also called date added
+or admission date. No createdAt field or migration is required.
+
+The backend search whitelist now permits admissionDate explicitly alongside
+name and stoneSize; generated OpenAPI remains the contract source. The UI
+defaults to Newest first and passes field/direction through the API boundary.
+The mock adapter sorts a copy of the complete dataset before paging, using
+id ASC for ties in both directions. Sort changes reset page and preserve size;
+page/size changes preserve sort. This supersedes the initial sorting exclusion.
+The dropdown is feature-owned and uses separate named enum types and explicit
+presentation mappings. No new dependency or live HTTP integration is added.

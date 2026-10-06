@@ -78,3 +78,32 @@ T0005-012 verification: lint, 6/6 tests and build passed. Chrome runtime checks
 at 1440, 1024, 768, 390 and 320 pixels confirmed 12 initial cards, correct
 4/4/2/1/1 column counts, two-line biographies and no horizontal overflow.
 Desktop/mobile screenshots inspected; UI remains running at localhost:5174.
+
+- [x] **T0005-013 — Permit explicit admissionDate backend sorting.** Expand
+  request validation/generated descriptions, verify defaults, directions, ties
+  and invalid inputs; run backend verification and check generated OpenAPI.
+- [x] **T0005-014 — Implement the catalog sorting dropdown.** Add six options,
+  order mocks before paging through the existing data boundary, reset page on
+  sort changes, preserve page size/sort as specified and run frontend checks.
+- [x] **T0005-015 — Verify sorting end to end within the mock scope.** Check
+  responsive dropdown layout and acceptance criteria, record results and leave
+  the local UI running. No live UI/backend integration is included.
+
+T0005-013 verification (2026-10-06): Maven verify passed on JDK 23.0.2
+with PostgreSQL Testcontainers via the active Docker Desktop socket. Explicit
+admissionDate directions, omitted/null direction, id ASC ties and paginated
+ordering verified. Existing invalid-input/name/size checks passed. Generated
+JSON/YAML schema checks passed with the expanded whitelist. UI remains running
+at localhost:5174; no frontend implementation or database migration in this task.
+
+T0005-014 verification (2026-10-06): frontend lint, 13/13 tests and build passed.
+Six ordering cases use shuffled, tied entries and timezone-offset timestamps;
+tests verify global sorting before paging, ascending id ties and fixture
+immutability. UI tests verify options, default order, resets and preserved size/sort.
+
+T0005-015 verification (2026-10-06): Chrome checks at 1440, 1024, 768, 390
+and 320 pixels confirmed 12 initial cards, 4/4/2/1/1 grid columns, two-line
+biographies and no horizontal overflow. Desktop/mobile screenshots inspected.
+Sorting acceptance criteria checked against frontend evidence and T0005-013's
+128 passing backend tests and generated JSON/YAML checks. No live UI API calls
+or database changes. Development server remains at localhost:5174 (HTTP 200).

@@ -282,6 +282,19 @@ class StoneCatalogControllerTest extends IntegrationTest {
         assertThat(search(Map.of("size", 1, "page", 1))).isEqualTo(secondPage);
         assertThat(ids(search(Map.of("sort", Map.of("direction", "asc")))))
                 .containsExactly(oldestId, middleId, latest1, latest2);
+
+        assertThat(ids(search(Map.of("sort", Map.of("field", "admissionDate")))))
+                .containsExactly(latest1, latest2, middleId, oldestId);
+        assertThat(ids(search(Map.of("sort", Map.of("field", "admissionDate", "direction", "desc")))))
+                .containsExactly(latest1, latest2, middleId, oldestId);
+        assertThat(ids(search(Map.of("sort", Map.of("field", "admissionDate", "direction", "asc")))))
+                .containsExactly(oldestId, middleId, latest1, latest2);
+        nullFields.put("field", "admissionDate");
+        assertThat(ids(search(Map.of("sort", nullFields))))
+                .containsExactly(latest1, latest2, middleId, oldestId);
+        assertThat(ids(search(Map.of("page", 1, "size", 1,
+                "sort", Map.of("field", "admissionDate", "direction", "desc")))))
+                .containsExactly(latest2);
     }
 
     @Test
