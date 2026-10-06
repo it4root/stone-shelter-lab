@@ -50,7 +50,7 @@ do not create commits or push unless explicitly requested.
 
 Acceptance criteria and their verification evidence live in
 [acceptance.md](acceptance.md). Technical decisions are recorded in
-[ADR-0005](../../docs/adr/0005-ui-catalog-structure.md).
+[ADR-0005](../../docs/adr/0005-ui-mock-to-code.md).
 
 - [x] **T0005-009 — Add catalog pagination.** Default to 12 cards, offer up to
   24, return paginated metadata from the data source, implement accessible page
@@ -71,7 +71,7 @@ T0005-010 verification: lint, 6/6 tests and build passed; local UI returned HTTP
 T0005-011 verification: lint, 6/6 tests and build passed; local UI returned HTTP 200.
 
 - [x] **T0005-012 — Apply accepted feature-oriented UI architecture.** Record
-  ADR-0006, separate layout/page/hooks/domain/API DTOs/mocks, colocate styles,
+  ADR-0005, separate layout/page/hooks/domain/API DTOs/mocks, colocate styles,
   preserve existing behavior, verify frontend checks and leave UI running.
 
 T0005-012 verification: lint, 6/6 tests and build passed. Chrome runtime checks
@@ -108,7 +108,7 @@ Sorting acceptance criteria checked against frontend evidence and T0005-013's
 128 passing backend tests and generated JSON/YAML checks. No live UI API calls
 or database changes. Development server remains at localhost:5174 (HTTP 200).
 
-## Pending Filter Tasks
+## Completed Filter Tasks
 
 - [x] **T0005-016 — Extend backend filter contract and implementation.** Add
   plural size/type and optional date bounds, preserve singular compatibility,
@@ -171,3 +171,34 @@ Desktop/mobile screenshots inspected. UI remains running at localhost:5174.
 
 T0005-022 verification: lint, 20/20 tests and build passed; original unscaled
 grid CSS restored. Local UI remains at localhost:5174 (HTTP 200).
+
+- [x] **T0005-023 — Replace collapse with fluid responsive sidebar.** Update
+  shell/layout/feature composition, arrows/count, mobile overlay and state retention.
+- [x] **T0005-024 — Verify sidebar accessibility and responsive behavior.**
+  Check keyboard/modal/backdrop/reduced-motion behavior, tests and build, record
+  acceptance evidence and leave the local UI running.
+
+T0005-023/024 verification: frontend lint, 21/21 tests and build passed. Chrome
+checks at 1440/1024/768/390/320 pixels verified initial state and no overflow.
+Desktop catalog gains width when the sidebar hides and retains four columns.
+Mobile modal/inert/scroll lock, focus trap/restore, Escape and backdrop closure
+and reduced-motion zero transitions were verified. Screenshots inspected.
+Selected filters survive reopening; reset now requires opening the panel.
+Local UI remains running at localhost:5174. No backend changes or commits.
+
+- [x] **T0005-025 — Audit UI decisions and consolidate the current stage.**
+  Reconcile spec, plan and active acceptance descriptions with default 8,
+  original cards, feature architecture and sliding sidebar. Record ADR-0005
+  from initial image-to-code delivery through the current stage, preserving
+  historical decisions and identifying superseded requirements.
+
+T0005-025 verification: documentation links, task IDs and diff whitespace checked.
+No runtime code changed; prior implementation evidence remains historical.
+
+- [x] **T0005-026 — Consolidate UI ADRs into the feature-named record.**
+  Merge current decisions, original architecture rules and historical catalog
+  iterations into docs/adr/0005-ui-mock-to-code.md. Remove the three source ADRs
+  and update repository references.
+
+T0005-026 verification: obsolete references, local documentation links and diff
+whitespace checked. Documentation-only change; no commit created.

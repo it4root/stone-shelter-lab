@@ -9,9 +9,6 @@ interface CatalogFiltersProps {
   filter: StoneSearchFilter;
   dateDraft: { from: string; to: string };
   dateError?: string;
-  filtersExpanded: boolean;
-  activeFilterGroups: number;
-  onToggleFilters: () => void;
   onSizesChange: (values: StoneSize[]) => void;
   onTypesChange: (values: StoneType[]) => void;
   onDatesChange: (from: string, to: string, badInput?: boolean) => void;
@@ -23,18 +20,9 @@ function toggleValue<T>(values: T[], value: T): T[] {
 }
 
 export function CatalogFilters(props: CatalogFiltersProps) {
-  const fieldsId = useId();
   const errorId = useId();
   return (
     <section className="catalog-filters" aria-label="Filters">
-      <div className="filters-heading">
-        <h2>Filters {!props.filtersExpanded && <span className="filter-count" aria-label={`${props.activeFilterGroups} active filter groups`}>{props.activeFilterGroups}</span>}</h2>
-        <button type="button" aria-label={props.filtersExpanded ? 'Collapse filters' : 'Expand filters'}
-          aria-expanded={props.filtersExpanded} aria-controls={fieldsId} onClick={props.onToggleFilters}>
-          <span aria-hidden="true">{props.filtersExpanded ? '−' : '+'}</span>
-        </button>
-      </div>
-      <div id={fieldsId} hidden={!props.filtersExpanded}>
         <fieldset><legend>Size</legend>
           {(Object.keys(stoneSizeLabels) as StoneSize[]).map(value => (
             <label key={value}><input type="checkbox" checked={props.filter.stoneSizes?.includes(value) ?? false}
@@ -56,7 +44,6 @@ export function CatalogFilters(props: CatalogFiltersProps) {
             onChange={event => props.onDatesChange(props.dateDraft.from, event.target.value, event.target.validity.badInput)} /></label>
           {props.dateError && <p id={errorId} className="date-error" role="alert">{props.dateError}</p>}
         </fieldset>
-      </div>
       <button type="button" className="reset-filters" onClick={props.onResetFilters}>Reset filters</button>
     </section>
   );

@@ -56,7 +56,7 @@ Never skip these checks unless explicitly instructed to do so.
 
 ## Feature architecture
 
-- Follow [ADR-0006](../docs/adr/0006-ui-feature-architecture.md). Organize feature
+- Follow [ADR-0005](../docs/adr/0005-ui-mock-to-code.md). Organize feature
   components, hooks, services and state under src/features/{feature}.
 - Keep reusable domain UI and presentation under src/domain/{domain}; common
   layout/UI under src/components/Common must not own feature data or state.

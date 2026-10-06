@@ -107,7 +107,7 @@ test('sort selection resets page, preserves size and remains selected during nav
 });
 
 
-test('combines size/type selections, counts groups and resets while collapsed', () => {
+test('combines size/type selections, counts groups and resets after reopening', () => {
   render(<App />);
   fireEvent.change(screen.getByLabelText('Stones per page'), { target: { value: '24' } });
   fireEvent.change(screen.getByLabelText('Sort stones'), { target: { value: 'OLDEST' } });
@@ -119,14 +119,16 @@ test('combines size/type selections, counts groups and resets while collapsed', 
   fireEvent.click(screen.getByRole('checkbox', { name: 'Obsidian' }));
   fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-09-01' } });
   expect(screen.getAllByRole('article')).toHaveLength(6);
-  fireEvent.click(screen.getByRole('button', { name: 'Collapse filters' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Close filters' }));
   expect(screen.getByLabelText('3 active filter groups').textContent).toBe('3');
   expect(screen.queryByRole('checkbox')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Open filters' }));
   fireEvent.click(screen.getByRole('button', { name: 'Reset filters' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Close filters' }));
   expect(screen.getByLabelText('0 active filter groups').textContent).toBe('0');
   expect(screen.getAllByRole('article')).toHaveLength(24);
   expect((screen.getByLabelText('Sort stones') as HTMLSelectElement).value).toBe('OLDEST');
-  expect(screen.getByRole('button', { name: 'Expand filters' })).toBeTruthy();
+  expect(screen.getByRole('button', { name: 'Open filters' })).toBeTruthy();
 });
 
 test('invalid date draft preserves applied range and page until corrected or reset', () => {
@@ -147,9 +149,9 @@ test('invalid date draft preserves applied range and page until corrected or res
   expect(screen.getAllByRole('article')).toHaveLength(1);
   expect(screen.getByRole('heading', { name: 'River' })).toBeTruthy();
   fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-09-01' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Collapse filters' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Close filters' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Open filters' }));
   fireEvent.click(screen.getByRole('button', { name: 'Reset filters' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Expand filters' }));
   expect(screen.queryByRole('alert')).toBeNull();
   expect((screen.getByLabelText('From') as HTMLInputElement).value).toBe('');
   expect((screen.getByLabelText('To') as HTMLInputElement).value).toBe('');
@@ -189,4 +191,40 @@ test('defaults to eight cards and offers 8, 12 and 24 with complete traversal', 
     names.push(...within(screen.getByRole('main')).getAllByRole('heading', { level: 2 }).map(h => h.textContent!));
   }
   expect(names).toEqual([...mockStones].reverse().map(stone => stone.name));
+});
+
+
+test('mobile sidebar is modal, traps focus and restores the opening control', () => {
+  const width = window.innerWidth;
+  Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+  try {
+    render(<App />);
+    expect(screen.queryByRole('checkbox')).toBeNull();
+    const opener = screen.getByRole('button', { name: 'Open filters' });
+    fireEvent.click(opener);
+    const dialog = screen.getByRole('dialog', { name: 'Filters' });
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
+    const close = screen.getByRole('button', { name: 'Close filters' });
+    expect(document.activeElement).toBe(close);
+    expect(document.body.style.overflow).toBe('hidden');
+    expect((document.querySelector('.catalog-slot') as HTMLElement).inert).toBe(true);
+    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Reset filters' }));
+    fireEvent.keyDown(document, { key: 'Tab' });
+    expect(document.activeElement).toBe(close);
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Small' }));
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByLabelText('1 active filter groups').textContent).toBe('1');
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Open filters' }));
+    expect(document.body.style.overflow).toBe('');
+    expect((document.querySelector('.catalog-slot') as HTMLElement).inert).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Open filters' }));
+    expect((screen.getByRole('checkbox', { name: 'Small' }) as HTMLInputElement).checked).toBe(true);
+    fireEvent.click(document.querySelector('.sidebar-backdrop')!);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  } finally {
+    cleanup();
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: width });
+  }
 });

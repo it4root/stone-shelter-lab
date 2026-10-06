@@ -22,7 +22,7 @@ a running backend.
 
 Each card must display:
 
-- A stone photo, or `placeholder-rock.png` when no photo is provided.
+- A stone photo, or `placeholder-rock.png` when the photo is missing or fails to load.
 - The stone's name.
 - The stone's size.
 - The stone's type (the backend field representing the requested breed).
@@ -31,7 +31,10 @@ Each card must display:
 Use contract-supported values for size and type rather than inventing additional
 API fields to reproduce decorative content from the reference image.
 The placeholder asset must be named `placeholder-rock.png`, without a leading
-space, and be available to the implemented UI.
+space, and be available to the implemented UI. Preserve the supplied bitmap
+unchanged, including its embedded Russian text; this asset is the explicit
+exception to English application text. Missing biographies use an English
+fallback, also limited to two lines.
 
 ## Visual and Responsive Requirements
 
@@ -56,8 +59,8 @@ If represented as paginated responses, retain the contract's `content`, `page`,
 The local dataset contains 30 stones in total; this does not require returning
 all 30 in a single API-shaped page.
 
-The initial catalog uses local mocks. The sorting extension below updates the
-existing backend search contract; live UI API calls remain out of scope.
+The catalog uses local mocks. The sorting and filtering extensions below update
+the existing backend search contract; live UI API calls remain out of scope.
 
 ## Out of Scope
 
@@ -81,40 +84,54 @@ It has no links or additional functionality. Keep App limited to page compositio
 API types live outside mock data; mock data is supplied at a data-source boundary.
 Use explicit English presentation mappings for API enum values.
 
-Each React component lives in a directory named after that component. Shared
-page components Header, Footer and Content live under `src/components/Common`.
-Catalog and StoneCard live under `src/components`; App lives under `src/App`.
+Each React component lives in its own PascalCase directory with a matching
+`{ComponentName}.tsx` file. Header, Footer, PageLayout, Pagination and the generic
+FilterSidebar belong under `src/components/Common`. CatalogPage, Catalog,
+CatalogSort and CatalogFilters belong under `src/features/catalog/components`;
+StoneCard belongs under `src/domain/stone/components`; App lives under `src/App`.
+CatalogPage replaces the earlier Content component.
 
 ## Catalog Pagination
 
-Show 12 cards per page by default. Offer page sizes 12 and 24; never show more
+Show 8 cards per page by default. Offer exactly page sizes 8, 12 and 24; never show more
 than 24 cards per page. Provide numbered pages and Previous/Next controls with
 boundary buttons disabled. Changing page size resets the page to the first page.
 Use zero-based page indices internally and one-based labels in the UI. Display
 the total stone count from response metadata, not the current page length.
 The mock data source returns the existing StonesSearchResponse shape: content,
-page, size and totalElements. No backend endpoint changes or live calls.
+page, size and totalElements. UI/mock defaults are 8; the backend omitted-size
+default remains 12. Pagination adds no route or live UI API calls.
 
 ## Catalog Column Count
 
 Desktop uses four cards per row, including narrower desktop widths. Tablet
 retains two columns and mobile one column. With the default page size, desktop
-shows three rows of four cards.
+shows two rows of four cards. Tablet spans 560–959 pixels; mobile spans widths
+below 560 pixels. Desktop starts at 960 pixels. Cards retain their original
+unscaled dimensions and occupy the available grid width.
 
 ## Frontend Enum Types
 
-Define StoneType, StoneSize and AdoptionStatus separately in src/enums, each
+Define every frontend enum as a separate named type in src/enums, including
+StoneType, StoneSize, AdoptionStatus, CatalogSortOption, StoneSortField and
+SortDirection, each
 in its own PascalCase-named file. DTOs and presentation mappings import these
 types rather than declaring inline unions. Preserve backend contract values.
 
 ## Feature-Oriented Architecture
 
-Follow [ADR-0006](../../docs/adr/0006-ui-feature-architecture.md), which supersedes
+Follow [ADR-0005](../../docs/adr/0005-ui-mock-to-code.md), which supersedes
 the earlier component locations. Keep reusable layout in Common/PageLayout,
 catalog components and useCatalog under features/catalog, StoneCard and labels
 under domain/stone, DTOs under api/dto, and fixtures/adapters under mocks.
 Colocate component CSS and keep shared styles/tokens under styles. Preserve
 existing behavior and introduce no live HTTP calls or new dependencies.
+useCatalog owns local page, size, sort, applied filters, date drafts/errors and
+sidebar state. Derive group counts and page totals instead of storing them.
+Reserve feature services/stores and application providers/routing/HTTP clients
+for actual future requirements; do not create empty or forwarding-only layers.
+The consolidated current-stage decisions are recorded in
+[ADR-0005](../../docs/adr/0005-ui-mock-to-code.md).
 
 ## Catalog Sorting: UI and Backend Extension
 
@@ -215,22 +232,19 @@ Clearing endpoints to a valid open range applies immediately.
 
 ### Expansion, Count and Responsive Behavior
 
-Use the English heading Filters with a nearby toggle button. Clicking that
-button expands/collapses the fields; expose aria-expanded and aria-controls.
-Collapsing hides only the inputs; applied filters continue affecting results.
+Use the English heading Filters and arrow controls described in the sliding
+sidebar section below. Closing hides the entire panel; applied filters continue
+affecting results. Reset filters is inside the panel and requires reopening it.
 
-When collapsed, display a numeric badge for the number of active applied groups
-(0–3), not selected values. Any sizes count as one group, any types as one group,
-and either or both valid applied date endpoints as one group. Two sizes plus
-three types plus a date range therefore display 3. Invalid draft dates do not
-change the applied-group count. Reset filters remains available while collapsed,
-including when a hidden invalid draft needs clearing.
+The numeric badge counts active applied groups (0–3), not selected values.
+Any sizes count as one group, any types as one group, and either or both valid
+applied date endpoints as one group. Two sizes plus three types plus a date
+range display 3. Invalid draft dates do not change the applied-group count.
 
-Initially expand on desktop (960 pixels and above); initially collapse on tablet
-and mobile, where the panel is above the catalog. User toggles persist for the
-current mounted page; responsive layout changes must not clear filter values.
-No localStorage or navigation persistence is required. Labels, checkboxes, date
-inputs and the toggle must be keyboard accessible without horizontal overflow.
+Initially open on desktop (960 pixels and above); initially hide on tablet and
+mobile. User toggles persist for the current mounted page; resizing must not
+clear open state or filter values. No localStorage or navigation persistence is
+required. Controls must be keyboard accessible without horizontal overflow.
 
 ### Backend HTTP Contract Requirements
 
@@ -283,18 +297,23 @@ in the service. ApiExceptionHandler translates it to HTTP 400 ProblemDetail
 with the existing validation detail. Services and custom exceptions remain
 independent of HTTP status/error types; enforce the boundary with ArchUnit.
 
-## Compact Cards and Page Size Update
+## Sliding Responsive Filter Sidebar
 
-Render the catalog card grid at 70% of its previous visual scale (30% smaller
-card width/height), with layout occupying the scaled space rather than reserving
-empty unscaled card boxes. Keep desktop/tablet/mobile column counts unchanged.
-Set the initial UI page size to 8 and offer exactly 8, 12 and 24. Resetting filters
-or changing sort must preserve the selected size. This supersedes earlier
-12-card UI defaults; backend omitted-size default remains 12, and explicit size 8
-is already supported. UI mock API defaults to 8 and maintains the maximum 24.
+Replace field-only collapse with a fluid sidebar. On desktop, initially show
+the left panel; closing slides the entire panel left out of view and the catalog
+uses the freed space. Keep four desktop columns. While hidden, show a compact
+Filters button with active-group count (0–3) and an opening arrow.
 
-## Card Size Restoration
+On tablet/mobile, initially hide the panel; opening slides it from the left
+over the catalog with a backdrop. Close via the panel arrow, backdrop click or
+Escape. Reset remains inside the panel; users open the sidebar to reset filters.
+Opening/closing preserves applied filters, drafts/errors, pagination, sort and
+size. Responsive changes preserve selections.
 
-Restore the original full-size cards and grid width, superseding the compact
-70% scale requirement. Keep the default UI size 8 and choices 8, 12 and 24.
-Responsive column counts and other catalog behavior remain unchanged.
+Use semantic accessible open/close buttons with arrow icons, expanded state and
+controlled-panel references. The overlay behaves as a modal: move focus inside,
+trap focus while open, make background content inert, lock background scrolling
+and restore focus to the opening button on close. Desktop sidebar is nonmodal.
+Hidden panels cannot receive focus. Honor prefers-reduced-motion; otherwise
+animate panel translation and desktop layout without horizontal page overflow.
+This supersedes the previous inline collapse and collapsed-panel reset behavior.

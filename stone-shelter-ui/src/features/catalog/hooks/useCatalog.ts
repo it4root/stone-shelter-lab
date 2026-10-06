@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { getCatalogStones } from '../../../api/stonesApi';
 
 import type { CatalogSortOption } from '../../../enums/CatalogSortOption';
@@ -55,12 +55,15 @@ export function useCatalog() {
     setPage(0);
   }
 
+  const closeFilters = useCallback(() => setFiltersExpanded(false), []);
+
   return {
     filter,
     dateDraft,
     dateError,
     filtersExpanded,
-    onToggleFilters: () => setFiltersExpanded(current => !current),
+    onOpenFilters: () => setFiltersExpanded(true),
+    onCloseFilters: closeFilters,
     onSizesChange: changeSizes,
     onTypesChange: changeTypes,
     onDatesChange: changeDates,

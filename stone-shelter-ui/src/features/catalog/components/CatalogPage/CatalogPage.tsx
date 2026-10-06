@@ -1,3 +1,5 @@
+import { useId, useRef } from 'react';
+import { FilterSidebar } from '../../../../components/Common/FilterSidebar/FilterSidebar';
 import { PageLayout } from '../../../../components/Common/PageLayout/PageLayout';
 import { Catalog } from '../Catalog/Catalog';
 import { CatalogFilters } from '../CatalogFilters/CatalogFilters';
@@ -5,12 +7,20 @@ import { useCatalog } from '../../hooks/useCatalog';
 
 export function CatalogPage() {
   const catalog = useCatalog();
+  const sidebarId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
   return (
-    <PageLayout sidebar={<CatalogFilters filter={catalog.filter} dateDraft={catalog.dateDraft}
-      dateError={catalog.dateError} filtersExpanded={catalog.filtersExpanded}
-      activeFilterGroups={catalog.activeFilterGroups} onToggleFilters={catalog.onToggleFilters}
+    <PageLayout sidebarOpen={catalog.filtersExpanded} toolbar={!catalog.filtersExpanded &&
+      <button ref={triggerRef} className="sidebar-open" type="button" aria-label="Open filters"
+        aria-expanded={false} aria-controls={sidebarId} onClick={catalog.onOpenFilters}>
+        Filters <span className="filter-count" aria-label={`${catalog.activeFilterGroups} active filter groups`}>{catalog.activeFilterGroups}</span>
+        <span aria-hidden="true">→</span>
+      </button>}
+      sidebar={<FilterSidebar id={sidebarId} open={catalog.filtersExpanded}
+        onClose={catalog.onCloseFilters} triggerRef={triggerRef}><CatalogFilters filter={catalog.filter} dateDraft={catalog.dateDraft}
+      dateError={catalog.dateError}
       onSizesChange={catalog.onSizesChange} onTypesChange={catalog.onTypesChange}
-      onDatesChange={catalog.onDatesChange} onResetFilters={catalog.onResetFilters} />}>
+      onDatesChange={catalog.onDatesChange} onResetFilters={catalog.onResetFilters} /></FilterSidebar>}>
       <Catalog sortOption={catalog.sortOption} onSortChange={catalog.onSortChange}
         response={catalog.response} onPageChange={catalog.onPageChange} onSizeChange={catalog.onSizeChange} />
     </PageLayout>

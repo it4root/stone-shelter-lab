@@ -1,5 +1,9 @@
 # Acceptance Criteria: Feature 0005
 
+Criteria describe the current implementation; verification records preserve the
+historical iteration in which checks ran. Criterion 40 is superseded by 42.
+Current consolidated decisions: [ADR-0005](../../docs/adr/0005-ui-mock-to-code.md).
+
 1. The React UI starts and displays the catalog using local mock data without
    a running backend.
 2. The mock dataset contains exactly 30 contract-compatible stone entries.
@@ -9,8 +13,8 @@
 5. The header contains English navigation labels that do not navigate.
 6. The layout follows `catalog.png` within the agreed scope and adapts to
    desktop, tablet and mobile widths without horizontal page scrolling.
-7. Space is provided for future filters and chatbot UI without implementing
-   those features or compromising mobile readability.
+7. The implemented filter sidebar and reserved future chatbot space preserve
+   mobile readability. Chatbot functionality remains outside scope.
 8. Favorites, adoption and other excluded actions are not implemented.
 9. Frontend lint, existing tests and production build pass. Responsive layout
    and biography truncation are checked visually at representative widths.
@@ -43,12 +47,13 @@ as the explicitly selected asset; application text and mock content are English.
 13. App only composes page components; API types are separate from mock data,
     data is supplied through the data-source boundary and enum labels are explicit.
 
-14. Every component lives in its own named directory; Header, Footer and Content
-    share the Common parent directory. Existing rendering and checks pass.
+14. Every component lives in its own named directory; Header, Footer, PageLayout, Pagination and
+    FilterSidebar share the Common parent directory; feature/domain components
+    follow ADR-0005. Existing rendering and checks pass.
 
 ## Pagination Criteria
 
-15. Initial render contains 12 cards and reports 30 stones in total.
+15. Initial render contains 8 cards and reports 30 stones in total.
 16. With size 12, pages contain 12, 12 and 6 stones respectively; navigation
     reaches every stone without duplication and disables controls at boundaries.
 17. Size 24 produces pages of 24 and 6 cards. Changing size resets to page 1.
@@ -61,13 +66,13 @@ Pagination verification: six component tests passed, including page traversal
 and 12/24 size changes; frontend lint and build passed.
 
 19. Desktop widths of 960 pixels and above show four cards per row. Default
-    pages show three rows; tablet/mobile retain two/one columns respectively.
+    pages show two rows; tablet/mobile retain two/one columns respectively.
 
 20. StoneType, StoneSize and AdoptionStatus each have a dedicated file under
     src/enums. DTOs and presentation mappings reference those types, with exact
     backend values preserved and existing frontend verification passing.
 
-21. Architecture follows ADR-0006: shared layout has no catalog data/state;
+21. Architecture follows ADR-0005: shared layout has no catalog data/state;
     CatalogPage uses useCatalog; domain card/labels, DTOs and mocks are separate.
 22. Component CSS is colocated, shared styles use tokens, and existing pagination,
     responsive layout and image fallbacks retain their behavior. No new dependency
@@ -85,7 +90,7 @@ initial count and responsive columns without overflow; screenshots inspected.
     SMALL/MEDIUM/LARGE, timestamps sort chronologically, and equal values use
     id ASC. Page traversal preserves the selected order.
 25. Changing sort resets to page 1 and preserves size; changing page or size
-    preserves sort. Page sizes 12/24 and totalElements remain correct.
+    preserves sort. Page sizes 8/12/24 and totalElements remain correct.
 26. The backend accepts explicit admissionDate asc/desc, preserves existing
     name/stoneSize behavior, omitted-field/direction defaults and id ASC ties.
     Unsupported fields/directions return HTTP 400 ProblemDetail.
@@ -126,11 +131,11 @@ Sorting completion evidence (2026-10-06):
 33. Valid filter changes/reset return to page 1 and preserve sort/size. Page,
     size and sort changes preserve applied filters. Empty results show a message
     and zero total, no numbered pages and disabled Previous/Next.
-34. The nearby toggle exposes expanded state, hides/reveals fields and retains
+34. The arrow toggle exposes expanded state, hides/reveals the sidebar and retains
     applied filters. Collapsed badge counts applied groups 0–3; two sizes, three
-    types and a date range count as 3. Reset is available while collapsed.
+    types and a date range count as 3. Reset is inside the sidebar and requires reopening it.
 35. Desktop initially expands the side panel; tablet/mobile initially collapse
-    it above the catalog. Keyboard interaction and narrow layout are verified.
+    it as a left overlay when opened. Keyboard interaction and narrow layout are verified.
 36. Backend accepts plural size/type arrays and optional date bounds; retains
     singular/adoption-status compatibility with AND semantics. Empty/null groups
     and duplicate values behave as specified. Invalid enums/elements/dates/ranges
@@ -177,3 +182,20 @@ eight initial cards; page-size options and complete traversal verified in tests.
 
 42. Cards use their original unscaled dimensions and full grid width; this
     supersedes criterion 40. Default page size 8 and options 8/12/24 are retained.
+
+43. Desktop sidebar closes by sliding left; catalog expands into the freed space
+    while retaining four columns. Hidden state shows Filters, count and arrow.
+44. Tablet/mobile initially hide the sidebar. Opening creates a left overlay
+    and backdrop; arrow, backdrop and Escape close it without changing data/state.
+45. The full panel slides, reset stays inside, and hidden controls are unfocusable.
+    Active-group count remains 0–3. Existing filters/drafts/errors survive toggles.
+46. Modal focus entry/trap/restoration, inert background and scroll locking work
+    on small screens; desktop stays nonmodal. Reduced-motion setting is respected.
+47. Frontend lint/tests/build and responsive/browser interaction checks pass;
+    UI stays running. Earlier inline-collapse/reset-visible criteria are superseded.
+
+Criteria 43–47 verified (2026-10-06): 21 frontend tests, lint and build passed.
+Chrome checks at five widths confirmed fluid desktop space and modal behavior
+on narrow screens. Keyboard trap, Escape, focus restoration, backdrop closure,
+selection persistence, inert background and scroll locking passed; emulated
+reduced motion produced zero-duration sidebar/layout transitions.
