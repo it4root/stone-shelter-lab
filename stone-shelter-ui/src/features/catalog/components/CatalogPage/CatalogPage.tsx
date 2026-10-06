@@ -3,10 +3,10 @@ import { FilterSidebar } from '../../../../components/Common/FilterSidebar/Filte
 import { PageLayout } from '../../../../components/Common/PageLayout/PageLayout';
 import { Catalog } from '../Catalog/Catalog';
 import { CatalogFilters } from '../CatalogFilters/CatalogFilters';
-import { useCatalog } from '../../hooks/useCatalog';
+import { useCatalogSession } from '../../state/CatalogSessionProvider/CatalogSessionProvider';
 
 export function CatalogPage() {
-  const catalog = useCatalog();
+  const catalog = useCatalogSession();
   const sidebarId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   return (

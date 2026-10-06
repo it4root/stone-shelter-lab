@@ -7,7 +7,8 @@ const placeholder = '/placeholder-rock.png';
 export function StoneCard({ stone }: { stone: StoneSearchResponse }) {
   return (
     <article className="stone-card" aria-labelledby={`stone-${stone.id}`}>
-      <img
+      <a className="stone-photo-link" href={`/stones/${stone.id}`} aria-label={`View details for ${stone.name}`}>
+        <img
         className="stone-photo"
         src={stone.photo || placeholder}
         alt={stone.photo ? stone.name : `Photo coming soon for ${stone.name}`}
@@ -17,7 +18,8 @@ export function StoneCard({ stone }: { stone: StoneSearchResponse }) {
             event.currentTarget.src = placeholder;
           }
         }}
-      />
+        />
+      </a>
       <div className="stone-content">
         <h2 id={`stone-${stone.id}`}>{stone.name}</h2>
         <dl className="stone-facts">

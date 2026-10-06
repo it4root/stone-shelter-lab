@@ -9,6 +9,11 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import org.hibernate.annotations.BatchSize;
+import java.util.ArrayList;
+import java.util.List;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import lab.stoneshelter.enums.AdoptionStatus;
 import lab.stoneshelter.enums.StoneSize;
 import lab.stoneshelter.enums.StoneType;
@@ -28,6 +33,14 @@ public class StoneEntity {
     @Column(name = "admission_date", nullable = false) Instant admissionDate;
     @Enumerated(EnumType.STRING) @Column(name = "size", nullable = false, length = 16)
     StoneSize stoneSize;
+
+    @BatchSize(size = 24)
+    @OneToMany(mappedBy = "stone")
+    @OrderBy("position ASC")
+    private List<StonePhotoEntity> photos = new ArrayList<>();
+
+    public List<StonePhotoEntity> getPhotos() { return photos; }
+    public void setPhotos(List<StonePhotoEntity> photos) { this.photos = photos; }
 
     public StoneEntity() {}
 

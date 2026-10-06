@@ -1,6 +1,11 @@
 package lab.stoneshelter.repositories;
 
 import lab.stoneshelter.entities.StoneEntity;
+import jakarta.persistence.LockModeType;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
@@ -17,6 +22,10 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface StoneEntityRepository extends JpaRepository<StoneEntity, Long>,
         JpaSpecificationExecutor<StoneEntity> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select s from StoneEntity s where s.id = :id")
+    Optional<StoneEntity> findByIdForUpdate(@Param("id") long id);
 
     default Page<StoneEntity> search(StoneSearchCriteria search) {
         Specification<StoneEntity> filter = (root, query, cb) -> {

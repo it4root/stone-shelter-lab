@@ -402,8 +402,10 @@ class StoneCatalogControllerTest extends IntegrationTest {
     }
 
     private Map<String, Object> get(long id) {
-        return client.get().uri(STONES + "/" + id).exchange().expectStatus().isOk()
+        var stone = client.get().uri(STONES + "/" + id).exchange().expectStatus().isOk()
                 .expectBody(JSON_OBJECT).returnResult().getResponseBody();
+        assertThat(stone.remove("photos")).as("Legacy stones have an empty managed gallery").isEqualTo(List.of());
+        return stone;
     }
 
     private Map<String, Object> update(long id, Map<String, Object> body) {

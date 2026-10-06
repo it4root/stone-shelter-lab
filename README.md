@@ -27,7 +27,32 @@ docker compose down
 docker compose ps
 
 Compose loads `.env` automatically. The template contains development-only
-database credentials; edit `.env` if needed. Keep this file out of Git.
+database and MinIO credentials; edit `.env` if needed. Existing `.env` files
+need the new MinIO settings from `.env.example`. Keep this file out of Git.
+
+## Stone Photo Storage
+
+Compose builds a pinned MinIO release from official binaries with checksum
+verification. PostgreSQL stores gallery metadata and MinIO stores image bytes
+in persistent volumes. The bucket is private. `MINIO_BROWSER_ENDPOINT` must
+be reachable by the browser; the local default is `http://localhost:9000`.
+The MinIO console is at `http://localhost:9001`.
+
+Use the generated contract at `/v3/api-docs` or `/v3/api-docs.yaml` for current
+HTTP requirements. For an existing stone, upload a supported image with:
+
+```sh
+curl --fail-with-body -F 'file=@stone.png;type=image/png' \
+  http://localhost:8080/api/v1/stones/1/photos
+```
+
+Read `/api/v1/stones/1` for ordered gallery metadata and temporary image URLs.
+The first successfully added photo supplies the catalog cover. The React UI
+continues to use independent mock data and the supplied placeholder; it has no
+volunteer upload interface. Run it using [UI instructions](stone-shelter-ui/README.md).
+
+Feature decisions and verification are in
+[0006-stone-details](specs/0006-stone-details/spec.md).
 ## Verify
     curl localhost:8080/actuator/health
     http://localhost:8080/actuator/health

@@ -1,4 +1,8 @@
 spring:
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
   application:
     name: stone-shelter-api
   datasource:
@@ -23,3 +27,18 @@ springdoc:
   packages-to-scan: lab.stoneshelter.controllers
   paths-to-match: /api/**
   override-with-generic-response: false
+
+stone:
+  photos:
+    enabled: ${PHOTO_STORAGE_ENABLED:false}
+    endpoint: ${MINIO_ENDPOINT:}
+    browser-endpoint: ${MINIO_BROWSER_ENDPOINT:}
+    bucket: ${MINIO_BUCKET:}
+    access-key: ${MINIO_ACCESS_KEY:}
+    secret-key: ${MINIO_SECRET_KEY:}
+    cleanup-delay-ms: ${PHOTO_CLEANUP_DELAY_MS:60000}
+
+server:
+  tomcat:
+    # Consume a rejected multipart body so clients can receive its 413 ProblemDetail.
+    max-swallow-size: -1

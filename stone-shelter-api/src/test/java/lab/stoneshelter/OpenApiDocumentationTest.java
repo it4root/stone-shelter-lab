@@ -25,7 +25,7 @@ class OpenApiDocumentationTest extends IntegrationTest {
         assertThat(jsonNode.path("openapi").asText()).startsWith("3.");
         JsonNode pathsJsonNode = jsonNode.path("paths");
         assertThat(pathsJsonNode.propertyStream().map(entry -> entry.getKey()).toList())
-                .containsExactlyInAnyOrder("/api/v1/stones", "/api/v1/stones/{id}", "/api/v1/stones/search");
+                .containsExactlyInAnyOrder("/api/v1/stones", "/api/v1/stones/{id}", "/api/v1/stones/search", "/api/v1/stones/{id}/photos");
         assertThat(pathsJsonNode.path("/api/v1/stones").propertyStream().map(entry -> entry.getKey()).toList())
                 .containsExactly("post");
         assertThat(pathsJsonNode.path("/api/v1/stones/{id}").propertyStream().map(entry -> entry.getKey()).toList())
@@ -53,7 +53,8 @@ class OpenApiDocumentationTest extends IntegrationTest {
         JsonNode schemasJsonNode = openApiJson().at("/components/schemas");
         for (String name : List.of("StoneCreateRequest", "StoneUpdateRequest", "StoneCreateResponse",
                 "StoneUpdateResponse", "StoneResponse", "StoneDeleteResponse", "StoneSearchResponse",
-                "StonesSearchRequest", "StonesSearchResponse", "StoneSearchFilter", "SearchSort")) {
+                "StonesSearchRequest", "StonesSearchResponse", "StoneSearchFilter", "SearchSort",
+                "StonePhotoResponse", "StonePhotoUploadResponse", "StonePhotoUploadRequest")) {
             JsonNode schemaJsonNode = schemasJsonNode.path(name);
             assertThat(schemaJsonNode.path("description").asText()).as(name + " description").isNotBlank();
             assertThat(schemaJsonNode.path("properties").size()).as(name + " properties").isPositive();
@@ -81,6 +82,29 @@ class OpenApiDocumentationTest extends IntegrationTest {
         assertThat(schemasJsonNode.at("/StonesSearchRequest/properties/size/maximum").asInt()).isEqualTo(24);
         assertThat(schemasJsonNode.at("/SearchSort/properties/field/pattern").asText()).isEqualTo("name|stoneSize|admissionDate");
         assertThat(schemasJsonNode.at("/SearchSort/properties/direction/pattern").asText()).isEqualTo("asc|desc");
+    }
+
+    @Test
+    void describesMultipartUploadAndOrderedGalleryWithoutExpandingSearchItems() throws Exception {
+        var jsonNode = openApiJson();
+        var operation = jsonNode.at("/paths/~1api~1v1~1stones~1{id}~1photos/post");
+        assertThat(operation.at("/requestBody/content/multipart~1form-data/schema").isMissingNode()).isFalse();
+        assertThat(operation.at("/responses/201/content/*~1*/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/StonePhotoUploadResponse");
+        assertThat(operation.path("responses").propertyStream().map(entry -> entry.getKey()).toList())
+                .containsExactlyInAnyOrder("201", "400", "404", "413", "415", "503");
+        for (String code : List.of("400", "404", "413", "415", "503")) {
+            assertThat(operation.at("/responses/" + code + "/content/application~1problem+json/schema/$ref").asText())
+                    .isEqualTo("#/components/schemas/ProblemDetail");
+        }
+        var schemas = jsonNode.at("/components/schemas");
+        assertThat(schemas.at("/StoneResponse/properties/photos/type").asText()).isEqualTo("array");
+        assertThat(schemas.at("/StoneResponse/properties/photos/items/$ref").asText())
+                .isEqualTo("#/components/schemas/StonePhotoResponse");
+        assertThat(schemas.at("/StoneResponse/required")).contains(Json31.mapper().valueToTree("photos"));
+        assertThat(schemas.at("/StoneSearchResponse/properties/photos").isMissingNode()).isTrue();
+        assertThat(schemas.at("/StonePhotoUploadRequest/properties/file/format").asText()).isEqualTo("binary");
+        assertThat(schemas.at("/StonePhotoUploadRequest/required")).contains(Json31.mapper().valueToTree("file"));
     }
 
     @Test

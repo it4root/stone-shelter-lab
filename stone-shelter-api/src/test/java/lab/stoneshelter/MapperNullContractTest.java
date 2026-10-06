@@ -4,6 +4,8 @@ import java.util.stream.Stream;
 import lab.stoneshelter.handlers.ApiExceptionHandler;
 import lab.stoneshelter.controllers.StoneCatalogController;
 import lab.stoneshelter.services.StoneService;
+import lab.stoneshelter.mappers.dtos.StonePhotoEntityToStonePhotoResponseMapper;
+import lab.stoneshelter.services.MinioPhotoStorageService;
 import lab.stoneshelter.mappers.dtos.AbstractDtoMapper;
 import lab.stoneshelter.exceptions.MapperValidationException;
 import lab.stoneshelter.mappers.dtos.StoneEntityToStoneCreateResponseMapper;
@@ -36,8 +38,8 @@ class MapperNullContractTest {
     }
 
     static Stream<AbstractDtoMapper<StoneEntity, ?>> dtoMappers() {
-        return Stream.of(new StoneEntityToStoneCreateResponseMapper(), new StoneEntityToStoneResponseMapper(),
-                new StoneEntityToStoneUpdateResponseMapper(), new StoneEntityToStoneSearchResponseMapper());
+        return Stream.of(new StoneEntityToStoneCreateResponseMapper(), new StoneEntityToStoneResponseMapper(new StonePhotoEntityToStonePhotoResponseMapper(mock(MinioPhotoStorageService.class))),
+                new StoneEntityToStoneUpdateResponseMapper(), new StoneEntityToStoneSearchResponseMapper(new StonePhotoEntityToStonePhotoResponseMapper(mock(MinioPhotoStorageService.class))));
     }
 
     @ParameterizedTest

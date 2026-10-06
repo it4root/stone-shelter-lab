@@ -1,6 +1,9 @@
 package lab.stoneshelter.services;
 
 import java.time.ZoneOffset;
+import lab.stoneshelter.repositories.StonePhotoEntityRepository;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import lab.stoneshelter.exceptions.InvalidAdmissionDateRangeException;
 import lab.stoneshelter.enums.StoneSortField;
 import lab.stoneshelter.criteria.StoneSearchCriteria;
@@ -29,6 +32,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class StoneService {
     private final StoneEntityRepository repository;
+    private final StonePhotoEntityRepository photoRepository;
+    private final PhotoCleanupService cleanup;
     private final StoneCreateRequestToStoneEntityMapper createRequestMapper;
     private final StoneUpdateRequestToStoneEntityMapper updateRequestMapper;
     private final StoneEntityToStoneCreateResponseMapper createResponseMapper;
@@ -37,6 +42,7 @@ public class StoneService {
     private final PageToStonesSearchResponseMapper searchResponseMapper;
 
     public StoneService(StoneEntityRepository repository,
+            StonePhotoEntityRepository photoRepository, PhotoCleanupService cleanup,
             StoneCreateRequestToStoneEntityMapper createRequestMapper,
             StoneUpdateRequestToStoneEntityMapper updateRequestMapper,
             StoneEntityToStoneCreateResponseMapper createResponseMapper,
@@ -44,6 +50,8 @@ public class StoneService {
             StoneEntityToStoneUpdateResponseMapper updateResponseMapper,
             PageToStonesSearchResponseMapper searchResponseMapper) {
         this.repository = repository;
+        this.photoRepository = photoRepository;
+        this.cleanup = cleanup;
         this.createRequestMapper = createRequestMapper;
         this.updateRequestMapper = updateRequestMapper;
         this.createResponseMapper = createResponseMapper;
@@ -66,7 +74,15 @@ public class StoneService {
     }
 
     public StoneDeleteResponse delete(long id) {
-        repository.delete(findById(id));
+        var stoneEntity = repository.findByIdForUpdate(id).orElseThrow(() -> new StoneNotFoundException(id));
+        var objectKeys = photoRepository.findByStoneIdOrderByPositionAsc(id).stream().map(photo -> photo.getObjectKey()).toList();
+        cleanup.enqueueDeletedPhotos(objectKeys);
+        photoRepository.deleteAll(stoneEntity.getPhotos());
+        repository.delete(stoneEntity);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() { objectKeys.forEach(cleanup::attemptCleanup); }
+        });
         return new StoneDeleteResponse(id);
     }
 

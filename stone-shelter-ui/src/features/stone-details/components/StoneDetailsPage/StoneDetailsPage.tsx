@@ -1,0 +1,50 @@
+import { useEffect, useRef } from 'react';
+import { StoneGallery } from '../../../../domain/stone/components/StoneGallery/StoneGallery';
+import { adoptionStatusLabels, stoneSizeLabels, stoneTypeLabels } from '../../../../domain/stone/presentation/stoneLabels';
+import { useStoneDetails } from '../../hooks/useStoneDetails';
+import './StoneDetailsPage.css';
+
+const dateFormat = new Intl.DateTimeFormat('en-US', {
+  day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
+});
+
+export function StoneDetailsPage({ id }: { id?: number }) {
+  const stone = useStoneDetails(id);
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [id]);
+
+  return (
+    <main className="stone-details-page" aria-labelledby="stone-details-heading">
+      <nav className="stone-details-navigation" aria-label="Stone navigation">
+        <a href="/"><span aria-hidden="true">←</span> Back to catalog</a>
+        {stone && <><span aria-hidden="true">/</span><span aria-current="page">{stone.name}</span></>}
+      </nav>
+      {stone ? <div className="stone-details-grid">
+        <StoneGallery key={stone.id} name={stone.name} photos={stone.photos} photo={stone.photo} />
+        <div className="stone-details-information">
+          <div className="stone-details-identity">
+            <h1 id="stone-details-heading" ref={heading} tabIndex={-1}>{stone.name}</h1>
+            <p className="stone-details-id">ID {stone.id}</p>
+            <span className="stone-status">{adoptionStatusLabels[stone.adoptionStatus]}</span>
+          </div>
+          <section className="stone-details-characteristics" aria-labelledby="stone-characteristics-heading">
+            <h2 id="stone-characteristics-heading">Characteristics</h2>
+            <dl>
+              <div><dt>Type</dt><dd>{stoneTypeLabels[stone.stoneType]}</dd></div>
+              <div><dt>Size</dt><dd>{stoneSizeLabels[stone.stoneSize]}</dd></div>
+              <div><dt>Admission date</dt><dd><time dateTime={stone.admissionDate}>{dateFormat.format(new Date(stone.admissionDate))}</time></dd></div>
+            </dl>
+          </section>
+          <section className="stone-details-biography" aria-labelledby="stone-biography-heading">
+            <h2 id="stone-biography-heading">Biography</h2>
+            <p>{stone.biography?.trim() ? stone.biography : 'This stone’s story is coming soon.'}</p>
+          </section>
+        </div>
+      </div> : <div className="stone-details-not-found">
+        <h1 id="stone-details-heading" ref={heading} tabIndex={-1}>Stone not found</h1>
+        <p>We could not find a stone at this address. Return to the catalog to meet our stones.</p>
+      </div>}
+    </main>
+  );
+}

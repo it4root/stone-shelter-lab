@@ -5,9 +5,9 @@ import type { StoneType } from '../../enums/StoneType';
 export interface StoneSearchResponse {
   id: number;
   name: string;
-  photo?: string;
+  photo?: string | null;
   stoneType: StoneType;
-  biography?: string;
+  biography?: string | null;
   adoptionStatus: AdoptionStatus;
   admissionDate: string;
   stoneSize: StoneSize;

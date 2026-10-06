@@ -1,10 +1,14 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, expect, test } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { App } from './App';
 import { StoneCard } from '../domain/stone/components/StoneCard/StoneCard';
 import { mockStones } from '../mocks/data/stones';
 
-afterEach(cleanup);
+beforeEach(() => {
+  window.history.replaceState(null, '', '/');
+  vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
+});
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 test('displays the application name', () => {
   render(<App />);
@@ -18,7 +22,7 @@ test('renders the initial 8 stones with required content and total count', () =>
   expect(screen.getByText((_, element) => element?.textContent === 'Found 30 stones' && element.tagName === 'P').textContent).toBe('Found 30 stones');
   for (const stone of [...mockStones].reverse().slice(0, 8)) {
     expect(screen.getByRole('heading', { name: stone.name }).textContent).toBe(stone.name);
-    expect(screen.getByAltText(`Photo coming soon for ${stone.name}`).getAttribute('src')).toBe('/placeholder-rock.png');
+    expect(within(screen.getByRole('article', { name: stone.name })).getByRole('img').getAttribute('src')).toBe('/placeholder-rock.png');
   }
   expect(screen.getAllByText('Type')).toHaveLength(8);
   expect(within(screen.getByRole('main', { name: 'Stone catalog' })).getAllByText('Size')).toHaveLength(8);
@@ -28,7 +32,8 @@ test('renders the initial 8 stones with required content and total count', () =>
 test('keeps navigation static and excludes catalog actions', () => {
   render(<App />);
   expect(screen.getByRole('navigation', { name: 'Main navigation' }).textContent).toContain('Stone catalog');
-  expect(screen.queryAllByRole('link')).toHaveLength(0);
+  expect(within(screen.getByRole('navigation', { name: 'Main navigation' })).queryAllByRole('link')).toHaveLength(0);
+  expect(screen.getAllByRole('link')).toHaveLength(8);
   expect(within(screen.getByRole('navigation', { name: 'Main navigation' })).queryAllByRole('button')).toHaveLength(0);
   expect(screen.queryByRole('button', { name: /adopt|favorite|details/i })).toBeNull();
 });

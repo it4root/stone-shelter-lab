@@ -1,9 +1,14 @@
 package lab.stoneshelter.handlers;
 
 import lab.stoneshelter.exceptions.InvalidAdmissionDateRangeException;
+import lab.stoneshelter.exceptions.InvalidPhotoException;
+import lab.stoneshelter.exceptions.UnsupportedPhotoTypeException;
+import lab.stoneshelter.exceptions.PhotoTooLargeException;
+import lab.stoneshelter.exceptions.PhotoStorageUnavailableException;
 import lab.stoneshelter.exceptions.StoneNotFoundException;
 import lab.stoneshelter.exceptions.MapperValidationException;
 import org.springframework.http.HttpHeaders;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
@@ -27,6 +32,31 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(InvalidAdmissionDateRangeException.class)
     public ProblemDetail handleInvalidAdmissionDateRange(InvalidAdmissionDateRangeException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+    @ExceptionHandler(InvalidPhotoException.class)
+    public ProblemDetail handleInvalidPhoto(InvalidPhotoException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+    @ExceptionHandler(UnsupportedPhotoTypeException.class)
+    public ProblemDetail handleUnsupportedPhoto(UnsupportedPhotoTypeException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.UNSUPPORTED_MEDIA_TYPE, exception.getMessage());
+    }
+
+    @ExceptionHandler(PhotoTooLargeException.class)
+    public ProblemDetail handlePhotoTooLarge(PhotoTooLargeException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.PAYLOAD_TOO_LARGE, exception.getMessage());
+    }
+
+    @ExceptionHandler(PhotoStorageUnavailableException.class)
+    public ProblemDetail handlePhotoStorageUnavailable(PhotoStorageUnavailableException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.SERVICE_UNAVAILABLE, exception.getMessage());
+    }
+
+    @ExceptionHandler(DataAccessException.class)
+    public ProblemDetail handlePersistenceFailure(DataAccessException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, "The operation could not be saved. Try again later.");
     }
 
     @Override

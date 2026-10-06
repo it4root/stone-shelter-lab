@@ -12,7 +12,7 @@ public class StoneSearchResponse {
     private Long id;
     @Schema(description = "Stone name.")
     private String name;
-    @Schema(description = "Optional photo value, preserved as supplied.")
+    @Schema(description = "First managed gallery URL, otherwise the unchanged optional legacy photo value.")
     private String photo;
     @Schema(description = "Stone type.")
     private StoneType stoneType;

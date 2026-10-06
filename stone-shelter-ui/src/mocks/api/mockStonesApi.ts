@@ -1,4 +1,6 @@
 import { mockStones } from '../data/stones';
+import { mockStonePhotos } from '../data/stonePhotos';
+import type { StoneResponse } from '../../api/dto/StoneResponse';
 import type { StonesSearchResponse } from '../../api/dto/StonesSearchResponse';
 
 import type { SearchSort } from '../../api/dto/SearchSort';
@@ -39,9 +41,19 @@ export function getMockCatalogStones(page = 0, size = 8,
     return (sort.direction === 'desc' ? -comparison : comparison) || left.id - right.id;
   });
   return {
-    content: sortedStones.slice(page * size, (page + 1) * size),
+    content: sortedStones.slice(page * size, (page + 1) * size).map(stone => ({
+      ...stone,
+      photo: mockStonePhotos[stone.id]?.[0]?.url ?? stone.photo,
+    })),
     page,
     size,
     totalElements: matchingStones.length,
   };
+}
+
+export function getMockStone(id: number): StoneResponse | undefined {
+  const stone = mockStones.find(stone => stone.id === id);
+  if (!stone) return undefined;
+  const photos = (mockStonePhotos[id] ?? []).map(photo => ({ ...photo }));
+  return { ...stone, photo: photos[0]?.url ?? stone.photo, photos };
 }

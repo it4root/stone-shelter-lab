@@ -137,3 +137,34 @@ records the 3.1.0 line's upgrade to Spring Boot 4.1.0; 3.1.1 is its stable
 patch successor. Keep the existing Spring Boot 4.1.1 and JDK 23.0.2 pins.
 This dependency provides generated OpenAPI JSON/YAML and Swagger UI without
 a handwritten contract or a separate documentation model.
+
+## Feature 0006 Photo Storage Pins
+
+Feature 0006 uses MinIO server `RELEASE.2025-04-22T22-12-26Z` and
+`io.minio:minio:8.5.17`. Official released tags were verified on 2026-10-06:
+[server release](https://github.com/minio/minio/releases/tag/RELEASE.2025-04-22T22-12-26Z),
+[Java SDK release](https://github.com/minio/minio-java/releases/tag/8.5.17).
+The SDK provides object upload/removal and presigned URLs, absent from existing
+dependencies. These are explicit reproducibility pins, not a claim of newest
+versions; existing backend/runtime pins remain unchanged.
+
+The official Docker Hub image could not be pulled (404) and Quay returned 401
+during runtime verification. Build `stone-shelter-minio:RELEASE.2025-04-22T22-12-26Z`
+locally from official GitHub release assets, using `alpine:3.22.6` as the base
+([official image inventory](https://github.com/docker-library/official-images/blob/master/library/alpine)).
+Verify SHA-256 before installing the binary:
+
+| Target | Official release asset | SHA-256 |
+| --- | --- | --- |
+| amd64 | minio.linux-amd64.RELEASE.2025-04-22T22-12-26Z | 53e2a2cb16c5366ea6fbbc479c19ddb4c6a0948273e752f740fb1fbf27bb817c |
+| arm64 | minio.linux-arm64.RELEASE.2025-04-22T22-12-26Z | 6c2f3142c94240206123177f4ba1e360daa5d1e0a4962e90757ef4f92c3ab57c |
+
+These hashes come from the official release asset metadata; both Compose and
+Testcontainers use this build definition. The server version remains unchanged.
+
+Feature 0006 also pins `com.twelvemonkeys.imageio:imageio-webp:3.12.0` to
+validate uploaded WebP pixel data through Java ImageIO. The JDK does not include
+that decoder; structural headers alone accepted a corrupt payload during review.
+[Official release](https://github.com/haraldk/TwelveMonkeys/releases/tag/twelvemonkeys-3.12.0)
+and [supported formats](https://github.com/haraldk/TwelveMonkeys) were verified
+before adding the dependency. It does not add image editing functionality.

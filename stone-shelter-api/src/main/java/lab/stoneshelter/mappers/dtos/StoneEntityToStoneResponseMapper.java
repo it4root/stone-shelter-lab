@@ -7,12 +7,16 @@ import org.springframework.stereotype.Component;
 @Component
 public final class StoneEntityToStoneResponseMapper extends AbstractDtoMapper<StoneEntity, StoneResponse> {
 
+    private final StonePhotoEntityToStonePhotoResponseMapper photoMapper;
+    public StoneEntityToStoneResponseMapper(StonePhotoEntityToStonePhotoResponseMapper photoMapper) { this.photoMapper = photoMapper; }
+
     @Override
     protected StoneResponse mapToDto(StoneEntity entity) {
         var dto = new StoneResponse();
         dto.setId(entity.getId());
         dto.setName(entity.getName());
-        dto.setPhoto(entity.getPhoto());
+        dto.setPhotos(entity.getPhotos().stream().map(photoMapper::toDto).toList());
+        dto.setPhoto(dto.getPhotos().isEmpty() ? entity.getPhoto() : dto.getPhotos().getFirst().url());
         dto.setStoneType(entity.getStoneType());
         dto.setBiography(entity.getBiography());
         dto.setAdoptionStatus(entity.getAdoptionStatus());

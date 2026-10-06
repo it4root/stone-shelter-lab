@@ -2,6 +2,7 @@ package lab.stoneshelter.shared;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.util.List;
 import lab.stoneshelter.enums.AdoptionStatus;
 import lab.stoneshelter.enums.StoneSize;
 import lab.stoneshelter.enums.StoneType;
@@ -12,7 +13,7 @@ public class StoneResponse {
     private Long id;
     @Schema(description = "Stone name.")
     private String name;
-    @Schema(description = "Optional photo value, preserved as supplied.")
+    @Schema(description = "First managed gallery URL, otherwise the unchanged optional legacy photo value.")
     private String photo;
     @Schema(description = "Stone type.")
     private StoneType stoneType;
@@ -24,6 +25,12 @@ public class StoneResponse {
     private Instant admissionDate;
     @Schema(description = "Stone size.")
     private StoneSize stoneSize;
+
+    @Schema(description = "Managed photos in stable successful-addition order; empty when no managed photos exist.", requiredMode = Schema.RequiredMode.REQUIRED)
+    private List<StonePhotoResponse> photos = List.of();
+
+    public List<StonePhotoResponse> getPhotos() { return photos; }
+    public void setPhotos(List<StonePhotoResponse> photos) { this.photos = photos; }
 
     public StoneResponse() {}
 
