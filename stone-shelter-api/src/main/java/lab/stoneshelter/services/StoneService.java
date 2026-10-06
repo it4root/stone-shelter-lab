@@ -1,5 +1,7 @@
 package lab.stoneshelter.services;
 
+import java.time.ZoneOffset;
+import lab.stoneshelter.exceptions.InvalidAdmissionDateRangeException;
 import lab.stoneshelter.enums.StoneSortField;
 import lab.stoneshelter.criteria.StoneSearchCriteria;
 import lab.stoneshelter.exceptions.StoneNotFoundException;
@@ -75,15 +77,25 @@ public class StoneService {
 
     private StoneSearchCriteria prepareSearchCriteria(StonesSearchRequest request) {
         var filter = request.filter();
+        if (filter != null && filter.getAdmissionDateFrom() != null && filter.getAdmissionDateTo() != null
+                && filter.getAdmissionDateFrom().isAfter(filter.getAdmissionDateTo())) {
+            throw new InvalidAdmissionDateRangeException();
+        }
         var sort = request.sort();
         var field = sort == null || sort.field() == null
                 ? StoneSortField.ADMISSION_DATE
                 : StoneSortField.fromValue(sort.field());
 
         var stoneSearchCriteria = new StoneSearchCriteria();
-        stoneSearchCriteria.setStoneType(filter == null ? null : filter.stoneType());
-        stoneSearchCriteria.setStoneSize(filter == null ? null : filter.stoneSize());
-        stoneSearchCriteria.setAdoptionStatus(filter == null ? null : filter.adoptionStatus());
+        stoneSearchCriteria.setStoneType(filter == null ? null : filter.getStoneType());
+        stoneSearchCriteria.setStoneSize(filter == null ? null : filter.getStoneSize());
+        stoneSearchCriteria.setAdoptionStatus(filter == null ? null : filter.getAdoptionStatus());
+        stoneSearchCriteria.setStoneSizes(filter == null ? null : filter.getStoneSizes());
+        stoneSearchCriteria.setStoneTypes(filter == null ? null : filter.getStoneTypes());
+        stoneSearchCriteria.setAdmissionDateFrom(filter == null || filter.getAdmissionDateFrom() == null ? null
+                : filter.getAdmissionDateFrom().atStartOfDay().toInstant(ZoneOffset.UTC));
+        stoneSearchCriteria.setAdmissionDateToExclusive(filter == null || filter.getAdmissionDateTo() == null ? null
+                : filter.getAdmissionDateTo().plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC));
         stoneSearchCriteria.setPage(request.page() == null ? 0 : request.page());
         stoneSearchCriteria.setSize(request.size() == null ? 12 : request.size());
         stoneSearchCriteria.setField(field);

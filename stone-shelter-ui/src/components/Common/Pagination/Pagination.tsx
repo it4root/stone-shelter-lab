@@ -24,7 +24,7 @@ export function Pagination({ page, size, totalElements, onPageChange, onSizeChan
       </nav>
       <label>Stones per page
         <select value={size} onChange={(event) => onSizeChange(Number(event.target.value))}>
-          <option value={12}>12</option><option value={24}>24</option>
+          <option value={8}>8</option><option value={12}>12</option><option value={24}>24</option>
         </select>
       </label>
     </div>

@@ -129,6 +129,14 @@
     convention does not require introducing variables for single-use results;
     direct forwarding under rule 19 still applies.
 
+23. Backend application services must be independent of protocol error handling.
+    Throw custom application/domain exceptions from lab.stoneshelter.exceptions
+    for business failures. Services must not use HTTP statuses, ProblemDetail,
+    ResponseStatusException or other protocol-specific error types. Custom
+    exceptions must also remain protocol-independent. ApiExceptionHandler owns
+    translation into HTTP status codes and RFC 9457 ProblemDetail responses.
+    Enforce this dependency boundary with ArchUnit tests.
+
 ## Process
 1. Spec → plan → tasks → code. No spec, no code.
 2. Infrastructure in `docker-compose.yml` may be running without being used.

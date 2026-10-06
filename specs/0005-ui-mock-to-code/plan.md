@@ -76,3 +76,32 @@ slicing, preserve fixtures, and use id ASC for ties. Add interaction/order tests
 with shuffled/tied data so they detect ordering defects rather than merely
 matching the fixture's existing insertion order. Run frontend checks, backend
 verification, responsive inspection and leave the dev server running.
+
+## Filter Extension Plan
+
+Keep backward-compatible singular filters; add plural arrays and LocalDate bounds
+to StoneSearchFilter as a class, annotate constraints and generated descriptions.
+Validate cross-field date order in the service, extend criteria with plural
+values and UTC bounds, and build repository predicates before existing ordering
+and pagination. Test PostgreSQL boundary dates, group semantics, invalid input,
+compatibility, counts and generated JSON/YAML using existing infrastructure.
+
+Add a feature-owned CatalogFilters component, DTOs and explicit type/size labels.
+useCatalog owns applied filters, separate date drafts/errors and panel state.
+The mock adapter filters a copy before existing sorting/pagination. PageLayout
+accepts a feature-provided filter slot; it handles responsive placement only.
+Retain accessible native controls and existing dependencies. Tests include
+shuffled fixture data, UTC/day-offset boundaries, invalid draft retention, group
+count, reset, expansion and pagination/sort interactions. Verify responsive
+layout at desktop/tablet/mobile sizes and leave the local UI server running.
+
+Replace the service ResponseStatusException with InvalidAdmissionDateRangeException
+and centralize its HTTP 400 translation in ApiExceptionHandler. Extend architecture
+checks to forbid HTTP/protocol error dependencies in services and custom exceptions.
+
+Use CSS zoom on the catalog grid for 70% layout-aware scaling. Update local
+UI/mock defaults to 8; retain existing backend contract defaults and maximum.
+Verify all three size options and responsive rendering.
+
+Remove compact grid width/zoom rules to restore original card dimensions.
+Preserve the eight-card default and existing size choices.

@@ -4,14 +4,26 @@ import type { StonesSearchResponse } from '../../api/dto/StonesSearchResponse';
 import type { SearchSort } from '../../api/dto/SearchSort';
 import type { StoneSize } from '../../enums/StoneSize';
 
+import type { StoneSearchFilter } from '../../api/dto/StoneSearchFilter';
+
 const sizeRanks: Record<StoneSize, number> = { SMALL: 0, MEDIUM: 1, LARGE: 2 };
 
-export function getMockCatalogStones(page = 0, size = 12,
-  sort: SearchSort = { field: 'admissionDate', direction: 'desc' }): StonesSearchResponse {
+export function getMockCatalogStones(page = 0, size = 8,
+  sort: SearchSort = { field: 'admissionDate', direction: 'desc' }, filter: StoneSearchFilter = {}): StonesSearchResponse {
   if (!Number.isInteger(page) || page < 0 || !Number.isInteger(size) || size < 1 || size > 24) {
     throw new RangeError('Page must be nonnegative and page size must be between 1 and 24.');
   }
-  const sortedStones = [...mockStones].sort((left, right) => {
+  const matchingStones = mockStones.filter(stone => {
+    const timestamp = Date.parse(stone.admissionDate);
+    return (!filter.stoneSizes?.length || filter.stoneSizes.includes(stone.stoneSize))
+      && (!filter.stoneTypes?.length || filter.stoneTypes.includes(stone.stoneType))
+      && (!filter.stoneSize || filter.stoneSize === stone.stoneSize)
+      && (!filter.stoneType || filter.stoneType === stone.stoneType)
+      && (!filter.adoptionStatus || filter.adoptionStatus === stone.adoptionStatus)
+      && (!filter.admissionDateFrom || timestamp >= Date.parse(`${filter.admissionDateFrom}T00:00:00Z`))
+      && (!filter.admissionDateTo || timestamp < Date.parse(`${filter.admissionDateTo}T00:00:00Z`) + 86400000);
+  });
+  const sortedStones = matchingStones.sort((left, right) => {
     let comparison: number;
     switch (sort.field) {
       case 'stoneSize':
@@ -30,6 +42,6 @@ export function getMockCatalogStones(page = 0, size = 12,
     content: sortedStones.slice(page * size, (page + 1) * size),
     page,
     size,
-    totalElements: mockStones.length,
+    totalElements: matchingStones.length,
   };
 }

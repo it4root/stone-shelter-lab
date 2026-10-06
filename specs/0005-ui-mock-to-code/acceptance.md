@@ -111,3 +111,69 @@ Sorting completion evidence (2026-10-06):
 - Criterion 28: frontend lint/build passed; screenshots and runtime layout
   checks at 1440, 1024, 768, 390 and 320 pixels passed. UI remains running
   at localhost:5174. Live backend integration remains outside this feature.
+
+## Filter Acceptance Criteria
+
+29. Filters provides size and type checkbox multiselects for existing contract
+    values and optional From/To admission-date inputs with English labels.
+30. Groups use AND and multiselect values use OR. Empty groups do not restrict
+    results. Filtering occurs before sorting/paging and totals count matches.
+31. From-only, To-only and equal-date ranges work with inclusive UTC days,
+    including timezone-offset timestamps and timestamps on day boundaries.
+32. Malformed/nonexistent dates and reversed ranges show accessible errors;
+    invalid drafts retain the last valid applied date range and page. Correction
+    applies immediately; reset clears errors and all filter values.
+33. Valid filter changes/reset return to page 1 and preserve sort/size. Page,
+    size and sort changes preserve applied filters. Empty results show a message
+    and zero total, no numbered pages and disabled Previous/Next.
+34. The nearby toggle exposes expanded state, hides/reveals fields and retains
+    applied filters. Collapsed badge counts applied groups 0–3; two sizes, three
+    types and a date range count as 3. Reset is available while collapsed.
+35. Desktop initially expands the side panel; tablet/mobile initially collapse
+    it above the catalog. Keyboard interaction and narrow layout are verified.
+36. Backend accepts plural size/type arrays and optional date bounds; retains
+    singular/adoption-status compatibility with AND semantics. Empty/null groups
+    and duplicate values behave as specified. Invalid enums/elements/dates/ranges
+    return HTTP 400 ProblemDetail.
+37. Generated OpenAPI describes the expanded filter DTO. No schema migration,
+    new field on Stone or live UI API integration is introduced.
+38. Backend PostgreSQL integration/contract verification and frontend lint,
+    meaningful filter tests and build pass. Responsive checks are recorded and
+    the local UI remains running after verification.
+
+Filter criteria supersede earlier evidence concerning reserved-only filter space.
+
+Filter completion evidence (2026-10-06):
+
+- Criteria 29–34: frontend interaction/adapter/date validation tests passed.
+  Coverage includes OR/AND, group-count badge, inclusive UTC/open dates,
+  invalid draft retention, reset while collapsed, empty state and preserved
+  sort/size with page resets.
+- Criterion 35: Chrome verified fresh initial state at 1440, 1024, 768, 390
+  and 320 pixels; Space toggles the focused button. Checkbox interaction and
+  expanded narrow layouts checked without horizontal overflow.
+- Criteria 36–37: backend PostgreSQL tests and generated JSON/YAML tests passed
+  for arrays, date bounds and retained singular/adoption-status compatibility.
+  No migration or live UI API integration introduced.
+- Criterion 38: 131 backend tests and 19 frontend tests passed, along with lint
+  and production build. Local UI remains available at localhost:5174.
+
+39. Invalid date order throws a custom protocol-independent exception;
+    ApiExceptionHandler retains HTTP 400 ProblemDetail and the validation detail.
+    ArchUnit prevents protocol error dependencies in services/custom exceptions.
+
+Criterion 39 verified: 132 backend tests passed, including reversed date-range
+ProblemDetail behavior and service/exception protocol-dependency enforcement.
+
+40. Card grid renders at 70% of the previous scale with unchanged responsive
+    column counts, no horizontal overflow and two-line biographies.
+41. Initial UI render shows 8 cards; page-size choices are exactly 8, 12 and 24.
+    With 30 unfiltered stones, size 8 yields pages of 8, 8, 8 and 6. Existing
+    sorting/filtering/reset behavior is preserved; backend defaults stay unchanged.
+
+Criteria 40–41 verified: 20 frontend tests, lint and build passed. Browser
+measurements confirmed 70% card width/height at five responsive sizes and
+eight initial cards; page-size options and complete traversal verified in tests.
+
+42. Cards use their original unscaled dimensions and full grid width; this
+    supersedes criterion 40. Default page size 8 and options 8/12/24 are retained.

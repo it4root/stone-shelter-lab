@@ -30,6 +30,18 @@ public interface StoneEntityRepository extends JpaRepository<StoneEntity, Long>,
             if (search.getAdoptionStatus() != null) {
                 predicates.add(cb.equal(root.get("adoptionStatus"), search.getAdoptionStatus()));
             }
+            if (search.getStoneSizes() != null && !search.getStoneSizes().isEmpty()) {
+                predicates.add(root.get("stoneSize").in(search.getStoneSizes()));
+            }
+            if (search.getStoneTypes() != null && !search.getStoneTypes().isEmpty()) {
+                predicates.add(root.get("stoneType").in(search.getStoneTypes()));
+            }
+            if (search.getAdmissionDateFrom() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("admissionDate"), search.getAdmissionDateFrom()));
+            }
+            if (search.getAdmissionDateToExclusive() != null) {
+                predicates.add(cb.lessThan(root.get("admissionDate"), search.getAdmissionDateToExclusive()));
+            }
             return cb.and(predicates.toArray(Predicate[]::new));
         };
         var pageable = PageRequest.of(search.getPage(), search.getSize());

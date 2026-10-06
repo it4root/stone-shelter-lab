@@ -419,6 +419,59 @@ class StoneCatalogControllerTest extends IntegrationTest {
         createdIds.remove(id);
     }
 
+    @Test
+    void pluralFiltersCombineGroupsAndPreserveLegacyConstraints() {
+        long small = id(create(validStone()));
+        long medium = id(create(changed("stoneSize", "MEDIUM")));
+        long granite = id(create(changed("stoneType", "GRANITE")));
+        create(changed("stoneSize", "LARGE"));
+        var filter = new HashMap<String, Object>();
+        filter.put("stoneSizes", List.of("SMALL", "MEDIUM", "SMALL"));
+        filter.put("stoneTypes", List.of("BASALT"));
+        assertThat(ids(search(Map.of("filter", filter)))).containsExactly(small, medium);
+        var page = search(Map.of("filter", filter, "size", 1, "page", 1));
+        assertThat(ids(page)).containsExactly(medium);
+        assertThat(number(page, "totalElements")).isEqualTo(2);
+        filter.put("stoneTypes", List.of("BASALT", "GRANITE"));
+        assertThat(ids(search(Map.of("filter", filter)))).containsExactly(small, medium, granite);
+        filter.put("stoneSize", "LARGE");
+        assertThat(ids(search(Map.of("filter", filter)))).isEmpty();
+        filter.remove("stoneSize");
+        filter.put("stoneSizes", List.of());
+        filter.put("stoneTypes", null);
+        assertThat(number(search(Map.of("filter", filter)), "totalElements")).isEqualTo(4);
+        filter.put("adoptionStatus", "ADOPTED");
+        assertThat(ids(search(Map.of("filter", filter)))).isEmpty();
+    }
+
+    @Test
+    void dateFiltersIncludeWholeUtcDaysAndSupportOpenBounds() {
+        long before = id(create(changed("admissionDate", "2000-01-01T23:59:59Z")));
+        long start = id(create(changed("admissionDate", "2000-01-02T02:00:00+02:00")));
+        long end = id(create(changed("admissionDate", "2000-01-02T23:59:59.999999Z")));
+        long after = id(create(changed("admissionDate", "2000-01-03T00:00:00Z")));
+        assertThat(ids(search(Map.of("filter", Map.of("admissionDateFrom", "2000-01-02",
+                "admissionDateTo", "2000-01-02"))))).containsExactly(end, start);
+        assertThat(ids(search(Map.of("filter", Map.of("admissionDateFrom", "2000-01-02")))))
+                .containsExactly(after, end, start);
+        assertThat(ids(search(Map.of("filter", Map.of("admissionDateTo", "2000-01-02")))))
+                .containsExactly(end, start, before);
+    }
+
+    @Test
+    void invalidPluralFiltersAndDateRangesReturnProblemDetail() {
+        for (var filter : List.of(
+                Map.of("stoneSizes", List.of("UNKNOWN")),
+                Map.of("stoneTypes", List.of("UNKNOWN")),
+                Map.of("stoneSizes", java.util.Arrays.asList("SMALL", null)),
+                Map.of("stoneTypes", java.util.Arrays.asList("BASALT", null)),
+                Map.of("admissionDateFrom", "not-a-date"),
+                Map.of("admissionDateTo", "2000-02-30"),
+                Map.of("admissionDateFrom", "2000-01-03", "admissionDateTo", "2000-01-02"))) {
+            problem(HttpMethod.POST, STONES + "/search", Map.of("filter", filter), 400);
+        }
+    }
+
     private Map<String, Object> search(Map<String, Object> body) {
         return client.post().uri(STONES + "/search").body(body).exchange()
                 .expectStatus().isOk().expectBody(JSON_OBJECT).returnResult().getResponseBody();

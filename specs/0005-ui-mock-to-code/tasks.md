@@ -107,3 +107,67 @@ biographies and no horizontal overflow. Desktop/mobile screenshots inspected.
 Sorting acceptance criteria checked against frontend evidence and T0005-013's
 128 passing backend tests and generated JSON/YAML checks. No live UI API calls
 or database changes. Development server remains at localhost:5174 (HTTP 200).
+
+## Pending Filter Tasks
+
+- [x] **T0005-016 — Extend backend filter contract and implementation.** Add
+  plural size/type and optional date bounds, preserve singular compatibility,
+  update DTO/criteria/service validation/repository predicates and generated
+  descriptions. Verify invalid inputs, UTC boundaries, group semantics, sorted
+  pagination/totals and OpenAPI with PostgreSQL tests; run Maven verify.
+- [x] **T0005-017 — Add mock filter support and feature state.** Introduce
+  frontend filter DTOs, thread filters through the API boundary, filter before
+  sorting/paging, manage applied filters/date drafts and page-reset semantics.
+  Add meaningful tests and run frontend checks.
+- [x] **T0005-018 — Build the responsive collapsible filter panel.** Add size/type
+  multiselects, optional date inputs with accessible validation, group-count
+  badge, toggle and reset. Use a feature slot in PageLayout, preserve common
+  layout independence, add interaction tests and run frontend checks.
+- [x] **T0005-019 — Verify filter acceptance and responsive integration.** Check
+  keyboard access, desktop/tablet/mobile placement, empty results, expansion,
+  reset, group counts and combined sorting/pagination. Record frontend/backend
+  evidence, run required checks and leave the local UI server running.
+
+Filter tasks are completed; verification evidence follows.
+
+Filter verification (2026-10-06):
+
+- T0005-016: Maven verify passed on JDK 23.0.2 with Docker Desktop PostgreSQL
+  Testcontainers: 131 tests, zero failures/errors. Added plural-group, singular
+  compatibility, duplicate/empty/null group, UTC day/open-bound, invalid enum/
+  element/date/range and generated OpenAPI checks. No migration required.
+- T0005-017: mock adapter filters before ordering/page slicing; tests cover OR/AND,
+  counts, UTC bounds and compatibility. Feature state separates date draft/error
+  from applied dates and derives active group count.
+- T0005-018: responsive CatalogFilters added with accessible native controls,
+  toggle/badge/reset, associated date errors and feature-provided layout slot.
+  Frontend lint, 19/19 tests and production build passed.
+- T0005-019: Chrome checks at 1440, 1024, 768, 390 and 320 pixels confirmed
+  initial expanded/collapsed behavior, 4/4/2/1/1 columns and no overflow.
+  Expanded tablet/mobile views, keyboard Space toggle and checkbox selection
+  checked; desktop and narrow screenshots inspected. UI remains running at
+  localhost:5174 (HTTP 200). No live backend integration was introduced.
+
+- [x] **T0005-020 — Isolate service validation from HTTP error handling.**
+  Add a custom date-range exception, translate it in ApiExceptionHandler, record
+  the constitutional rule, enforce dependencies with ArchUnit and verify backend.
+
+T0005-020 verification: Maven verify passed on 2026-10-06, 132 tests with no
+failures/errors. Reversed-range HTTP 400 behavior remains covered; the new
+ArchUnit protocol-dependency rule passes. UI remains at localhost:5174 (HTTP 200).
+
+- [x] **T0005-021 — Compact catalog cards and default to eight per page.**
+  Scale cards to 70%, offer 8/12/24, verify paging and responsive presentation,
+  update documentation and leave UI running.
+
+T0005-021 verification: lint, 20/20 tests and build passed. Chrome at 1440,
+1024, 768, 390 and 320 pixels confirmed 8 initial cards, no overflow and
+width/height ratios approximately 0.70 compared with the previous card scale.
+Desktop/mobile screenshots inspected. UI remains running at localhost:5174.
+
+- [x] **T0005-022 — Restore original card dimensions.** Remove grid scaling
+  while retaining default size 8 and options 8/12/24; verify frontend checks
+  and leave the local UI running.
+
+T0005-022 verification: lint, 20/20 tests and build passed; original unscaled
+grid CSS restored. Local UI remains at localhost:5174 (HTTP 200).

@@ -1,5 +1,6 @@
 package lab.stoneshelter.handlers;
 
+import lab.stoneshelter.exceptions.InvalidAdmissionDateRangeException;
 import lab.stoneshelter.exceptions.StoneNotFoundException;
 import lab.stoneshelter.exceptions.MapperValidationException;
 import org.springframework.http.HttpHeaders;
@@ -21,6 +22,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(MapperValidationException.class)
     public ProblemDetail handleMapperValidation(MapperValidationException exception) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+    }
+
+    @ExceptionHandler(InvalidAdmissionDateRangeException.class)
+    public ProblemDetail handleInvalidAdmissionDateRange(InvalidAdmissionDateRangeException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
     }
 
     @Override

@@ -1,11 +1,17 @@
 package lab.stoneshelter.criteria;
 
+import java.time.Instant;
+import java.util.List;
 import lab.stoneshelter.enums.StoneSortField;
 import lab.stoneshelter.enums.StoneType;
 import lab.stoneshelter.enums.StoneSize;
 import lab.stoneshelter.enums.AdoptionStatus;
 
 public class StoneSearchCriteria {
+    private List<StoneType> stoneTypes;
+    private List<StoneSize> stoneSizes;
+    private Instant admissionDateFrom;
+    private Instant admissionDateToExclusive;
     private StoneType stoneType;
     private StoneSize stoneSize;
     private AdoptionStatus adoptionStatus;
@@ -71,4 +77,20 @@ public class StoneSearchCriteria {
     public void setDescending(boolean descending) {
         this.descending = descending;
     }
+
+    public List<StoneType> getStoneTypes() { return stoneTypes; }
+
+    public void setStoneTypes(List<StoneType> stoneTypes) { this.stoneTypes = stoneTypes; }
+
+    public List<StoneSize> getStoneSizes() { return stoneSizes; }
+
+    public void setStoneSizes(List<StoneSize> stoneSizes) { this.stoneSizes = stoneSizes; }
+
+    public Instant getAdmissionDateFrom() { return admissionDateFrom; }
+
+    public void setAdmissionDateFrom(Instant admissionDateFrom) { this.admissionDateFrom = admissionDateFrom; }
+
+    public Instant getAdmissionDateToExclusive() { return admissionDateToExclusive; }
+
+    public void setAdmissionDateToExclusive(Instant admissionDateToExclusive) { this.admissionDateToExclusive = admissionDateToExclusive; }
 }

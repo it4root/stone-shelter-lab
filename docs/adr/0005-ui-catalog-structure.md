@@ -104,3 +104,39 @@ id ASC for ties in both directions. Sort changes reset page and preserve size;
 page/size changes preserve sort. This supersedes the initial sorting exclusion.
 The dropdown is feature-owned and uses separate named enum types and explicit
 presentation mappings. No new dependency or live HTTP integration is added.
+
+## Amendment: Catalog Filters
+
+The user accepted size/type multiselects and optional admission-date bounds,
+with OR inside groups and AND between groups. Count active applied groups (0–3),
+not selections. The date range counts as one group even with only one bound.
+Use inclusive UTC calendar days, retain the last valid applied range when a
+draft is invalid and show associated validation errors. Filter before sorting
+and pagination; totals reflect matches. Reset preserves sort, size and expansion.
+
+A feature-owned collapsible panel occupies the desktop side area and appears
+above the catalog collapsed initially on tablet/mobile. PageLayout receives the
+feature panel as a slot and retains no filter state. Native accessible controls
+and local feature state suffice; no dependency or global store is introduced.
+
+The backend adds plural filters and optional LocalDate bounds while preserving
+singular size/type/adoption-status filters with AND semantics. StoneSearchFilter
+is a class because it now exceeds four fields. The service validates date order
+and translates UTC bounds; repositories build query predicates. Generated
+OpenAPI remains the only HTTP contract. No schema change or migration is needed.
+These decisions supersede the initial reserved-only filter area and filter scope
+exclusion. UI continues using the mock API boundary.
+
+## Amendment: Compact Cards and Eight-Card UI Default
+
+The user requested cards 30% smaller and an initial page size of 8 with options
+8/12/24. The grid uses 70% width with layout-aware 0.7 CSS zoom to preserve card
+proportions and responsive column counts. The local UI/mock default changes to
+8; backend omitted-size default stays 12 because UI sends its chosen size.
+This supersedes the previous UI default of 12 without changing the maximum 24.
+
+## Amendment: Restore Original Card Dimensions
+
+The user reverted the compact-card visual change. Remove the 70% grid width
+and CSS zoom; restore full-size cards. Keep the UI/mock default 8 and options
+8/12/24. This supersedes only the preceding compact-scale decision.

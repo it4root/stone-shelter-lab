@@ -73,6 +73,12 @@ class ArchitectureTest {
             .allowEmptyShould(true);
 
     @ArchTest
+    static final ArchRule servicesAndCustomExceptionsDoNotDependOnProtocolErrors = noClasses()
+            .that().resideInAnyPackage("lab.stoneshelter.services..", "lab.stoneshelter.exceptions..")
+            .should().dependOnClassesThat().resideInAnyPackage(
+                    "org.springframework.http..", "org.springframework.web..", "jakarta.servlet..");
+
+    @ArchTest
     static final ArchRule servicesDoNotDependOnHttpLayer = noClasses()
             .that().resideInAnyPackage("lab.stoneshelter.services..", "lab.stoneshelter.criteria..", "lab.stoneshelter.enums..")
             .should().dependOnClassesThat().resideInAnyPackage("lab.stoneshelter.controllers..", "lab.stoneshelter.handlers..")

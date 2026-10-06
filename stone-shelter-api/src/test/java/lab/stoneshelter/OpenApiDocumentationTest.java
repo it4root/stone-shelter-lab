@@ -72,6 +72,10 @@ class OpenApiDocumentationTest extends IntegrationTest {
             assertThat(schemaJsonNode.at("/properties/biography/maxLength").asInt()).isEqualTo(2048);
             assertThat(schemaJsonNode.at("/properties/admissionDate/format").asText()).isEqualTo("date-time");
         }
+        assertThat(schemasJsonNode.at("/StoneSearchFilter/properties/stoneSizes/type").asText()).isEqualTo("array");
+        assertThat(schemasJsonNode.at("/StoneSearchFilter/properties/stoneTypes/type").asText()).isEqualTo("array");
+        assertThat(schemasJsonNode.at("/StoneSearchFilter/properties/admissionDateFrom/format").asText()).isEqualTo("date");
+        assertThat(schemasJsonNode.at("/StoneSearchFilter/properties/admissionDateTo/format").asText()).isEqualTo("date");
         assertThat(schemasJsonNode.at("/StonesSearchRequest/properties/page/minimum").asText()).isEqualTo("0");
         assertThat(schemasJsonNode.at("/StonesSearchRequest/properties/size/minimum").asInt()).isEqualTo(1);
         assertThat(schemasJsonNode.at("/StonesSearchRequest/properties/size/maximum").asInt()).isEqualTo(24);
