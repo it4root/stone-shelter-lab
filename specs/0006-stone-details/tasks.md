@@ -29,6 +29,11 @@ Acceptance and verification evidence live in [acceptance.md](acceptance.md).
   Run required frontend checks, Chrome responsive/keyboard/history checks,
   audit acceptance/backend evidence, record ADR/retrospective and keep UI running.
 
+- [x] **T0006-009 — Move cleanup to a daily health-gated backend scheduler.**
+  Update spec/acceptance/ADR; defer removal from user requests, configure daily
+  scheduling/readiness/limits, stop on failures, verify durable behavior and
+  existing contracts, and leave local applications running.
+
 ## Verification Records
 
 T0006-001: requirements, links and task numbering reviewed; runtime checks follow
@@ -62,3 +67,13 @@ Generated OpenAPI is served by the running API. UI was restarted with pinned
 Node 24.21.0 at http://localhost:5174/ and returns 200 for the detail route.
 Plan, ADR, acceptance, retrospective and run instructions are complete.
 No commits or pushes were created; unrelated engineering notes were preserved.
+
+T0006-009: full Maven verify on JDK 23.0.2 passed 153 tests, zero failures,
+errors or skips: 13 PostgreSQL/MinIO gallery tests, seven job limit/failure/pacing
+checks and all existing generated contract, mapper, CRUD and architecture checks.
+Compose smoke verification used a temporary 15-second cron: deleting a temporary
+stone removed metadata immediately, retained its uploaded placeholder bytes until
+the scheduled run, and then removed the MinIO object. The default daily cron and
+pacing were restored. No migration, dependency or HTTP schema changes were needed.
+UI remained running at http://localhost:5174/ (HTTP 200). Unrelated engineering
+notes were preserved; no new commit or push was created.

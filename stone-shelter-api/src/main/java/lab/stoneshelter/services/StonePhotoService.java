@@ -31,11 +31,6 @@ public class StonePhotoService {
         byte[] bytes = validation.validate(request);
         String objectKey = "stones/" + stoneId + "/" + UUID.randomUUID();
         cleanup.recordUploadIntent(objectKey);
-        try {
-            return attachment.append(stoneId, request, bytes, objectKey);
-        } catch (RuntimeException exception) {
-            cleanup.attemptCleanup(objectKey);
-            throw exception;
-        }
+        return attachment.append(stoneId, request, bytes, objectKey);
     }
 }

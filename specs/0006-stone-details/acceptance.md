@@ -1,6 +1,6 @@
 # Acceptance Criteria: Feature 0006
 
-Status: Implemented and verified on 2026-10-06. All criteria below passed.
+Status: Initial feature and daily cleanup revision verified on 2026-10-06.
 Detail adoption and the volunteer upload UI are deferred by the authorized plan.
 
 1. Clicking a catalog photo or its placeholder opens `/stones/{id}` for that
@@ -67,6 +67,21 @@ Detail adoption and the volunteer upload UI are deferred by the authorized plan.
     lint/tests/build and responsive/gallery interaction checks pass.
     Verification evidence is recorded after implementation below.
 
+21. Photo cleanup runs through a dedicated scheduler inside the backend, once
+    daily by configurable cron/timezone; default is 03:00 UTC.
+22. Stone deletion returns its existing identifier-only 200 response and removes
+    metadata while retaining durable file-cleanup work. Neither deletion nor
+    failed upload requests call MinIO removal immediately.
+23. Each run checks MinIO write readiness with a bounded timeout before processing.
+    Unavailable or disabled storage causes no per-object removals and preserves
+    queued work until a subsequent daily run.
+24. Processing is sequential and paced, with configurable batch, object and time
+    limits. Storage/database failure or interruption stops the current run; no
+    minute-based retry loop remains. Unfinished work is retained.
+25. Successful cleanup removes objects and completed intents; attached images and
+    not-yet-due upload intents remain protected. Deferred work survives restart.
+26. Backend verification covers deferred request behavior, readiness gating,
+    mid-run failure, bounded processing, successful cleanup and existing contracts.
 
 ## Verification Evidence
 
@@ -83,3 +98,28 @@ Decision records are in [ADR-0006](../../docs/adr/0006-stone-details.md),
 with stack pins in [ADR-0001](../../docs/adr/0001-stack-versions.md).
 Task records are in [tasks.md](tasks.md). Temporary smoke-test data was removed.
 The UI remains mock-first; real upload/storage was verified independently.
+
+Daily cleanup criteria 21–26 supersede immediate compensation and minute-retry
+behavior described in the initial verification evidence. Revision checks below cover
+T0006-009; the initial checks above remain historical evidence.
+
+
+### Daily Cleanup Revision Evidence
+
+Criteria 21–26 passed. Full Maven verify ran 153 tests with zero failures,
+errors or skips. Real PostgreSQL/MinIO tests verify that requests retain intents
+without immediate removal, not-yet-due upload work is preserved, unavailable
+readiness skips per-object calls, mid-run storage/database failure retains work,
+and a later run completes cleanup without touching attached objects.
+Seven job tests cover readiness gating, multiple batches/object budget, elapsed
+budget including the probe, pacing, insufficient remaining wait budget,
+mid-run stop and interruption. Cleanup transport has a 2-second connect and
+10-second total call timeout; queue read/cleanup transactions have 10-second
+transaction timeouts. Time budget checks run between intents.
+
+A Compose smoke check exercised the actual scheduler using a temporary 15-second
+cron: stone metadata disappeared immediately, uploaded placeholder bytes stayed
+available until the scheduled tick, then returned 404. Temporary data was removed;
+the default 03:00 UTC daily cron and 1000 ms pacing were restored afterward.
+The current deployment has one backend scheduler instance; cross-replica
+coordination and a separate cleanup process remain outside this revision.

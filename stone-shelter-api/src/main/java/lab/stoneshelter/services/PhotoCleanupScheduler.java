@@ -7,11 +7,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 @Configuration
 @EnableScheduling
 public class PhotoCleanupScheduler {
-    private final PhotoCleanupService cleanup;
-    public PhotoCleanupScheduler(PhotoCleanupService cleanup) { this.cleanup = cleanup; }
+    private final PhotoCleanupJobService job;
+    public PhotoCleanupScheduler(PhotoCleanupJobService job) { this.job = job; }
 
-    @Scheduled(fixedDelayString = "${stone.photos.cleanup-delay-ms}", initialDelayString = "${stone.photos.cleanup-delay-ms}")
-    public void retryDueObjects() {
-        cleanup.findDueKeys().forEach(cleanup::clean);
+    @Scheduled(cron = "${stone.photos.cleanup-cron}", zone = "${stone.photos.cleanup-zone}")
+    public void cleanDaily() {
+        job.run();
     }
 }

@@ -47,15 +47,13 @@ remain excluded. Use the existing placeholder-rock.png for every mock gallery im
   resource existence, persist intent independently, then delegate to a separate
   transactional attachment service which rechecks and locks the stone and intent.
   This prevents concurrent requests exhausting the connection pool through nested
-  transactions. Attempt compensation only after attachment rollback has completed.
-  Attempt immediate compensation on failure and retain durable retry if removal
-  fails. Queue managed keys transactionally on stone deletion, remove metadata,
-  then clean objects after commit with durable retry. Cleanup work must never
+  transactions. Retain intent after attachment rollback for the daily job.
+  Queue managed keys transactionally on stone deletion and remove metadata;
+  user requests never perform immediate file removal. Cleanup work must never
   delete a successfully attached object; use delayed safety/retry processing for
   incomplete uploads. This queue implements the required failure compensation,
   not a general event/messaging subsystem.
-  Post-commit cleanup failures are logged and retried from the durable queue;
-  they must not change the successful response for an already committed deletion.
+  Daily cleanup failures cannot change a completed deletion response.
 - Existing stone deletion returns its identifier-only 200 response; external
   legacy URLs are never deleted. Storage unavailable on upload returns 503.
 - Extend generated OpenAPI from actual multipart controllers/shared DTOs. No
@@ -112,3 +110,30 @@ refresh and state/scroll restoration. Record evidence and leave local UI running
 - [Accepted UI architecture](../../docs/adr/0005-ui-mock-to-code.md)
 
 - [TwelveMonkeys ImageIO release](https://github.com/haraldk/TwelveMonkeys/releases/tag/twelvemonkeys-3.12.0)
+
+## T0006-009: Daily Cleanup Revision
+
+Keep PhotoCleanupScheduler as a trigger inside the current single backend.
+Delegate run orchestration to PhotoCleanupJobService without an outer database
+transaction; PhotoCleanupService owns durable intent and each object's locked
+transaction. Remove request-path compensation/afterCommit removal and the
+minute-based rescheduling. Upload intents retain the existing 24-hour safety delay.
+
+Default PHOTO_CLEANUP_CRON is `0 0 3 * * *`, PHOTO_CLEANUP_ZONE is `UTC`.
+Use batches of 100, at most 1000 intents and 30 minutes per run, with 1000 ms
+between intents; configure through environment variables. After reaching a limit,
+leave remaining work for the next scheduled day. These are one-instance limits;
+separate processes and distributed scheduler coordination are outside this scope.
+
+Probe internal `/minio/health/cluster` once before processing. Use the existing
+OkHttp dependency from the MinIO SDK for a bounded cleanup client: connection
+2 seconds and total call 10 seconds, including removal. Keep upload client
+behavior unchanged. Health success is a precondition, not a guarantee of future
+operations. Stop on first storage/database failure or interruption and retain
+unfinished intents. Existing successful/attached intent removal remains atomic.
+Use 10-second transaction timeouts for queue reads and per-object cleanup.
+The elapsed budget is checked between intents; do not start a pacing wait that
+would consume the remaining budget. No new dependency, migration or HTTP contract
+is introduced. Disable cron in
+integration tests, invoke the job deterministically with zero pacing for tests,
+and verify real readiness/upload/removal plus controlled failure/limit cases.

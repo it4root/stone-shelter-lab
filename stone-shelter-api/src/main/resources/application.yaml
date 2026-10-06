@@ -36,7 +36,12 @@ stone:
     bucket: ${MINIO_BUCKET:}
     access-key: ${MINIO_ACCESS_KEY:}
     secret-key: ${MINIO_SECRET_KEY:}
-    cleanup-delay-ms: ${PHOTO_CLEANUP_DELAY_MS:60000}
+    cleanup-cron: "${PHOTO_CLEANUP_CRON:0 0 3 * * *}"
+    cleanup-zone: ${PHOTO_CLEANUP_ZONE:UTC}
+    cleanup-batch-size: ${PHOTO_CLEANUP_BATCH_SIZE:100}
+    cleanup-max-objects: ${PHOTO_CLEANUP_MAX_OBJECTS:1000}
+    cleanup-interval-ms: ${PHOTO_CLEANUP_INTERVAL_MS:1000}
+    cleanup-max-duration: ${PHOTO_CLEANUP_MAX_DURATION:PT30M}
 
 server:
   tomcat:

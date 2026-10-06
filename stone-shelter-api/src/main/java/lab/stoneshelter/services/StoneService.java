@@ -2,8 +2,6 @@ package lab.stoneshelter.services;
 
 import java.time.ZoneOffset;
 import lab.stoneshelter.repositories.StonePhotoEntityRepository;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import lab.stoneshelter.exceptions.InvalidAdmissionDateRangeException;
 import lab.stoneshelter.enums.StoneSortField;
 import lab.stoneshelter.criteria.StoneSearchCriteria;
@@ -79,10 +77,6 @@ public class StoneService {
         cleanup.enqueueDeletedPhotos(objectKeys);
         photoRepository.deleteAll(stoneEntity.getPhotos());
         repository.delete(stoneEntity);
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() { objectKeys.forEach(cleanup::attemptCleanup); }
-        });
         return new StoneDeleteResponse(id);
     }
 

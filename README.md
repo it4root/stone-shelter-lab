@@ -51,6 +51,14 @@ The first successfully added photo supplies the catalog cover. The React UI
 continues to use independent mock data and the supplied placeholder; it has no
 volunteer upload interface. Run it using [UI instructions](stone-shelter-ui/README.md).
 
+Photo deletion is deferred to a scheduler inside the backend. By default it runs
+at 03:00 UTC daily, checks MinIO write readiness, and processes paced batches.
+Deletion requests remove database metadata and queue owned files; failed uploads
+retain durable cleanup intent. Storage failures stop a run and preserve work for
+the next day. Configure cron/timezone and processing limits using the
+PHOTO_CLEANUP_* settings in `.env.example`. The current deployment uses one
+backend scheduler instance.
+
 Feature decisions and verification are in
 [0006-stone-details](specs/0006-stone-details/spec.md).
 ## Verify

@@ -77,19 +77,28 @@ the existing JDK decoder. The frontend requires no added dependency.
 ### Storage failure compensation
 
 Object storage and the database do not share an atomic transaction. Persist
-cleanup intent before upload independently of metadata attachment. Successful
-attachment removes that intent in the metadata transaction; failures attempt
-immediate object cleanup and retain durable delayed retry when necessary.
-Upload orchestration runs without a database transaction and delegates to a
-separate transactional attachment service after validation and intent creation.
-Attachment rechecks the stone and locks both stone and intent before storing and
-attaching the photo. This avoids reserving a second database connection while
-concurrent requests already hold connections waiting for the same stone lock.
-Compensation starts after rollback has completed.
-On stone removal, queue managed keys transactionally and clean after commit.
-Failures starting or performing post-commit cleanup are logged for durable retry;
-they cannot turn an already committed deletion into a failed HTTP response.
-Cleanup never owns legacy external URLs and must not delete attached photos.
+cleanup intent independently before attachment and remove it atomically when
+metadata commits. Upload orchestration has no outer database transaction; a
+separate attachment service locks the stone and intent. This avoids nested
+connection acquisition while concurrent uploads wait on the same stone lock.
+
+The accepted follow-up replaces immediate compensation and minute retries with
+a daily scheduler inside the existing backend. User requests persist work only;
+stone deletion removes metadata and returns its existing response independently
+of MinIO availability. Interrupted upload intents retain a 24-hour safety delay.
+Managed bytes can remain until the next successful daily cleanup.
+
+The scheduler checks MinIO write readiness before processing. Default schedule
+is 03:00 UTC, configured by environment. Process sequential batches of 100 with
+1000 ms pacing, up to 1000 intents or 30 minutes per run. Stop on the first
+storage/database failure or interruption, retaining unfinished work for the next
+scheduled day. Bound cleanup network calls to 10 seconds with a 2-second connect
+timeout using the already available OkHttp client. Upload transport is unchanged.
+Protect attached objects under a database lock and never delete legacy URLs.
+
+A dedicated job service orchestrates outside a database transaction; each intent
+has its own short transaction. The current deployment has one backend instance;
+separate cleanup containers and cross-replica coordination remain deferred.
 This queue serves photo consistency only; no new message broker is introduced.
 
 ### Scope boundaries
@@ -97,6 +106,51 @@ This queue serves photo consistency only; no new message broker is introduced.
 The browser continues through the mock API boundary; real backend upload/storage
 is verified independently. Live frontend API integration, volunteer upload UI,
 adoption submissions and all other excluded controls require separate scope.
+
+## Recommendation: Dedicated Photo Domain and Reverse Proxy
+
+Status: Recommendation only. The reverse proxy is not an accepted deployment
+decision, has not been implemented, and is outside the completed feature scope.
+Implementation requires a separately documented deployment decision and scope.
+The accepted private bucket and presigned GET behavior remain in place.
+
+For a future deployment, consider the following topology:
+
+```text
+Browser -> HTTPS photo domain -> reverse proxy -> MinIO in a private network
+Backend -> internal MinIO endpoint
+```
+
+Use a dedicated public hostname, for example photos.stone-shelter.example, with
+real DNS, routing and a valid TLS certificate. Set MINIO_BROWSER_ENDPOINT to
+that public HTTPS origin when generating signed URLs. Keep MINIO_ENDPOINT as
+the internal address used by the backend for uploads and removal. This property
+configures the backend SDK's signing endpoint; it does not configure DNS or
+install a proxy in MinIO.
+
+The proxy can provide TLS termination, request-rate limits and restrictions on
+public operations. Network rules should prevent bypassing it through direct
+external access to MinIO's S3 port; the administrative console should have
+separate restricted access. Keep the bucket private and preserve MinIO's
+signature and permission checks behind these additional controls.
+
+Generate URLs against the public hostname from the outset. Forward the signed
+Host, object path and query parameters unchanged; rewriting them can invalidate
+the signature. In Nginx, proxy_set_header Host $http_host preserves the incoming
+Host, including its port. Avoid a rewritten subpath for the S3 endpoint; use the
+dedicated hostname's root. Confirm signed downloads through the actual proxy
+before adopting this deployment.
+
+The public domain hides the internal storage address, but remains visible to
+the browser. An arbitrary unreachable hostname cannot deliver photos. A domain
+with working DNS and proxy routing is an external alias, not a security secret.
+Possession of a valid signed URL still permits reading its specific object until
+expiry; the proxy does not automatically bind it to an application user.
+
+References:
+
+- [MinIO load balancing and reverse proxy guidance](https://docs.min.io/aistor/installation/linux/load-balancing/)
+- [Nginx proxy header configuration](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_set_header)
 
 ## Consequences
 

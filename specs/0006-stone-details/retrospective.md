@@ -45,3 +45,13 @@ separate specifications. Presigned read URLs expire after one hour; future live
 integration must request fresh metadata. Production client-route hosting remains
 outside this scope. [Acceptance evidence](acceptance.md) records the final checks;
 [ADR-0006](../../docs/adr/0006-stone-details.md) records the accepted decisions.
+
+## Follow-up: Daily Cleanup (T0006-009)
+
+The user identified fixed minute retries and immediate per-photo removal as a
+source of load during storage outages. The accepted follow-up keeps a scheduler
+inside the backend but defers all removal from user requests. A daily job checks
+write readiness, processes paced and bounded batches, and stops at the first
+dependency failure. Durable intent and attached-object protection remain.
+Delayed file removal is now an explicit behavior; separate cleanup deployment
+and coordination across multiple backend instances remain outside this revision.

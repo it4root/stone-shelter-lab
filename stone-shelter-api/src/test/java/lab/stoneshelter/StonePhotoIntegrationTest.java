@@ -21,6 +21,7 @@ import lab.stoneshelter.repositories.StonePhotoEntityRepository;
 import lab.stoneshelter.repositories.PhotoCleanupEntityRepository;
 import lab.stoneshelter.services.MinioPhotoStorageService;
 import lab.stoneshelter.services.PhotoCleanupService;
+import lab.stoneshelter.services.PhotoCleanupJobService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,6 +51,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
@@ -74,12 +77,14 @@ class StonePhotoIntegrationTest extends IntegrationTest {
         registry.add("stone.photos.bucket", () -> "gallery-test");
         registry.add("stone.photos.access-key", () -> "gallery-test");
         registry.add("stone.photos.secret-key", () -> "gallery-test-secret");
-        registry.add("stone.photos.cleanup-delay-ms", () -> 3600000);
+        registry.add("stone.photos.cleanup-cron", () -> "-");
+        registry.add("stone.photos.cleanup-interval-ms", () -> 0);
     }
 
     @Autowired private RestTestClient client;
     @Autowired private JdbcTemplate jdbc;
     @Autowired private PhotoCleanupService cleanup;
+    @Autowired private PhotoCleanupJobService job;
     @MockitoSpyBean private MinioPhotoStorageService storage;
     @MockitoSpyBean private StonePhotoEntityRepository photoRepository;
     @MockitoSpyBean private PhotoCleanupEntityRepository cleanupRepository;
@@ -98,6 +103,10 @@ class StonePhotoIntegrationTest extends IntegrationTest {
             storage.remove(objectKey);
             jdbc.update("DELETE FROM photo_cleanup WHERE object_key = ?", objectKey);
         }
+        for (long id : createdIds) {
+            jdbc.update("UPDATE photo_cleanup SET available_at = '2000-01-01T00:00:00Z' WHERE object_key LIKE ?", "stones/" + id + "/%");
+        }
+        cleanup.findDueKeys(1000).forEach(cleanup::clean);
     }
 
     @Test
@@ -194,62 +203,73 @@ class StonePhotoIntegrationTest extends IntegrationTest {
         doThrow(new PhotoStorageUnavailableException()).when(storage).upload(anyString(), any(byte[].class), anyString());
         upload(id, "image/png", image("png"), 503);
         assertThat(photos(detail(id))).isEmpty();
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM photo_cleanup", Long.class)).isZero();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM photo_cleanup", Long.class)).isEqualTo(1);
+        verify(storage, never()).remove(anyString());
         reset(storage);
         assertThat(upload(id, "image/png", image("png"), 201)).containsEntry("position", 0);
     }
 
     @Test
-    void databaseFailureCompensatesTheStoredObjectBeforeReturningAnError() throws Exception {
+    void databaseFailureRetainsIntentForDailyCleanupWithoutImmediateRemoval() throws Exception {
         long id = createStone();
         doThrow(new DataIntegrityViolationException("Simulated metadata failure")).when(photoRepository)
                 .saveAndFlush(any(StonePhotoEntity.class));
-        upload(id, "image/png", image("png"), 500);
-        assertThat(photos(detail(id))).isEmpty();
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM photo_cleanup", Long.class)).isZero();
-        var keyCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
-        org.mockito.Mockito.verify(storage).remove(keyCaptor.capture());
-        assertThat(download(storage.readUrl(keyCaptor.getValue())).statusCode()).isEqualTo(404);
-    }
-
-    @Test
-    void failedCompensationRetainsDurableIntentAndLaterRetryRemovesTheObject() throws Exception {
-        long id = createStone();
-        doThrow(new DataIntegrityViolationException("Simulated metadata failure")).when(photoRepository)
-                .saveAndFlush(any(StonePhotoEntity.class));
-        doThrow(new PhotoStorageUnavailableException()).when(storage).remove(anyString());
         upload(id, "image/png", image("png"), 500);
         assertThat(photos(detail(id))).isEmpty();
         String key = jdbc.queryForObject("SELECT object_key FROM photo_cleanup", String.class);
         extraKeys.add(key);
+        verify(storage, never()).remove(anyString());
         assertThat(download(storage.readUrl(key)).statusCode()).isEqualTo(200);
-        reset(storage, photoRepository, cleanupRepository);
+        job.run();
+        verify(storage, never()).remove(anyString());
+        reset(photoRepository);
         jdbc.update("UPDATE photo_cleanup SET available_at = '2000-01-01T00:00:00Z' WHERE object_key = ?", key);
-        cleanup.findDueKeys().forEach(cleanup::clean);
+        job.run();
         assertThat(download(storage.readUrl(key)).statusCode()).isEqualTo(404);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM photo_cleanup WHERE object_key = ?", Long.class, key)).isZero();
     }
 
     @Test
-    void stoneRemovalQueuesFailedObjectCleanupAndRetryDoesNotTouchLegacyUrls() throws Exception {
+    void unavailableReadinessSkipsAllQueuedObjectsAndLaterRunCleansThem() throws Exception {
         long id = createStone();
         upload(id, "image/png", image("png"), 201);
         String key = objectKey(id, 0);
         extraKeys.add(key);
-        doThrow(new PhotoStorageUnavailableException()).when(storage).remove(key);
-        client.delete().uri("/api/v1/stones/" + id).exchange().expectStatus().isOk()
-                .expectBody().jsonPath("$.id").isEqualTo(id);
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM stone_photo WHERE stone_id = ?", Long.class, id)).isZero();
+        client.delete().uri("/api/v1/stones/" + id).exchange().expectStatus().isOk();
+        doThrow(new PhotoStorageUnavailableException()).when(storage).checkAvailability();
+        job.run();
+        verify(storage, never()).remove(anyString());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM photo_cleanup WHERE object_key = ?", Long.class, key)).isEqualTo(1);
         assertThat(download(storage.readUrl(key)).statusCode()).isEqualTo(200);
         reset(storage);
-        cleanup.clean(key);
+        job.run();
         assertThat(download(storage.readUrl(key)).statusCode()).isEqualTo(404);
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM photo_cleanup WHERE object_key = ?", Long.class, key)).isZero();
     }
 
     @Test
-    void committedStoneDeletionStillReturns200WhenImmediateCleanupCannotQueryTheDatabase() throws Exception {
+    void stoneRemovalDefersOwnedFilesAndMidRunFailureRetainsWorkUntilLaterDailyRun() throws Exception {
+        long id = createStone();
+        upload(id, "image/png", image("png"), 201);
+        upload(id, "image/png", image("png"), 201);
+        var keys = jdbc.queryForList("SELECT object_key FROM stone_photo WHERE stone_id = ? ORDER BY position", String.class, id);
+        extraKeys.addAll(keys);
+        client.delete().uri("/api/v1/stones/" + id).exchange().expectStatus().isOk()
+                .expectBody().jsonPath("$.id").isEqualTo(id);
+        verify(storage, never()).remove(anyString());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM stone_photo WHERE stone_id = ?", Long.class, id)).isZero();
+        doThrow(new PhotoStorageUnavailableException()).when(storage).remove(anyString());
+        job.run();
+        verify(storage).remove(anyString());
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM photo_cleanup", Long.class)).isEqualTo(2);
+        for (String key : keys) assertThat(download(storage.readUrl(key)).statusCode()).isEqualTo(200);
+        reset(storage);
+        job.run();
+        for (String key : keys) assertThat(download(storage.readUrl(key)).statusCode()).isEqualTo(404);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM photo_cleanup", Long.class)).isZero();
+    }
+
+    @Test
+    void cleanupDatabaseFailureDoesNotAffectDeletedStoneAndLaterRunRetainsProgress() throws Exception {
         long id = createStone();
         upload(id, "image/png", image("png"), 201);
         String key = objectKey(id, 0);
@@ -258,12 +278,19 @@ class StonePhotoIntegrationTest extends IntegrationTest {
                 .findByObjectKeyForUpdate(key);
         client.delete().uri("/api/v1/stones/" + id).exchange().expectStatus().isOk()
                 .expectBody().jsonPath("$.id").isEqualTo(id);
+        job.run();
+        verify(storage, never()).remove(anyString());
         assertThat(jdbc.queryForObject("SELECT count(*) FROM stone WHERE id = ?", Long.class, id)).isZero();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM photo_cleanup WHERE object_key = ?", Long.class, key)).isEqualTo(1);
-        assertThat(download(storage.readUrl(key)).statusCode()).isEqualTo(200);
         reset(cleanupRepository);
-        cleanup.clean(key);
+        job.run();
         assertThat(download(storage.readUrl(key)).statusCode()).isEqualTo(404);
+    }
+
+    @Test
+    void cleanupReadinessProbeUsesTheRealConfiguredMinioEndpoint() {
+        storage.checkAvailability();
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM photo_cleanup", Long.class)).isZero();
     }
 
     @Test
@@ -280,7 +307,7 @@ class StonePhotoIntegrationTest extends IntegrationTest {
         cleanup.recordUploadIntent(abandoned);
         storage.upload(abandoned, image("png"), "image/png");
         jdbc.update("UPDATE photo_cleanup SET available_at = '2000-01-01T00:00:00Z' WHERE object_key = ?", abandoned);
-        cleanup.findDueKeys().forEach(cleanup::clean);
+        job.run();
         assertThat(download(storage.readUrl(abandoned)).statusCode()).isEqualTo(404);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM photo_cleanup", Long.class)).isZero();
     }

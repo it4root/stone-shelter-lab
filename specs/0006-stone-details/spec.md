@@ -140,6 +140,28 @@ report storage errors with the existing ProblemDetail boundary and allow retry.
 Deleting a stone must clean up its photo metadata and managed MinIO objects;
 legacy external photo URLs do not represent owned objects to delete.
 
+### Daily Deferred Cleanup
+
+Run cleanup in a dedicated scheduler inside the existing backend. User requests
+only persist cleanup intent; stone deletion and failed upload handling do not
+issue immediate MinIO removal requests. Deleted-stone metadata is removed at once;
+managed bytes remain until a successful scheduled cleanup. Failed upload intent
+retains the existing 24-hour safety delay for interrupted attachments.
+
+Use an environment-configurable daily cron and explicit timezone, defaulting to
+03:00 UTC. Before processing, check MinIO write readiness with a short timeout.
+If unavailable, skip the run and retain all work for the next scheduled day.
+Process due work sequentially in small batches with configurable rate, object
+count and elapsed-time limits. Stop the run on storage/database failure or thread
+interruption; do not retry every queued object against an unavailable dependency.
+A successful initial health check does not remove the need to handle later errors.
+Protect attached photos under the existing database lock and retain durable work
+across restarts. No HTTP route, DTO or database schema changes are required.
+
+This scope uses the current single backend instance. A separate cleanup process
+and coordination of daily runs across multiple backend replicas are deferred;
+each additional scheduler instance would otherwise have its own run budget.
+
 Before this feature, local Compose infrastructure had PostgreSQL and the API only.
 Add MinIO service/configuration and persistent object storage as part of this
 backend scope. Configure endpoint, bucket, credentials and browser-accessible
