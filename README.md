@@ -61,6 +61,20 @@ backend scheduler instance.
 
 Feature decisions and verification are in
 [0006-stone-details](specs/0006-stone-details/spec.md).
+
+## Stone Reservations
+
+POST `/api/v1/stones/{id}/reservations` with JSON fields `applicantName` and
+`contactDetails` to reserve an available stone. Both fields accept arbitrary
+nonblank text. Creation returns 201 with the reservation id, stoneId, RESERVED
+adoptionStatus and createdAt. The reservation and status change commit together;
+duplicates or unavailable stones return 409 ProblemDetail. Deleting the stone
+removes its dependent reservation. Generated OpenAPI remains the HTTP contract.
+
+The React details page provides this flow through the mock API boundary without
+a running backend. Live frontend/backend integration is deferred. Decisions and
+verification are in [0007-adopt-stone](specs/0007-adopt-stone/spec.md).
+
 ## Verify
     curl localhost:8080/actuator/health
     http://localhost:8080/actuator/health

@@ -114,3 +114,9 @@ report no browser surfaces, and Chrome/in-app browser creation is unavailable.
 No visual passes are claimed; keep this task unchecked until those checks run.
 Implementation verification preceded commit authorization. No pushes, dependency
 changes or applied-migration edits were made.
+
+Commit preparation: after explicit user authorization, implementation changes
+were grouped by task with the required feature prefix. Frontend lint, all 68
+tests and production build were rerun successfully before each frontend commit.
+Unrelated engineering notes were excluded. The remaining native browser check
+is still open; committing verification evidence does not complete T0007-007.
