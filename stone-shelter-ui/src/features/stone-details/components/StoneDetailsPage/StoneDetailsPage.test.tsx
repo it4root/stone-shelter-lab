@@ -5,7 +5,7 @@ import type { AdoptionStatus } from '../../../../enums/AdoptionStatus';
 import { getStone } from '../../../../api/stonesApi';
 import { StoneDetailsPage } from './StoneDetailsPage';
 
-vi.mock('../../../../api/stonesApi', () => ({ getStone: vi.fn() }));
+vi.mock('../../../../api/stonesApi', () => ({ getStone: vi.fn(), createStoneReservation: vi.fn() }));
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 const stone: StoneResponse = {
@@ -25,7 +25,8 @@ test('shows contract-backed characteristics, UTC date and complete biography wit
   expect(screen.getByText('Shale')).toBeTruthy();
   expect(screen.getByText('Small')).toBeTruthy();
   expect(document.querySelector('.stone-details-biography p')?.textContent).toBe(stone.biography);
-  expect(screen.queryByRole('button', { name: /adopt|favorite|chat|upload/i })).toBeNull();
+  expect(screen.getByRole('button', { name: 'Adopt this stone' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: /favorite|chat|upload/i })).toBeNull();
   expect(screen.queryByText(/weight|color|location|centimeters|found in nature/i)).toBeNull();
 });
 

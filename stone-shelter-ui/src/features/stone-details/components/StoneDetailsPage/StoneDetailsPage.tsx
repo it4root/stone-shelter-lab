@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { StoneGallery } from '../../../../domain/stone/components/StoneGallery/StoneGallery';
 import { adoptionStatusLabels, stoneSizeLabels, stoneTypeLabels } from '../../../../domain/stone/presentation/stoneLabels';
 import { useStoneDetails } from '../../hooks/useStoneDetails';
+import { AdoptStoneAction } from '../../../adopt-stone/components/AdoptStoneAction/AdoptStoneAction';
 import './StoneDetailsPage.css';
 
 const dateFormat = new Intl.DateTimeFormat('en-US', {
@@ -9,7 +10,7 @@ const dateFormat = new Intl.DateTimeFormat('en-US', {
 });
 
 export function StoneDetailsPage({ id }: { id?: number }) {
-  const stone = useStoneDetails(id);
+  const { stone, refreshStone } = useStoneDetails(id);
   const heading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [id]);
@@ -28,6 +29,7 @@ export function StoneDetailsPage({ id }: { id?: number }) {
             <p className="stone-details-id">ID {stone.id}</p>
             <span className="stone-status">{adoptionStatusLabels[stone.adoptionStatus]}</span>
           </div>
+          <AdoptStoneAction key={stone.id} stone={stone} onReserved={refreshStone} />
           <section className="stone-details-characteristics" aria-labelledby="stone-characteristics-heading">
             <h2 id="stone-characteristics-heading">Characteristics</h2>
             <dl>
