@@ -24,8 +24,16 @@ All 30 mock stones are available without the backend or MinIO. Galleries use
 `public/placeholder-rock.png`, with zero/one/multiple-photo examples.
 
 Vitest uses jsdom and React Testing Library to verify catalog, navigation,
-detail and gallery behavior. The visitor UI does not upload photos or submit
-adoption applications. Backend photo storage is verified independently.
+detail, gallery and reservation behavior. An available stone's details include
+`Adopt this stone`: enter arbitrary nonblank name/contact text in the modal and
+submit to reserve it. Confirmation stays in the same modal; failures retain the
+form and allow manual retry when the stone is still eligible. Reservations and
+`Reserved` status are shared by mock reads until a full reload. No backend is
+required and no live HTTP reservation requests are made.
+
+The visitor UI does not upload photos. Backend photo storage and real reservation
+persistence are verified independently. Feature scope and verification are in
+[0007-adopt-stone](../specs/0007-adopt-stone/spec.md).
 An eventual production host must serve `index.html` for the documented client
 routes; deployment is outside the current feature.
 TypeScript 6.0.3 is selected for supported ESLint integration in ADR-0002.
