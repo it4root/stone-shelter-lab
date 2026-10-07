@@ -25,7 +25,7 @@ class OpenApiDocumentationTest extends IntegrationTest {
         assertThat(jsonNode.path("openapi").asText()).startsWith("3.");
         JsonNode pathsJsonNode = jsonNode.path("paths");
         assertThat(pathsJsonNode.propertyStream().map(entry -> entry.getKey()).toList())
-                .containsExactlyInAnyOrder("/api/v1/stones", "/api/v1/stones/{id}", "/api/v1/stones/search", "/api/v1/stones/{id}/photos");
+                .containsExactlyInAnyOrder("/api/v1/stones", "/api/v1/stones/{id}", "/api/v1/stones/search", "/api/v1/stones/{id}/photos", "/api/v1/stones/{id}/reservations");
         assertThat(pathsJsonNode.path("/api/v1/stones").propertyStream().map(entry -> entry.getKey()).toList())
                 .containsExactly("post");
         assertThat(pathsJsonNode.path("/api/v1/stones/{id}").propertyStream().map(entry -> entry.getKey()).toList())
@@ -54,7 +54,8 @@ class OpenApiDocumentationTest extends IntegrationTest {
         for (String name : List.of("StoneCreateRequest", "StoneUpdateRequest", "StoneCreateResponse",
                 "StoneUpdateResponse", "StoneResponse", "StoneDeleteResponse", "StoneSearchResponse",
                 "StonesSearchRequest", "StonesSearchResponse", "StoneSearchFilter", "SearchSort",
-                "StonePhotoResponse", "StonePhotoUploadResponse", "StonePhotoUploadRequest")) {
+                "StonePhotoResponse", "StonePhotoUploadResponse", "StonePhotoUploadRequest",
+                "StoneReservationCreateRequest", "StoneReservationCreateResponse")) {
             JsonNode schemaJsonNode = schemasJsonNode.path(name);
             assertThat(schemaJsonNode.path("description").asText()).as(name + " description").isNotBlank();
             assertThat(schemaJsonNode.path("properties").size()).as(name + " properties").isPositive();
@@ -105,6 +106,27 @@ class OpenApiDocumentationTest extends IntegrationTest {
         assertThat(schemas.at("/StoneSearchResponse/properties/photos").isMissingNode()).isTrue();
         assertThat(schemas.at("/StonePhotoUploadRequest/properties/file/format").asText()).isEqualTo("binary");
         assertThat(schemas.at("/StonePhotoUploadRequest/required")).contains(Json31.mapper().valueToTree("file"));
+    }
+
+    @Test
+    void describesReservationCreationWithRequiredArbitraryTextAndOnlySuccessfulResponse() throws Exception {
+        var jsonNode = openApiJson();
+        var operation = jsonNode.at("/paths/~1api~1v1~1stones~1{id}~1reservations/post");
+        assertThat(operation.at("/requestBody/content/application~1json/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/StoneReservationCreateRequest");
+        assertOperation(operation, "201", "StoneReservationCreateResponse");
+        var request = jsonNode.at("/components/schemas/StoneReservationCreateRequest");
+        assertThat(request.path("required")).containsExactlyInAnyOrder(
+                Json31.mapper().valueToTree("applicantName"), Json31.mapper().valueToTree("contactDetails"));
+        for (String field : List.of("applicantName", "contactDetails")) {
+            assertThat(request.at("/properties/" + field + "/type").asText()).isEqualTo("string");
+            assertThat(request.at("/properties/" + field + "/maxLength").isMissingNode()).isTrue();
+            assertThat(request.at("/properties/" + field + "/pattern").isMissingNode()).isTrue();
+        }
+        var response = jsonNode.at("/components/schemas/StoneReservationCreateResponse");
+        assertThat(response.path("properties").propertyStream().map(entry -> entry.getKey()).toList())
+                .containsExactlyInAnyOrder("id", "stoneId", "adoptionStatus", "createdAt");
+        assertThat(response.at("/properties/createdAt/format").asText()).isEqualTo("date-time");
     }
 
     @Test
