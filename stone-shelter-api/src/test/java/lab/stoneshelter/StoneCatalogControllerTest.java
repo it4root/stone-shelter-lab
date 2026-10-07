@@ -397,6 +397,7 @@ class StoneCatalogControllerTest extends IntegrationTest {
         trackCreatedStone(stone);
         response.expectStatus().isCreated();
         assertThat(stone).isNotNull();
+        assertThat(stone.remove("photos")).as("Legacy creation has an empty managed gallery").isEqualTo(List.of());
         response.expectHeader().doesNotExist("Location");
         return stone;
     }

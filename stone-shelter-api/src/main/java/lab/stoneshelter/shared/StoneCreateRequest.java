@@ -2,6 +2,8 @@ package lab.stoneshelter.shared;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
 import lab.stoneshelter.enums.AdoptionStatus;
 import lab.stoneshelter.enums.StoneSize;
 import lab.stoneshelter.enums.StoneType;
@@ -34,6 +36,12 @@ public class StoneCreateRequest {
     @Schema(description = "Stone size.")
     private StoneSize stoneSize;
 
+    @Size(max = 16)
+    @Schema(description = "Ordered distinct draft photograph UUIDs for the initial gallery; optional.")
+    private List<@NotNull UUID> photoUploadIds;
+
+    public List<UUID> getPhotoUploadIds() { return photoUploadIds; }
+    public void setPhotoUploadIds(List<UUID> photoUploadIds) { this.photoUploadIds = photoUploadIds; }
     public StoneCreateRequest() {}
 
     public String getName() {

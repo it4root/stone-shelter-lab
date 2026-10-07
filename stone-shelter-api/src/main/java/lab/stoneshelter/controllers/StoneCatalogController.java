@@ -1,6 +1,11 @@
 package lab.stoneshelter.controllers;
 
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.springframework.http.ProblemDetail;
 import lab.stoneshelter.services.StoneService;
 import lab.stoneshelter.shared.StoneCreateRequest;
 import lab.stoneshelter.shared.StoneCreateResponse;
@@ -30,6 +35,12 @@ public class StoneCatalogController {
         this.service = service;
     }
 
+    @Operation(summary = "Create a stone with up to 16 previously uploaded draft photographs",
+            description = "Creation succeeds after database association. Internal permanent-copy failures use placeholders and do not fail creation.")
+    @ApiResponse(responseCode = "201", description = "Stone and gallery associations committed.", content = @Content(schema = @Schema(implementation = StoneCreateResponse.class)))
+    @ApiResponse(responseCode = "400", description = "Invalid stone details or unknown, expired, duplicate or excessive photo references.", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "409", description = "A draft photograph was already consumed.", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
+    @ApiResponse(responseCode = "500", description = "Stone could not be persisted; drafts remain reusable until expiry.", content = @Content(mediaType = "application/problem+json", schema = @Schema(implementation = ProblemDetail.class)))
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public StoneCreateResponse createStone(

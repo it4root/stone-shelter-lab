@@ -1,6 +1,9 @@
 package lab.stoneshelter.services;
 
 import java.time.ZoneOffset;
+import java.time.Clock;
+import java.time.Instant;
+import lab.stoneshelter.repositories.StonePhotoDraftEntityRepository;
 import lab.stoneshelter.repositories.StonePhotoEntityRepository;
 import lab.stoneshelter.exceptions.InvalidAdmissionDateRangeException;
 import lab.stoneshelter.enums.StoneSortField;
@@ -17,14 +20,13 @@ import lab.stoneshelter.shared.StoneUpdateResponse;
 import lab.stoneshelter.shared.StonesSearchRequest;
 import lab.stoneshelter.shared.StonesSearchResponse;
 import lab.stoneshelter.entities.StoneEntity;
-import lab.stoneshelter.mappers.entities.StoneCreateRequestToStoneEntityMapper;
 import lab.stoneshelter.mappers.entities.StoneUpdateRequestToStoneEntityMapper;
-import lab.stoneshelter.mappers.dtos.StoneEntityToStoneCreateResponseMapper;
 import lab.stoneshelter.mappers.dtos.StoneEntityToStoneResponseMapper;
 import lab.stoneshelter.mappers.dtos.StoneEntityToStoneUpdateResponseMapper;
 import lab.stoneshelter.mappers.dtos.PageToStonesSearchResponseMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 @Service
 @Transactional
@@ -32,34 +34,41 @@ public class StoneService {
     private final StoneEntityRepository repository;
     private final StonePhotoEntityRepository photoRepository;
     private final PhotoCleanupService cleanup;
-    private final StoneCreateRequestToStoneEntityMapper createRequestMapper;
+    private final StoneCreationService creationService;
+    private final StonePhotoTransferService transferService;
+    private final StonePhotoDraftEntityRepository draftRepository;
+    private final Clock clock;
     private final StoneUpdateRequestToStoneEntityMapper updateRequestMapper;
-    private final StoneEntityToStoneCreateResponseMapper createResponseMapper;
     private final StoneEntityToStoneResponseMapper responseMapper;
     private final StoneEntityToStoneUpdateResponseMapper updateResponseMapper;
     private final PageToStonesSearchResponseMapper searchResponseMapper;
 
     public StoneService(StoneEntityRepository repository,
             StonePhotoEntityRepository photoRepository, PhotoCleanupService cleanup,
-            StoneCreateRequestToStoneEntityMapper createRequestMapper,
+            StoneCreationService creationService, StonePhotoTransferService transferService,
+            StonePhotoDraftEntityRepository draftRepository, Clock clock,
             StoneUpdateRequestToStoneEntityMapper updateRequestMapper,
-            StoneEntityToStoneCreateResponseMapper createResponseMapper,
             StoneEntityToStoneResponseMapper responseMapper,
             StoneEntityToStoneUpdateResponseMapper updateResponseMapper,
             PageToStonesSearchResponseMapper searchResponseMapper) {
         this.repository = repository;
         this.photoRepository = photoRepository;
         this.cleanup = cleanup;
-        this.createRequestMapper = createRequestMapper;
+        this.creationService = creationService;
+        this.transferService = transferService;
+        this.draftRepository = draftRepository;
+        this.clock = clock;
         this.updateRequestMapper = updateRequestMapper;
-        this.createResponseMapper = createResponseMapper;
         this.responseMapper = responseMapper;
         this.updateResponseMapper = updateResponseMapper;
         this.searchResponseMapper = searchResponseMapper;
     }
 
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public StoneCreateResponse create(StoneCreateRequest request) {
-        return createResponseMapper.toDto(repository.save(createRequestMapper.toEntity(request)));
+        long stoneId = creationService.create(request);
+        transferService.copyAll(stoneId);
+        return creationService.findById(stoneId);
     }
 
     @Transactional(readOnly = true)
@@ -73,9 +82,14 @@ public class StoneService {
 
     public StoneDeleteResponse delete(long id) {
         var stoneEntity = repository.findByIdForUpdate(id).orElseThrow(() -> new StoneNotFoundException(id));
+        var stonePhotoDraftEntities = draftRepository.findByStoneIdForUpdate(id);
+        stonePhotoDraftEntities.forEach(stonePhotoDraftEntity -> cleanup.enqueueDraft(stonePhotoDraftEntity.getObjectKey(), Instant.now(clock)));
         var objectKeys = photoRepository.findByStoneIdOrderByPositionAsc(id).stream().map(photo -> photo.getObjectKey()).toList();
         cleanup.enqueueDeletedPhotos(objectKeys);
         photoRepository.deleteAll(stoneEntity.getPhotos());
+        photoRepository.flush();
+        draftRepository.deleteAll(stonePhotoDraftEntities);
+        draftRepository.flush();
         repository.delete(stoneEntity);
         return new StoneDeleteResponse(id);
     }

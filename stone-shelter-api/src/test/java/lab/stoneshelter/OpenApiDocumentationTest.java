@@ -20,19 +20,19 @@ class OpenApiDocumentationTest extends IntegrationTest {
     private RestTestClient restClient;
 
     @Test
-    void documentsOnlyCatalogOperationsWithTheirSuccessfulStatusesAndDtos() throws Exception {
+    void documentsOnlySupportedStoneOperationsWithTheirSuccessfulStatusesAndDtos() throws Exception {
         JsonNode jsonNode = openApiJson();
         assertThat(jsonNode.path("openapi").asText()).startsWith("3.");
         JsonNode pathsJsonNode = jsonNode.path("paths");
         assertThat(pathsJsonNode.propertyStream().map(entry -> entry.getKey()).toList())
-                .containsExactlyInAnyOrder("/api/v1/stones", "/api/v1/stones/{id}", "/api/v1/stones/search", "/api/v1/stones/{id}/photos", "/api/v1/stones/{id}/reservations");
+                .containsExactlyInAnyOrder("/api/v1/stones", "/api/v1/stones/{id}", "/api/v1/stones/search", "/api/v1/stones/{id}/photos", "/api/v1/stones/{id}/reservations", "/api/v1/stone-photo-drafts", "/api/v1/stone-photo-drafts/{id}");
         assertThat(pathsJsonNode.path("/api/v1/stones").propertyStream().map(entry -> entry.getKey()).toList())
                 .containsExactly("post");
         assertThat(pathsJsonNode.path("/api/v1/stones/{id}").propertyStream().map(entry -> entry.getKey()).toList())
                 .containsExactlyInAnyOrder("get", "put", "delete");
         assertThat(pathsJsonNode.path("/api/v1/stones/search").propertyStream().map(entry -> entry.getKey()).toList())
                 .containsExactly("post");
-        assertOperation(pathsJsonNode.path("/api/v1/stones").path("post"), "201", "StoneCreateResponse");
+        assertOperation(pathsJsonNode.path("/api/v1/stones").path("post"), "201", "StoneCreateResponse", "400", "409", "500");
         assertOperation(pathsJsonNode.path("/api/v1/stones/{id}").path("get"), "200", "StoneResponse");
         assertOperation(pathsJsonNode.path("/api/v1/stones/{id}").path("put"), "200", "StoneUpdateResponse");
         assertOperation(pathsJsonNode.path("/api/v1/stones/{id}").path("delete"), "200", "StoneDeleteResponse");
@@ -148,6 +148,33 @@ class OpenApiDocumentationTest extends IntegrationTest {
                 .expectBody().jsonPath("$.url").isEqualTo("/v3/api-docs");
     }
 
+    @Test
+    void draftContractsDescribeUploadsPreviewAndOrderedCreationReferences() throws Exception {
+        JsonNode root = openApiJson();
+        JsonNode paths = root.path("paths");
+        assertOperation(paths.at("/~1api~1v1~1stone-photo-drafts/post"), "201", "StonePhotoDraftUploadResponse", "400", "413", "415", "503", "500");
+        assertOperation(paths.at("/~1api~1v1~1stone-photo-drafts~1{id}/get"), "200", "StonePhotoDraftResponse", "400", "404", "503");
+        assertThat(paths.at("/~1api~1v1~1stone-photo-drafts/post/requestBody/content/multipart~1form-data/schema/$ref").asText())
+                .isEqualTo("#/components/schemas/StonePhotoDraftUploadRequest");
+        JsonNode schemas = root.path("components").path("schemas");
+        assertThat(schemas.at("/StonePhotoDraftUploadRequest/properties/file/format").asText()).isEqualTo("binary");
+        for (String schema : List.of("StonePhotoDraftUploadResponse", "StonePhotoDraftResponse")) {
+            assertThat(schemas.path(schema).path("properties").propertyStream().map(entry -> entry.getKey()).toList())
+                    .containsExactlyInAnyOrder("id", "url", "uploadedAt", "expiresAt");
+            assertThat(schemas.path(schema).at("/properties/id/format").asText()).isEqualTo("uuid");
+            assertThat(schemas.path(schema).at("/properties/expiresAt/format").asText()).isEqualTo("date-time");
+        }
+        assertThat(schemas.at("/StoneCreateRequest/properties/photoUploadIds/maxItems").asInt()).isEqualTo(16);
+        assertThat(schemas.at("/StoneCreateRequest/properties/photoUploadIds/items/format").asText()).isEqualTo("uuid");
+        assertThat(schemas.at("/StoneCreateResponse/properties/photos/items/$ref").asText()).isEqualTo("#/components/schemas/StonePhotoResponse");
+        for (String status : List.of("400", "413", "415", "503", "500")) {
+            assertThat(paths.at("/~1api~1v1~1stone-photo-drafts/post/responses/" + status).isMissingNode()).isFalse();
+        }
+        for (String status : List.of("400", "409", "500")) {
+            assertThat(paths.at("/~1api~1v1~1stones/post/responses/" + status).isMissingNode()).isFalse();
+        }
+    }
+
     private JsonNode openApiJson() throws Exception {
         return Json31.mapper().readTree(restClient.get().uri("/v3/api-docs")
                 .exchange().expectStatus().isOk()
@@ -155,9 +182,9 @@ class OpenApiDocumentationTest extends IntegrationTest {
                 .expectBody(String.class).returnResult().getResponseBody());
     }
 
-    private void assertOperation(JsonNode operationJsonNode, String status, String responseType) {
+    private void assertOperation(JsonNode operationJsonNode, String status, String responseType, String... errorStatuses) {
         assertThat(operationJsonNode.path("responses").propertyStream().map(entry -> entry.getKey()).toList())
-                .containsExactly(status);
+                .containsExactlyInAnyOrderElementsOf(java.util.stream.Stream.concat(java.util.stream.Stream.of(status), java.util.Arrays.stream(errorStatuses)).toList());
         assertThat(operationJsonNode.path("responses").path(status).path("content").propertyStream()
                 .map(entry -> entry.getValue().at("/schema/$ref").asText()).toList())
                 .isNotEmpty().containsOnly("#/components/schemas/" + responseType);

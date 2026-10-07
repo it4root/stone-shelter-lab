@@ -12,7 +12,7 @@ public final class StonePhotoEntityToStonePhotoResponseMapper
     public StonePhotoEntityToStonePhotoResponseMapper(MinioPhotoStorageService storage) { this.storage = storage; }
     @Override
     protected StonePhotoResponse mapToDto(StonePhotoEntity stonePhotoEntity) {
-        return new StonePhotoResponse(stonePhotoEntity.getId(), storage.readUrl(stonePhotoEntity.getObjectKey()),
+        return new StonePhotoResponse(stonePhotoEntity.getId(), stonePhotoEntity.isCopyReady() ? storage.readUrl(stonePhotoEntity.getObjectKey()) : storage.placeholderUrl(),
                 stonePhotoEntity.getAddedAt(), stonePhotoEntity.getPosition());
     }
 }

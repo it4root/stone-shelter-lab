@@ -82,6 +82,27 @@ class PhotoCleanupJobServiceTest {
     }
 
     @Test
+    void permanentAndDraftWorkShareTheSameObjectBudget() {
+        when(cleanup.findDueKeys(2)).thenReturn(List.of("permanent"), List.of());
+        when(cleanup.findDueDraftKeys(2)).thenReturn(List.of("draft-a", "draft-b"));
+        new PhotoCleanupJobService(cleanup, storage, 2, 3, 0, Duration.ofMinutes(30)).run();
+        verify(cleanup).clean("permanent");
+        verify(cleanup).cleanDraft("draft-a");
+        verify(cleanup).cleanDraft("draft-b");
+        verify(cleanup, never()).findDueDraftKeys(1);
+    }
+
+    @Test
+    void draftFailureStopsTheRunWithoutAttemptingRemainingObjects() {
+        when(cleanup.findDueDraftKeys(3)).thenReturn(List.of("a", "b", "c"));
+        doThrow(new PhotoStorageUnavailableException()).when(cleanup).cleanDraft("b");
+        new PhotoCleanupJobService(cleanup, storage, 3, 3, 0, Duration.ofMinutes(30)).run();
+        verify(cleanup).cleanDraft("a");
+        verify(cleanup).cleanDraft("b");
+        verify(cleanup, never()).cleanDraft("c");
+    }
+
+    @Test
     void interruptedWorkerPreservesTheInterruptAndDoesNotContactDependencies() {
         try {
             Thread.currentThread().interrupt();

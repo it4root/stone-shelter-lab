@@ -43,9 +43,16 @@ public class PhotoCleanupJobService {
         try {
             if (Thread.currentThread().isInterrupted()) return;
             storage.checkAvailability();
+            boolean draftBucket = false;
             while (processed < maxObjects && System.nanoTime() - startedAt < maxDuration.toNanos()) {
-                var objectKeys = cleanup.findDueKeys(Math.min(batchSize, maxObjects - processed));
-                if (objectKeys.isEmpty()) return;
+                var objectKeys = draftBucket
+                        ? cleanup.findDueDraftKeys(Math.min(batchSize, maxObjects - processed))
+                        : cleanup.findDueKeys(Math.min(batchSize, maxObjects - processed));
+                if (objectKeys.isEmpty()) {
+                    if (draftBucket) return;
+                    draftBucket = true;
+                    continue;
+                }
                 for (String objectKey : objectKeys) {
                     if (processed > 0 && intervalMillis > 0) {
                         if (TimeUnit.MILLISECONDS.toNanos(intervalMillis)
@@ -54,7 +61,8 @@ public class PhotoCleanupJobService {
                     }
                     if (Thread.currentThread().isInterrupted()
                             || System.nanoTime() - startedAt >= maxDuration.toNanos()) return;
-                    cleanup.clean(objectKey);
+                    if (draftBucket) cleanup.cleanDraft(objectKey);
+                    else cleanup.clean(objectKey);
                     processed++;
                 }
             }

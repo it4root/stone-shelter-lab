@@ -4,6 +4,9 @@ import java.net.URI;
 
 import lab.stoneshelter.exceptions.InvalidAdmissionDateRangeException;
 import lab.stoneshelter.exceptions.InvalidPhotoException;
+import lab.stoneshelter.exceptions.InvalidStonePhotoDraftException;
+import lab.stoneshelter.exceptions.StonePhotoDraftConflictException;
+import lab.stoneshelter.exceptions.StonePhotoDraftNotFoundException;
 import lab.stoneshelter.exceptions.UnsupportedPhotoTypeException;
 import lab.stoneshelter.exceptions.PhotoTooLargeException;
 import lab.stoneshelter.exceptions.PhotoStorageUnavailableException;
@@ -26,6 +29,21 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(StoneReservationConflictException.class)
     public ProblemDetail handleReservationConflict(StoneReservationConflictException exception) {
         return problemDetail(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(InvalidStonePhotoDraftException.class)
+    public ProblemDetail handleInvalidDraftReferences(InvalidStonePhotoDraftException exception) {
+        return problemDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+    @ExceptionHandler(StonePhotoDraftConflictException.class)
+    public ProblemDetail handleDraftConflict(StonePhotoDraftConflictException exception) {
+        return problemDetail(HttpStatus.CONFLICT, exception.getMessage());
+    }
+
+    @ExceptionHandler(StonePhotoDraftNotFoundException.class)
+    public ProblemDetail handleDraftNotFound(StonePhotoDraftNotFoundException exception) {
+        return problemDetail(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
     @ExceptionHandler(StoneNotFoundException.class)

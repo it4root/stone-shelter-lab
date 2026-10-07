@@ -10,6 +10,7 @@ import lab.stoneshelter.exceptions.InvalidPhotoException;
 import lab.stoneshelter.exceptions.PhotoTooLargeException;
 import lab.stoneshelter.exceptions.UnsupportedPhotoTypeException;
 import lab.stoneshelter.shared.StonePhotoUploadRequest;
+import lab.stoneshelter.shared.StonePhotoDraftUploadRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,26 +22,43 @@ public class PhotoValidationService {
 
     @Transactional(readOnly = true)
     public byte[] validate(StonePhotoUploadRequest request) {
-        if (request.contentLength() > MAX_BYTES) throw new PhotoTooLargeException();
-        if (request.contentLength() == 0) throw new InvalidPhotoException();
-        if (!SUPPORTED.contains(request.declaredMediaType() == null ? "" : request.declaredMediaType())) {
-            throw new UnsupportedPhotoTypeException();
-        }
+        validateSizeAndType(request.contentLength(), request.declaredMediaType());
         try {
-            byte[] bytes = request.readContent();
-            String actualType = signatureType(bytes);
-            if (actualType == null) throw new InvalidPhotoException();
-            if (!actualType.equals(request.declaredMediaType())) throw new UnsupportedPhotoTypeException();
-            if (actualType.equals("image/webp") && !validWebp(bytes)) throw new InvalidPhotoException();
-            try {
-                if (ImageIO.read(new ByteArrayInputStream(bytes)) == null) throw new InvalidPhotoException();
-            } catch (RuntimeException exception) {
-                throw new InvalidPhotoException(exception);
-            }
-            return bytes;
+            return validateBytes(request.readContent(), request.declaredMediaType());
         } catch (IOException exception) {
             throw new InvalidPhotoException(exception);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public byte[] validate(StonePhotoDraftUploadRequest request) {
+        validateSizeAndType(request.contentLength(), request.declaredMediaType());
+        try {
+            return validateBytes(request.readContent(), request.declaredMediaType());
+        } catch (IOException exception) {
+            throw new InvalidPhotoException(exception);
+        }
+    }
+
+    private void validateSizeAndType(long contentLength, String declaredMediaType) {
+        if (contentLength > MAX_BYTES) throw new PhotoTooLargeException();
+        if (contentLength == 0) throw new InvalidPhotoException();
+        if (!SUPPORTED.contains(declaredMediaType == null ? "" : declaredMediaType)) {
+            throw new UnsupportedPhotoTypeException();
+        }
+    }
+
+    private byte[] validateBytes(byte[] bytes, String declaredMediaType) throws IOException {
+        String actualType = signatureType(bytes);
+        if (actualType == null) throw new InvalidPhotoException();
+        if (!actualType.equals(declaredMediaType)) throw new UnsupportedPhotoTypeException();
+        if (actualType.equals("image/webp") && !validWebp(bytes)) throw new InvalidPhotoException();
+        try {
+            if (ImageIO.read(new ByteArrayInputStream(bytes)) == null) throw new InvalidPhotoException();
+        } catch (RuntimeException exception) {
+            throw new InvalidPhotoException(exception);
+        }
+        return bytes;
     }
 
     private String signatureType(byte[] bytes) {

@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
@@ -26,6 +27,16 @@ public class StonePhotoEntity {
     @Column(nullable = false)
     private int position;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "draft_id", unique = true)
+    private StonePhotoDraftEntity draft;
+    @Column(name = "copy_ready", nullable = false)
+    private boolean copyReady = true;
+
+    public StonePhotoDraftEntity getDraft() { return draft; }
+    public void setDraft(StonePhotoDraftEntity draft) { this.draft = draft; }
+    public boolean isCopyReady() { return copyReady; }
+    public void setCopyReady(boolean copyReady) { this.copyReady = copyReady; }
     public StonePhotoEntity() {}
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

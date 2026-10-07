@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import java.util.UUID;
 import org.hibernate.annotations.BatchSize;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,17 +23,19 @@ import lab.stoneshelter.enums.StoneType;
 @Table(name = "stone")
 public class StoneEntity {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
-    @Column(nullable = false, length = 120) String name;
-    @Column(name = "photo_url", length = 500) String photo;
+    private Long id;
+    @Column(name = "storage_uuid", nullable = false, unique = true)
+    private UUID storageUuid = UUID.randomUUID();
+    @Column(nullable = false, length = 120) private String name;
+    @Column(name = "photo_url", length = 500) private String photo;
     @Enumerated(EnumType.STRING) @Column(name = "stone_type", nullable = false, length = 32)
-    StoneType stoneType;
-    @Column(length = 2048) String biography;
+    private StoneType stoneType;
+    @Column(length = 2048) private String biography;
     @Enumerated(EnumType.STRING) @Column(name = "adoption_status", nullable = false, length = 16)
-    AdoptionStatus adoptionStatus;
-    @Column(name = "admission_date", nullable = false) Instant admissionDate;
+    private AdoptionStatus adoptionStatus;
+    @Column(name = "admission_date", nullable = false) private Instant admissionDate;
     @Enumerated(EnumType.STRING) @Column(name = "size", nullable = false, length = 16)
-    StoneSize stoneSize;
+    private StoneSize stoneSize;
 
     @BatchSize(size = 24)
     @OneToMany(mappedBy = "stone")
@@ -43,6 +46,11 @@ public class StoneEntity {
     public void setPhotos(List<StonePhotoEntity> photos) { this.photos = photos; }
 
     public StoneEntity() {}
+
+    public UUID getStorageUuid() { return storageUuid; }
+    public void setStorageUuid(UUID storageUuid) { this.storageUuid = storageUuid; }
+
+    public void setId(Long id) { this.id = id; }
 
     public Long getId() {
         return id;

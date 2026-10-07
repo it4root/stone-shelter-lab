@@ -2,6 +2,7 @@ package lab.stoneshelter.shared;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.util.List;
 import lab.stoneshelter.enums.AdoptionStatus;
 import lab.stoneshelter.enums.StoneSize;
 import lab.stoneshelter.enums.StoneType;
@@ -25,6 +26,11 @@ public class StoneCreateResponse {
     @Schema(description = "Stone size.")
     private StoneSize stoneSize;
 
+    @Schema(description = "Ordered managed photographs; unavailable permanent copies use a placeholder.")
+    private List<StonePhotoResponse> photos;
+
+    public List<StonePhotoResponse> getPhotos() { return photos; }
+    public void setPhotos(List<StonePhotoResponse> photos) { this.photos = photos; }
     public StoneCreateResponse() {}
 
     public Long getId() {

@@ -8,3 +8,6 @@ databaseChangeLog:
   - include:
       file: 0007-create-stone-reservation-table.xml
       relativeToChangelogFile: true
+  - include:
+      file: 0008-create-stone-photo-drafts.xml
+      relativeToChangelogFile: true

@@ -38,7 +38,7 @@ class MapperNullContractTest {
     }
 
     static Stream<AbstractDtoMapper<StoneEntity, ?>> dtoMappers() {
-        return Stream.of(new StoneEntityToStoneCreateResponseMapper(), new StoneEntityToStoneResponseMapper(new StonePhotoEntityToStonePhotoResponseMapper(mock(MinioPhotoStorageService.class))),
+        return Stream.of(new StoneEntityToStoneCreateResponseMapper(new StonePhotoEntityToStonePhotoResponseMapper(mock(MinioPhotoStorageService.class))), new StoneEntityToStoneResponseMapper(new StonePhotoEntityToStonePhotoResponseMapper(mock(MinioPhotoStorageService.class))),
                 new StoneEntityToStoneUpdateResponseMapper(), new StoneEntityToStoneSearchResponseMapper(new StonePhotoEntityToStonePhotoResponseMapper(mock(MinioPhotoStorageService.class))));
     }
 

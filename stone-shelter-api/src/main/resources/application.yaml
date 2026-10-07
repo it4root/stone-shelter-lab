@@ -34,6 +34,8 @@ stone:
     endpoint: ${MINIO_ENDPOINT:}
     browser-endpoint: ${MINIO_BROWSER_ENDPOINT:}
     bucket: ${MINIO_BUCKET:}
+    draft-bucket: ${MINIO_DRAFT_BUCKET:stone-photo-drafts}
+    placeholder-url: ${STONE_PHOTO_PLACEHOLDER_URL:/images/placeholder-rock.png}
     access-key: ${MINIO_ACCESS_KEY:}
     secret-key: ${MINIO_SECRET_KEY:}
     cleanup-cron: "${PHOTO_CLEANUP_CRON:0 0 3 * * *}"
