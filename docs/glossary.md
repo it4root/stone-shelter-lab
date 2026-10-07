@@ -35,6 +35,12 @@ Supported values are:
 - `RESERVED` — the Stone has been reserved.
 - `ADOPTED` — the Stone has been adopted.
 
+## Stone Reservation
+A visitor's request to begin adopting a specific Stone, containing their name,
+contact details and creation timestamp. Creating a reservation changes an
+AVAILABLE Stone to RESERVED; it does not complete adoption. At most one
+reservation can exist for a Stone, linked by its identifier.
+
 ## Admission Date
 The instant when a Stone was registered as admitted to the Stone Shelter.
 It represents a moment in time, not a calendar date, and is supplied as a
