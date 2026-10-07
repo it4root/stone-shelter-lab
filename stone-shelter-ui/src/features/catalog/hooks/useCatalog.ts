@@ -17,6 +17,8 @@ export function useCatalog() {
   const [sortOption, setSortOption] = useState<CatalogSortOption>('NEWEST');
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(8);
+  const [, setRevision] = useState(0);
+  const refreshCatalog = useCallback(() => setRevision(current => current + 1), []);
 
   function changeSize(nextSize: number) {
     setSize(nextSize);
@@ -58,6 +60,7 @@ export function useCatalog() {
   const closeFilters = useCallback(() => setFiltersExpanded(false), []);
 
   return {
+    refreshCatalog,
     filter,
     dateDraft,
     dateError,

@@ -17,7 +17,10 @@ interface CatalogProps {
 export function Catalog({ response, onPageChange, onSizeChange, sortOption, onSortChange }: CatalogProps) {
   return (
     <main className="catalog" aria-label="Stone catalog">
-      <div className="catalog-heading"><p>Found <strong>{response.totalElements}</strong> stones</p><CatalogSort value={sortOption} onChange={onSortChange} /></div>
+      <div className="catalog-heading">
+        <p>Found <strong>{response.totalElements}</strong> stones</p>
+        <div className="catalog-actions"><a className="catalog-add-stone" href="/stones/new">Add stone</a><CatalogSort value={sortOption} onChange={onSortChange} /></div>
+      </div>
       {response.totalElements === 0 && <p role="status">No stones match your filters. Try changing or resetting them.</p>}
       <div className="catalog-grid">{response.content.map((stone) => <StoneCard key={stone.id} stone={stone} />)}</div>
       <Pagination page={response.page} size={response.size} totalElements={response.totalElements}

@@ -57,7 +57,9 @@ public class StoneCreationService {
             if (stonePhotoDraftEntity.getStone() != null) throw new StonePhotoDraftConflictException();
             if (!stonePhotoDraftEntity.getExpiresAt().isAfter(now)) throw new InvalidStonePhotoDraftException();
         }
-        var stoneEntity = repository.saveAndFlush(requestMapper.toEntity(request));
+        var stoneEntity = requestMapper.toEntity(request);
+        stoneEntity.setAdmissionDate(now);
+        stoneEntity = repository.saveAndFlush(stoneEntity);
         for (UUID id : photoUploadIds) {
             var stonePhotoDraftEntity = stonePhotoDraftEntities.get(id);
             stonePhotoDraftEntity.setStone(stoneEntity);

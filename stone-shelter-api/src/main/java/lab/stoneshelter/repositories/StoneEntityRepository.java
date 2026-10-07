@@ -12,6 +12,7 @@ import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
 import java.util.List;
 import lab.stoneshelter.criteria.StoneSearchCriteria;
+import lab.stoneshelter.enums.AdoptionStatus;
 import lab.stoneshelter.enums.StoneSize;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -30,6 +31,7 @@ public interface StoneEntityRepository extends JpaRepository<StoneEntity, Long>,
     default Page<StoneEntity> search(StoneSearchCriteria search) {
         Specification<StoneEntity> filter = (root, query, cb) -> {
             var predicates = new ArrayList<Predicate>();
+            predicates.add(cb.equal(root.get("adoptionStatus"), AdoptionStatus.AVAILABLE));
             if (search.getStoneType() != null) {
                 predicates.add(cb.equal(root.get("stoneType"), search.getStoneType()));
             }

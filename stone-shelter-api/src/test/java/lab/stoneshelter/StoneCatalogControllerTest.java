@@ -3,16 +3,19 @@ package lab.stoneshelter;
 import lab.stoneshelter.enums.StoneType;
 
 import java.time.Instant;
+import java.time.Clock;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureRestTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -21,8 +24,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.client.RestTestClient;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.reset;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureRestTestClient
@@ -33,15 +39,22 @@ class StoneCatalogControllerTest extends IntegrationTest {
     @Autowired private JdbcTemplate jdbc;
     private final List<Long> createdIds = new ArrayList<>();
     @Autowired private RestTestClient client;
+    @MockitoSpyBean private Clock clock;
+
+    @BeforeEach
+    void setCreationTime() {
+        doReturn(Instant.parse("2000-01-01T00:00:00Z")).when(clock).instant();
+    }
 
     @AfterEach
     void cleanUpOwnStones() {
+        reset(clock);
         org.junit.jupiter.api.Assertions.assertAll("Delete all Stones created by this test",
                 List.copyOf(createdIds).stream().map(id -> () -> jdbc.update("DELETE FROM stone WHERE id = ?", id)));
     }
 
     @ParameterizedTest(name = "invalid create: {0}")
-    @MethodSource("invalidStoneBodies")
+    @MethodSource("invalidCreateBodies")
     void invalidCreateReturnsProblemDetail(String reason, Map<String, Object> body) {
         long before = jdbc.queryForObject("SELECT count(*) FROM stone", Long.class);
         problem(HttpMethod.POST, STONES, body, 400);
@@ -49,35 +62,40 @@ class StoneCatalogControllerTest extends IntegrationTest {
     }
 
     @ParameterizedTest(name = "invalid update preserves data: {0}")
-    @MethodSource("invalidStoneBodies")
+    @MethodSource("invalidUpdateBodies")
     void invalidUpdateLeavesStoneUnchanged(String reason, Map<String, Object> body) {
         Map<String, Object> original = create(validStone());
         problem(HttpMethod.PUT, STONES + "/" + id(original), body, 400);
         assertThat(get(id(original))).isEqualTo(original);
     }
 
-    static Stream<Arguments> invalidStoneBodies() {
+    static Stream<Arguments> invalidCreateBodies() { return invalidStoneBodies(false); }
+
+    static Stream<Arguments> invalidUpdateBodies() { return invalidStoneBodies(true); }
+
+    static Stream<Arguments> invalidStoneBodies(boolean update) {
         List<Arguments> cases = new ArrayList<>();
-        for (String field : List.of("name", "stoneType", "stoneSize", "adoptionStatus", "admissionDate")) {
-            Map<String, Object> absent = validStone();
+        for (String field : update ? List.of("name", "stoneType", "stoneSize", "adoptionStatus", "admissionDate")
+                : List.of("name", "stoneType", "stoneSize", "adoptionStatus")) {
+            Map<String, Object> absent = validStone(update);
             absent.remove(field);
             cases.add(Arguments.of(field + " missing", absent));
-            cases.add(Arguments.of(field + " null", changed(field, null)));
+            cases.add(Arguments.of(field + " null", changed(field, null, update)));
         }
         for (String name : List.of("", " ", "\t\n", "x".repeat(121))) {
-            cases.add(Arguments.of("invalid name", changed("name", name)));
+            cases.add(Arguments.of("invalid name", changed("name", name, update)));
         }
-        cases.add(Arguments.of("biography over limit", changed("biography", "x".repeat(2049))));
-        cases.add(Arguments.of("photo over limit", changed("photo", "x".repeat(501))));
-        cases.add(Arguments.of("unknown type", changed("stoneType", "GRANITE_X")));
-        cases.add(Arguments.of("lowercase type", changed("stoneType", "granite")));
-        cases.add(Arguments.of("unknown size", changed("stoneSize", "HUGE")));
-        cases.add(Arguments.of("unknown status", changed("adoptionStatus", "GONE")));
-        for (String timestamp : List.of("not-a-timestamp", "2000-02-30T08:00:00Z",
+        cases.add(Arguments.of("biography over limit", changed("biography", "x".repeat(2049), update)));
+        cases.add(Arguments.of("photo over limit", changed("photo", "x".repeat(501), update)));
+        cases.add(Arguments.of("unknown type", changed("stoneType", "GRANITE_X", update)));
+        cases.add(Arguments.of("lowercase type", changed("stoneType", "granite", update)));
+        cases.add(Arguments.of("unknown size", changed("stoneSize", "HUGE", update)));
+        cases.add(Arguments.of("unknown status", changed("adoptionStatus", "GONE", update)));
+        if (update) for (String timestamp : List.of("not-a-timestamp", "2000-02-30T08:00:00Z",
                 "2000-01-01", "2000-01-01T08:00:00", Instant.now().plusSeconds(3600).toString())) {
-            cases.add(Arguments.of("invalid/future timestamp " + timestamp, changed("admissionDate", timestamp)));
+            cases.add(Arguments.of("invalid/future timestamp " + timestamp, changed("admissionDate", timestamp, true)));
         }
-        cases.add(Arguments.of("wrong JSON type", changed("stoneSize", Map.of("value", "SMALL"))));
+        cases.add(Arguments.of("wrong JSON type", changed("stoneSize", Map.of("value", "SMALL"), update)));
         return cases.stream();
     }
 
@@ -128,7 +146,7 @@ class StoneCatalogControllerTest extends IntegrationTest {
         long id = id(create(validStone()));
         delete(id);
         problem(HttpMethod.GET, STONES + "/" + id, null, 404);
-        problem(HttpMethod.PUT, STONES + "/" + id, validStone(), 404);
+        problem(HttpMethod.PUT, STONES + "/" + id, validStone(true), 404);
         problem(HttpMethod.DELETE, STONES + "/" + id, null, 404);
     }
 
@@ -191,7 +209,7 @@ class StoneCatalogControllerTest extends IntegrationTest {
     static Stream<Arguments> individualFilters() {
         return Stream.of(Arguments.of("stoneType", "GRANITE", "BASALT"),
                 Arguments.of("stoneSize", "SMALL", "LARGE"),
-                Arguments.of("adoptionStatus", "RESERVED", "AVAILABLE"));
+                Arguments.of("adoptionStatus", "AVAILABLE", "RESERVED"));
     }
 
     @Test
@@ -222,10 +240,33 @@ class StoneCatalogControllerTest extends IntegrationTest {
     }
 
     @Test
-    void timestampOffsetsReferToTheSameInstantAndResponsesUseUtc() {
-        Map<String, Object> stone = create(changed("admissionDate", "2000-01-01T10:00:00+02:00"));
+    void updatedTimestampOffsetsReferToTheSameInstantAndResponsesUseUtc() {
+        long id = id(create(validStone()));
+        Map<String, Object> stone = update(id, changed("admissionDate", "2000-01-01T10:00:00+02:00"));
         assertThat(stone).containsEntry("admissionDate", "2000-01-01T08:00:00Z");
+        assertThat(get(id).get("admissionDate")).isEqualTo(stone.get("admissionDate"));
+    }
+
+    @Test
+    void creationWithoutAdmissionDatePersistsTheServerInstantInEveryRead() {
+        assertServerAdmissionDate(validStone());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"1900-01-01T00:00:00Z", "2099-01-01T00:00:00Z", "not-a-timestamp"})
+    void obsoleteClientAdmissionDateCannotOverrideTheServerInstant(String admissionDate) {
+        assertServerAdmissionDate(changed("admissionDate", admissionDate));
+    }
+
+    private void assertServerAdmissionDate(Map<String, Object> body) {
+        Instant serverTime = Instant.parse("2026-10-07T20:15:29.123456Z");
+        doReturn(serverTime).when(clock).instant();
+        var stone = create(body);
+        assertThat(stone).containsEntry("admissionDate", serverTime.toString());
         assertThat(get(id(stone))).isEqualTo(stone);
+        assertThat(jdbc.queryForObject("SELECT admission_date FROM stone WHERE id = ?", java.sql.Timestamp.class, id(stone)).toInstant())
+                .isEqualTo(serverTime);
+        assertThat(items(search(Map.of())).getFirst()).containsEntry("admissionDate", serverTime.toString());
     }
 
     @Test
@@ -254,15 +295,12 @@ class StoneCatalogControllerTest extends IntegrationTest {
     @Test
     void defaultSortingUsesLatestAdmissionDateWithAscendingIdTies() {
         var latest = changed("name", "ZETA");
-        latest.put("admissionDate", "2002-01-01T00:00:00Z");
-        long latest1 = id(create(latest));
+        long latest1 = id(createAt("2002-01-01T00:00:00Z", latest));
         var oldest = changed("name", "ALPHA");
-        oldest.put("admissionDate", "2000-01-01T00:00:00Z");
-        long oldestId = id(create(oldest));
-        long latest2 = id(create(latest));
+        long oldestId = id(createAt("2000-01-01T00:00:00Z", oldest));
+        long latest2 = id(createAt("2002-01-01T00:00:00Z", latest));
         var middle = changed("name", "BETA");
-        middle.put("admissionDate", "2001-01-01T00:00:00Z");
-        long middleId = id(create(middle));
+        long middleId = id(createAt("2001-01-01T00:00:00Z", middle));
 
         assertThat(ids(search(Map.of()))).containsExactly(latest1, latest2, middleId, oldestId);
         assertThat(ids(search(Map.of("sort", Map.of())))).containsExactly(latest1, latest2, middleId, oldestId);
@@ -321,7 +359,6 @@ class StoneCatalogControllerTest extends IntegrationTest {
     @Test
     void filtersCombineWithAndAndCountOnlyMatchingStones() {
         Map<String, Object> match = changed("stoneType", "GRANITE");
-        match.put("adoptionStatus", "RESERVED");
         long matchingId = id(create(match));
         long secondMatch = id(create(match));
         create(match);
@@ -331,17 +368,83 @@ class StoneCatalogControllerTest extends IntegrationTest {
         var wrongType = new HashMap<>(match);
         wrongType.put("stoneType", "BASALT");
         create(wrongType);
-        create(changed("stoneType", "GRANITE"));
+        for (String adoptionStatus : List.of("RESERVED", "ADOPTED")) {
+            var unavailable = new HashMap<>(match);
+            unavailable.put("adoptionStatus", adoptionStatus);
+            create(unavailable);
+        }
         create(changed("stoneSize", "LARGE"));
         Map<String, Object> result = search(Map.of("filter", Map.of("stoneType", "GRANITE",
-                "stoneSize", "SMALL", "adoptionStatus", "RESERVED"), "size", 1));
+                "stoneSize", "SMALL", "adoptionStatus", "AVAILABLE"), "size", 1));
         assertThat(ids(result)).containsExactly(matchingId);
         assertThat(number(result, "totalElements")).isEqualTo(3);
         Map<String, Object> next = search(Map.of("filter", Map.of("stoneType", "GRANITE",
-                "stoneSize", "SMALL", "adoptionStatus", "RESERVED"), "page", 1, "size", 1));
+                "stoneSize", "SMALL", "adoptionStatus", "AVAILABLE"), "page", 1, "size", 1));
         assertThat(ids(next)).containsExactly(secondMatch);
         assertThat(number(next, "totalElements")).isEqualTo(3);
         assertThat(items(search(Map.of("filter", Map.of("stoneType", "SLATE"))))).isEmpty();
+    }
+
+    static Stream<Map<String, Object>> availableCatalogRequests() {
+        var requests = new ArrayList<Map<String, Object>>();
+        requests.add(Map.of());
+        requests.add(Map.of("filter", Map.of()));
+        requests.add(Map.of("filter", Map.of("adoptionStatus", "AVAILABLE")));
+        var nullFilter = new HashMap<String, Object>();
+        nullFilter.put("filter", null);
+        requests.add(nullFilter);
+        var nullStatus = new HashMap<String, Object>();
+        nullStatus.put("adoptionStatus", null);
+        requests.add(Map.of("filter", nullStatus));
+        return requests.stream();
+    }
+
+    @ParameterizedTest
+    @MethodSource("availableCatalogRequests")
+    void catalogVisibilityFiltersBeforePaginationAndCountsOnlyAvailable(Map<String, Object> request) {
+        create(changed("adoptionStatus", "RESERVED"));
+        long firstAvailableId = id(create(validStone()));
+        create(changed("adoptionStatus", "ADOPTED"));
+        long secondAvailableId = id(create(validStone()));
+        var pageRequest = new HashMap<>(request);
+        pageRequest.put("size", 1);
+        var firstPage = search(pageRequest);
+        assertThat(ids(firstPage)).containsExactly(firstAvailableId);
+        assertThat(number(firstPage, "totalElements")).isEqualTo(2);
+        assertThat(items(firstPage).getFirst()).containsEntry("adoptionStatus", "AVAILABLE");
+        pageRequest.put("page", 1);
+        var secondPage = search(pageRequest);
+        assertThat(ids(secondPage)).containsExactly(secondAvailableId);
+        assertThat(number(secondPage, "totalElements")).isEqualTo(2);
+        pageRequest.put("page", 2);
+        var beyondLastPage = search(pageRequest);
+        assertThat(items(beyondLastPage)).isEmpty();
+        assertThat(number(beyondLastPage, "totalElements")).isEqualTo(2);
+        pageRequest.put("page", Integer.MAX_VALUE);
+        pageRequest.put("size", 2);
+        var largeOffsetPage = search(pageRequest);
+        assertThat(items(largeOffsetPage)).isEmpty();
+        assertThat(number(largeOffsetPage, "totalElements")).isEqualTo(2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"RESERVED", "ADOPTED"})
+    void unavailableStatusCannotOverrideCatalogVisibilityAndDirectLookupStillWorks(String adoptionStatus) {
+        long unavailableId = id(create(changed("adoptionStatus", adoptionStatus)));
+        create(validStone());
+        var page = search(Map.of("filter", Map.of("adoptionStatus", adoptionStatus)));
+        assertThat(items(page)).isEmpty();
+        assertThat(number(page, "totalElements")).isZero();
+        assertThat(get(unavailableId)).containsEntry("adoptionStatus", adoptionStatus);
+    }
+
+    @Test
+    void catalogIsEmptyWhenEveryStoneIsUnavailable() {
+        create(changed("adoptionStatus", "RESERVED"));
+        create(changed("adoptionStatus", "ADOPTED"));
+        var page = search(Map.of());
+        assertThat(items(page)).isEmpty();
+        assertThat(number(page, "totalElements")).isZero();
     }
 
     @Test
@@ -410,7 +513,9 @@ class StoneCatalogControllerTest extends IntegrationTest {
     }
 
     private Map<String, Object> update(long id, Map<String, Object> body) {
-        Map<String, Object> stone = client.put().uri(STONES + "/" + id).body(body)
+        var replacement = new HashMap<>(body);
+        replacement.putIfAbsent("admissionDate", "2000-01-01T00:00:00Z");
+        Map<String, Object> stone = client.put().uri(STONES + "/" + id).body(replacement)
                 .exchange().expectStatus().isOk().expectBody(JSON_OBJECT).returnResult().getResponseBody();
         assertThat(id(stone)).isEqualTo(id);
         return stone;
@@ -449,10 +554,10 @@ class StoneCatalogControllerTest extends IntegrationTest {
 
     @Test
     void dateFiltersIncludeWholeUtcDaysAndSupportOpenBounds() {
-        long before = id(create(changed("admissionDate", "2000-01-01T23:59:59Z")));
-        long start = id(create(changed("admissionDate", "2000-01-02T02:00:00+02:00")));
-        long end = id(create(changed("admissionDate", "2000-01-02T23:59:59.999999Z")));
-        long after = id(create(changed("admissionDate", "2000-01-03T00:00:00Z")));
+        long before = id(createAt("2000-01-01T23:59:59Z", validStone()));
+        long start = id(createAt("2000-01-02T00:00:00Z", validStone()));
+        long end = id(createAt("2000-01-02T23:59:59.999999Z", validStone()));
+        long after = id(createAt("2000-01-03T00:00:00Z", validStone()));
         assertThat(ids(search(Map.of("filter", Map.of("admissionDateFrom", "2000-01-02",
                 "admissionDateTo", "2000-01-02"))))).containsExactly(end, start);
         assertThat(ids(search(Map.of("filter", Map.of("admissionDateFrom", "2000-01-02")))))
@@ -495,9 +600,15 @@ class StoneCatalogControllerTest extends IntegrationTest {
     }
 
     private static Map<String, Object> validStone() {
-        return new HashMap<>(Map.of("name", "Basalt Buddy", "stoneType", "BASALT",
-                "stoneSize", "SMALL", "adoptionStatus", "AVAILABLE", "admissionDate",
-                "2000-01-01T00:00:00Z", "biography", "History", "photo", "placeholder"));
+        return validStone(false);
+    }
+
+    private static Map<String, Object> validStone(boolean update) {
+        var body = new HashMap<String, Object>(Map.of("name", "Basalt Buddy", "stoneType", "BASALT",
+                "stoneSize", "SMALL", "adoptionStatus", "AVAILABLE",
+                "biography", "History", "photo", "placeholder"));
+        if (update) body.put("admissionDate", "2000-01-01T00:00:00Z");
+        return body;
     }
 
     private void trackCreatedStone(Map<?, ?> body) {
@@ -507,9 +618,18 @@ class StoneCatalogControllerTest extends IntegrationTest {
     }
 
     private static Map<String, Object> changed(String field, Object value) {
-        Map<String, Object> body = validStone();
+        return changed(field, value, false);
+    }
+
+    private static Map<String, Object> changed(String field, Object value, boolean update) {
+        Map<String, Object> body = validStone(update);
         body.put(field, value);
         return body;
+    }
+
+    private Map<String, Object> createAt(String instant, Map<String, Object> body) {
+        doReturn(Instant.parse(instant)).when(clock).instant();
+        return create(body);
     }
 
     private static long number(Map<String, Object> body, String field) {

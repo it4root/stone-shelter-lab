@@ -47,7 +47,7 @@ Coverage: `auto` = covered by an integration test tagged with the same ID,
 |---|---|---|---|---|
 | AC-21 | stones of several stone types exist | POST search with `{"filter":{"stoneType":"GRANITE"}}` | 200, only granite stones | none |
 | AC-22 | stones of several sizes exist | POST search with `{"filter":{"stoneSize":"SMALL"}}` | 200, only small stones | none |
-| AC-23 | stones of several statuses exist | POST search with `{"filter":{"adoptionStatus":"RESERVED"}}` | 200, only reserved stones | none |
+| AC-23 | stones of several statuses exist | POST search with `{"filter":{"adoptionStatus":"RESERVED"}}` | 200, empty content and totalElements 0 because catalog visibility is restricted to AVAILABLE; supersedes the earlier reserved-results requirement | auto |
 | AC-24 | stones match one filter but not another | POST search with `{"filter":{"stoneType":"GRANITE","stoneSize":"SMALL"}}` | 200, only stones matching both — AND, not OR | none |
 | AC-25 | no stone matches | POST search with `{"filter":{"stoneType":"SLATE","stoneSize":"SMALL"}}` | 200, `content: []` — not 404, not 400 | none |
 | AC-26 | — | POST search with an unknown stoneType, stoneSize or adoptionStatus in filter | 400 each, `problem+json` | none |
@@ -135,3 +135,33 @@ Development seed criteria AC-65–67 are outside T0003-004.
 | AC-68 | Stones have different admission dates and names | search omits sort, sends null sort, empty sort or null field/direction | later admission dates come first, independent of name or insertion order | auto |
 | AC-69 | two Stones have the same admission date | default search spans multiple pages | ties use id ASC and repeated searches return identical page contents | auto |
 | AC-70 | Stones have different admission dates | search supplies direction asc without a field | admissionDate ASC, id ASC | auto |
+
+## AVAILABLE-only catalog — T0003-005
+
+| ID | Given | When | Then | Coverage |
+|---|---|---|---|---|
+| AC-71 | AVAILABLE, RESERVED and ADOPTED stones exist | Search uses omitted, null or empty filter, null adoptionStatus or explicit AVAILABLE | Only AVAILABLE stones appear; page boundaries/order and totalElements reflect available matches, including beyond-last and very large page indexes | auto |
+| AC-72 | Stones of all statuses exist | Search explicitly requests RESERVED or ADOPTED | HTTP 200 with empty content and totalElements 0; direct GET by id still returns the stone with its actual status | auto |
+| AC-73 | A catalog-visible AVAILABLE stone | Its reservation succeeds and catalog is searched again | The stone is absent and no longer counted; detail lookup still reports RESERVED | auto |
+| AC-74 | The generated HTTP contract | JSON/YAML documentation is inspected | Search operation and filter descriptions state the mandatory AVAILABLE restriction and empty results for incompatible status filters; response fields remain unchanged | auto |
+
+
+## AVAILABLE-only Catalog Verification — 2026-10-08
+
+T0003-005 passes AC-23 and AC-71–AC-74. The mixed-status catalog tests cover
+omitted/null/empty filters, null status and explicit AVAILABLE, first/second/
+beyond-last pages, the count-only large-offset fallback, and a catalog containing
+only unavailable stones. Separate RESERVED/ADOPTED cases confirm that status
+filters cannot override visibility and direct GET still returns the actual
+status. Existing AND/type/size/sort/date tests remain passing.
+
+The reservation HTTP test first verifies catalog visibility, then confirms an
+empty default catalog and zero total after successful reservation while direct
+lookup reports RESERVED. Generated OpenAPI tests verify the operation/filter
+visibility descriptions and complete JSON/YAML equivalence.
+
+./mvnw -q verify passed on JDK 23.0.2 with 213 tests, zero failures/errors/skips.
+The final refined large-offset test was then verified by rerunning all 103
+catalog cases, also passing. git diff --check passed. Backend source roots,
+existing contracts outside search visibility and fixture cleanup were reviewed.
+No live database changes, frontend/mock changes, commits or pushes were made.

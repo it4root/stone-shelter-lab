@@ -10,6 +10,8 @@ use the `0008-add-stone-api:` prefix and the complete task ID.
 
 Each task includes its relevant verification and a one-line completion report.
 Acceptance criteria are referenced here, never redefined.
+The user's requested server-owned creation date authorizes T0008-009 as a
+backend dependency of the current 0009 UI revision. Commits remain unauthorized.
 
 - [x] **T0008-001 — Record the technical implementation plan.**
   - Populate plan.md with the entity/DTO/service boundaries, transactional
@@ -135,3 +137,21 @@ Acceptance criteria are referenced here, never redefined.
     Existing-schema upgrade, generated JSON/YAML equivalence, real loader data,
     and exact preview expiry are covered. git diff --check passes; no dependency,
     applied-migration or UI changes, automatic real-data seeding, commits or pushes.
+
+- [x] **T0008-009 — Assign admission timestamps on the backend at creation.**
+  - Remove the creation request date and its mapper input; assign the UTC Clock
+    instant in the creation service before persistence.
+  - Align generated contract descriptions and loader requests; preserve update
+    validation, historical data, catalog ordering/filtering and photo lifecycle.
+  - Verify controlled-clock creation/readback with zero/photos, ignored obsolete
+    input, generated JSON/YAML, loader and full backend regressions on pinned JDK.
+  - Acceptance references: AC-0008-019, AC-0008-024, AC-0008-034,
+    AC-0008-036 and AC-0008-040.
+  - Dependencies: T0008-008.
+  - Verification: ./mvnw -q verify passed on JDK 23.0.2, with 205 tests and
+    zero failures/errors/skips; all 95 catalog cases additionally passed after
+    a concurrent targeted run overwrote that class's report. Generated current
+    JSON/YAML agree and omit the creation request date; four Python loader
+    tests pass. Controlled-clock tests cover no photos, 16 photos, obsolete
+    input and persistence/create/detail/search agreement. No migrations,
+    dependencies, real-data population, commits or pushes were introduced.

@@ -138,3 +138,14 @@ Packages are grouped by responsibility: controllers, handlers, services, enums,
 repositories, entities, criteria and exceptions. shared and mappers.entities /
 mappers.dtos retain their roles. Previous api/domain/persistence locations are
 superseded; dependencies keep the same architectural boundaries.
+
+### Server-owned creation admission date (2026-10-08)
+
+The user requested automatic backend dating when adding a stone in feature 0009.
+Feature 0008 T0008-009 removes admissionDate from StoneCreateRequest and assigns
+the current injected UTC Clock instant in the creation service before persistence.
+Obsolete client values are ignored. Responses keep the existing field and UTC
+representation. This supersedes the client-supplied creation timestamp decision;
+full-replacement update validation, historical dates, date filters and sorting
+retain their existing contracts. UI creation and the operator loader omit the
+date, and the mock adapter mirrors server assignment. No migration is required.

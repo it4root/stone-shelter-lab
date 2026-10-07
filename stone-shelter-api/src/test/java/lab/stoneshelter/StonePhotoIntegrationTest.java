@@ -133,6 +133,7 @@ class StonePhotoIntegrationTest extends IntegrationTest {
         assertThat(objectKey(id, 0)).doesNotContain("http", "X-Amz");
         var replacement = stoneBody();
         replacement.put("photo", "replacement-legacy");
+        replacement.put("admissionDate", detail(id).get("admissionDate"));
         client.put().uri("/api/v1/stones/" + id).body(replacement).exchange().expectStatus().isOk();
         assertThat(photos(detail(id))).extracting(photo -> photo.get("id")).containsExactly(first.get("id"), second.get("id"));
         var search = client.post().uri("/api/v1/stones/search").body(Map.of()).exchange().expectStatus().isOk()
@@ -322,7 +323,7 @@ class StonePhotoIntegrationTest extends IntegrationTest {
 
     private static Map<String, Object> stoneBody() {
         return new HashMap<>(Map.of("name", "Gallery Stone", "stoneType", "BASALT", "stoneSize", "SMALL",
-                "adoptionStatus", "AVAILABLE", "admissionDate", "2000-01-01T00:00:00Z", "photo", "legacy-photo"));
+                "adoptionStatus", "AVAILABLE", "photo", "legacy-photo"));
     }
 
     private Map<String, Object> upload(long id, String mediaType, byte[] bytes, int expectedStatus) {

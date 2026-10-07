@@ -1,5 +1,18 @@
 # 0003 — Tasks
 
+Requirements: [spec.md](spec.md). Acceptance: [acceptance.md](acceptance.md).
+
+- [x] **T0003-005 — Restrict backend catalog search to AVAILABLE stones.**
+  - Enforce visibility in the repository before pagination and count queries.
+  - Preserve AND filters; incompatible statuses return an empty successful page.
+  - Update generated-contract descriptions and relevant HTTP regression tests.
+  - Verify mixed-status paging/counts, null/omitted filters, explicit status
+    attempts and disappearance after reservation; preserve direct lookup.
+  - Verification: ./mvnw verify on pinned JDK and git diff --check.
+  - Acceptance references: AC-23, AC-24, AC-28, AC-71–AC-74.
+  - Dependencies: T0003-004.
+  - Scope: this task only; no commits or pushes authorized.
+
 ## Contract
 
 
@@ -222,3 +235,19 @@
   - Service lookup naming verification (2026-10-05): Maven verify on
     JDK 23.0.2 passes all 124 tests with PostgreSQL Testcontainers, including
     missing-resource HTTP 404 checks; git diff --check passes.
+
+
+## T0003-005 Verification — 2026-10-08
+
+Updated spec/plan and AC-23/AC-71–AC-74 before implementation. The repository
+now adds the mandatory AVAILABLE predicate to the shared content/count
+specification; generated-contract descriptions reflect this scope. Source
+changes remain under stone-shelter-api/src/main/java and src/test/java.
+
+On JDK 23.0.2, ./mvnw -q verify passed: 213 tests with zero failures/errors/skips,
+including architecture, catalog, reservation, photo lifecycle and seven generated
+OpenAPI JSON/YAML tests. After refining the large-offset test to exercise the
+count-only fallback, all 103 StoneCatalogControllerTest cases were rerun and
+passed. git diff --check passed. Acceptance evidence is in acceptance.md.
+No frontend/mock, dependency or migration changes, commits or pushes were made.
+Existing notes and the staged feature-0008 retrospective were preserved.

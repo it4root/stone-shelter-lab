@@ -29,11 +29,12 @@ test('renders the initial 8 stones with required content and total count', () =>
   expect(screen.getAllByText(mockStones[29].biography!)).toHaveLength(8);
 });
 
-test('keeps navigation static and excludes catalog actions', () => {
+test('keeps header navigation static and exposes catalog detail and creation links', () => {
   render(<App />);
   expect(screen.getByRole('navigation', { name: 'Main navigation' }).textContent).toContain('Stone catalog');
   expect(within(screen.getByRole('navigation', { name: 'Main navigation' })).queryAllByRole('link')).toHaveLength(0);
-  expect(screen.getAllByRole('link')).toHaveLength(8);
+  expect(screen.getAllByRole('link', { name: /View details for/ })).toHaveLength(8);
+  expect(screen.getByRole('link', { name: 'Add stone' }).getAttribute('href')).toBe('/stones/new');
   expect(within(screen.getByRole('navigation', { name: 'Main navigation' })).queryAllByRole('button')).toHaveLength(0);
   expect(screen.queryByRole('button', { name: /adopt|favorite|details/i })).toBeNull();
 });

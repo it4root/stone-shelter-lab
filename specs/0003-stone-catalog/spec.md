@@ -4,6 +4,8 @@
 
 Provide a basic catalog of stones available in Stone Shelter.
 
+Acceptance criteria are defined exclusively in [acceptance.md](acceptance.md).
+
 ## Stone attributes
 *-required mark is not part of code or naming
 
@@ -59,6 +61,18 @@ The system must support:
 
 
 ## Functional requirements
+Catalog search always restricts results to adoptionStatus AVAILABLE. RESERVED
+and ADOPTED stones are excluded before sorting, pagination and totalElements
+counting, including when filters are omitted, empty or null. The optional
+adoptionStatus filter remains supported and combines with this restriction
+using AND; requesting RESERVED or ADOPTED returns HTTP 200 with an empty page
+and totalElements 0. Callers cannot override catalog visibility with a filter.
+After a successful reservation, the stone no longer appears in catalog search.
+Direct lookup by id and existing creation/update/reservation operations retain
+their behavior; this revision introduces no role-specific search endpoint.
+Document this behavior in generated OpenAPI through controllers/shared DTOs;
+do not add a handwritten HTTP contract.
+
 Default sort is by admissionDate descending (later admission dates first),
 with id ascending as a tiebreaker. This uses the client-supplied admissionDate,
 not a separate creation timestamp. If sort or sort.field is omitted or null,

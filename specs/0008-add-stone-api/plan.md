@@ -59,6 +59,11 @@ mappers. Keep exception types independent of HTTP.
 Extend StoneCreateRequest with at most 16 non-null UUID references. Reject
 duplicates in the application service. Extend StoneCreateResponse with photos;
 reuse the managed photo DTO mapper for creation/details/catalog projections.
+For T0008-009 remove admissionDate from the creation request and request mapper.
+Use the creation service's existing injected UTC Clock to assign admissionDate
+to the mapped entity before saving, including photo-free requests. Ignore the
+obsolete JSON property explicitly; document the server-owned response timestamp
+in generated OpenAPI. Preserve update validation and existing historical dates.
 Pending copies map to the backend's /images/placeholder-rock.png static asset,
 copied from the existing supplied placeholder. Permanent keys remain unchanged
 for older images. Draft timestamps use whole seconds to match S3 signing precision. Preview URLs
@@ -75,8 +80,8 @@ mapper naming/null policies, and layer boundaries from AGENTS.md.
 Use Python 3 standard-library HTTP/multipart support in an explicitly invoked
 script. Require --base-url and allow a fixture root argument. Validate all type
 folders/counts/numeric filenames before mutations. Upload each numbered tile,
-then create one AVAILABLE stone per type with supported sizes and a current UTC
-timestamp. Print created IDs and, on failure, the reusable upload IDs and stone
+then create one AVAILABLE stone per type with supported sizes, omitting the
+server-owned admission timestamp. Print created IDs and, on failure, the reusable upload IDs and stone
 JSON. Do not run against a real database during implementation or verification.
 
 ## Verification

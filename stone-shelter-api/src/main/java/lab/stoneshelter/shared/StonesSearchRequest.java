@@ -5,9 +5,9 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Max;
 
-@Schema(description = "Optional filters, pagination, and ordering for a stone search.")
+@Schema(description = "Optional filters, pagination, and ordering for an AVAILABLE-only catalog search.")
 public record StonesSearchRequest(
-    @Schema(description = "Optional exact-match filters; omitted filters do not restrict results.")
+    @Schema(description = "Optional exact-match filters; omitted filters retain mandatory AVAILABLE visibility.")
     @Valid StoneSearchFilter filter,
     @Schema(description = "Zero-based page index; defaults to 0 when omitted.")
     @Min(0) Integer page,

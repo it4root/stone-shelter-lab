@@ -50,7 +50,8 @@ class OpenApiDocumentationTest extends IntegrationTest {
 
     @Test
     void describesEveryDtoAndPropertyAndRetainsSupportedValidationConstraints() throws Exception {
-        JsonNode schemasJsonNode = openApiJson().at("/components/schemas");
+        JsonNode jsonNode = openApiJson();
+        JsonNode schemasJsonNode = jsonNode.at("/components/schemas");
         for (String name : List.of("StoneCreateRequest", "StoneUpdateRequest", "StoneCreateResponse",
                 "StoneUpdateResponse", "StoneResponse", "StoneDeleteResponse", "StoneSearchResponse",
                 "StonesSearchRequest", "StonesSearchResponse", "StoneSearchFilter", "SearchSort",
@@ -67,15 +68,24 @@ class OpenApiDocumentationTest extends IntegrationTest {
             JsonNode schemaJsonNode = schemasJsonNode.path(name);
             assertThat(schemaJsonNode.path("required")).contains(
                     Json31.mapper().valueToTree("name"), Json31.mapper().valueToTree("stoneType"),
-                    Json31.mapper().valueToTree("stoneSize"), Json31.mapper().valueToTree("adoptionStatus"),
-                    Json31.mapper().valueToTree("admissionDate"));
+                    Json31.mapper().valueToTree("stoneSize"), Json31.mapper().valueToTree("adoptionStatus"));
             assertThat(schemaJsonNode.at("/properties/name/maxLength").asInt()).isEqualTo(120);
             assertThat(schemaJsonNode.at("/properties/photo/maxLength").asInt()).isEqualTo(500);
             assertThat(schemaJsonNode.at("/properties/biography/maxLength").asInt()).isEqualTo(2048);
-            assertThat(schemaJsonNode.at("/properties/admissionDate/format").asText()).isEqualTo("date-time");
         }
+        assertThat(schemasJsonNode.at("/StoneCreateRequest/properties/admissionDate").isMissingNode()).isTrue();
+        assertThat(schemasJsonNode.at("/StoneCreateRequest/required"))
+                .doesNotContain(Json31.mapper().valueToTree("admissionDate"));
+        assertThat(schemasJsonNode.at("/StoneUpdateRequest/required")).contains(Json31.mapper().valueToTree("admissionDate"));
+        assertThat(schemasJsonNode.at("/StoneUpdateRequest/properties/admissionDate/format").asText()).isEqualTo("date-time");
+        assertThat(schemasJsonNode.at("/StoneCreateResponse/properties/admissionDate/format").asText()).isEqualTo("date-time");
+        assertThat(schemasJsonNode.at("/StoneCreateResponse/properties/admissionDate/description").asText()).contains("backend");
         assertThat(schemasJsonNode.at("/StoneSearchFilter/properties/stoneSizes/type").asText()).isEqualTo("array");
         assertThat(schemasJsonNode.at("/StoneSearchFilter/properties/stoneTypes/type").asText()).isEqualTo("array");
+        assertThat(jsonNode.at("/paths/~1api~1v1~1stones~1search/post/description").asText())
+                .contains("AVAILABLE", "RESERVED", "ADOPTED", "totalElements 0");
+        assertThat(schemasJsonNode.at("/StoneSearchFilter/properties/adoptionStatus/description").asText())
+                .contains("AVAILABLE", "RESERVED", "ADOPTED", "totalElements 0");
         assertThat(schemasJsonNode.at("/StoneSearchFilter/properties/admissionDateFrom/format").asText()).isEqualTo("date");
         assertThat(schemasJsonNode.at("/StoneSearchFilter/properties/admissionDateTo/format").asText()).isEqualTo("date");
         assertThat(schemasJsonNode.at("/StonesSearchRequest/properties/page/minimum").asText()).isEqualTo("0");

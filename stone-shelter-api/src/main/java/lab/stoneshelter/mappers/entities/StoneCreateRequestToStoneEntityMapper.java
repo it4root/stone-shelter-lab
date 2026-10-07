@@ -18,7 +18,6 @@ public final class StoneCreateRequestToStoneEntityMapper extends AbstractEntityM
         entity.setStoneType(request.getStoneType());
         entity.setBiography(request.getBiography());
         entity.setAdoptionStatus(request.getAdoptionStatus());
-        entity.setAdmissionDate(request.getAdmissionDate());
         entity.setStoneSize(request.getStoneSize());
         return entity;
     }

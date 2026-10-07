@@ -43,8 +43,10 @@ reservation can exist for a Stone, linked by its identifier.
 
 ## Admission Date
 The instant when a Stone was registered as admitted to the Stone Shelter.
-It represents a moment in time, not a calendar date, and is supplied as a
-timestamp with an explicit UTC offset. API responses represent it in UTC.
+It represents a moment in time, not a calendar date. During creation the backend
+assigns its current UTC instant; callers do not supply it. API responses retain
+the timestamp in UTC. The existing full-replacement update contract still accepts
+an explicit timestamp, and historical admission dates remain unchanged.
 
 ## Biography
 Free-form information describing the individual Stone and its history in the shelter.

@@ -2,7 +2,6 @@
 """Populate an explicitly selected backend using its public draft/creation API."""
 
 import argparse
-from datetime import datetime, timedelta, timezone
 import json
 import mimetypes
 from pathlib import Path
@@ -100,7 +99,6 @@ def main(argv=None):
             "stoneType": stone_type,
             "stoneSize": ("SMALL", "MEDIUM", "LARGE")[index % 3],
             "adoptionStatus": "AVAILABLE",
-            "admissionDate": (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat(timespec="seconds"),
             "biography": f"API fixture stone for {stone_type.title()}.",
             "photoUploadIds": [],
         }

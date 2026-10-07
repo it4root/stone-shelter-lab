@@ -55,6 +55,9 @@ class StoneReservationControllerTest extends IntegrationTest {
     @Test
     void createsReservationAndReturnsChangedStatusWithoutExposingApplicantDataInReads() {
         long id = createStone(AdoptionStatus.AVAILABLE);
+        client.post().uri("/api/v1/stones/search").body(Map.of()).exchange().expectStatus().isOk()
+                .expectBody().jsonPath("$.content[0].id").isEqualTo(id)
+                .jsonPath("$.totalElements").isEqualTo(1);
         Map<String, Object> response = submit(id);
         assertThat(response.keySet()).containsExactlyInAnyOrder("id", "stoneId", "adoptionStatus", "createdAt");
         assertThat(((Number) response.get("stoneId")).longValue()).isEqualTo(id);
@@ -66,8 +69,10 @@ class StoneReservationControllerTest extends IntegrationTest {
         });
         client.post().uri("/api/v1/stones/search").contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("filter", Map.of("adoptionStatus", "RESERVED")))
-                .exchange().expectStatus().isOk().expectBody(String.class).value(body ->
-                        assertThat(body).doesNotContain("applicantName", "contactDetails"));
+                .exchange().expectStatus().isOk().expectBody().jsonPath("$.content").isEmpty()
+                .jsonPath("$.totalElements").isEqualTo(0);
+        client.post().uri("/api/v1/stones/search").body(Map.of()).exchange().expectStatus().isOk()
+                .expectBody().jsonPath("$.content").isEmpty().jsonPath("$.totalElements").isEqualTo(0);
         assertThat(jdbcTemplate.queryForObject("select contact_details from stone_reservation where stone_id = ?", String.class, id))
                 .isEqualTo("contact me anywhere " + "x".repeat(3000));
         problem(Long.toString(id), validRequest(), 409);

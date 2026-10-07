@@ -8,13 +8,13 @@ import lab.stoneshelter.enums.AdoptionStatus;
 import lab.stoneshelter.enums.StoneSize;
 import lab.stoneshelter.enums.StoneType;
 
-@Schema(description = "Optional filters combined with AND; selections within each array use OR.")
+@Schema(description = "Optional filters combined with AND within the AVAILABLE-only catalog; selections within each array use OR.")
 public class StoneSearchFilter {
     @Schema(description = "Legacy exact stone type; AND with stoneTypes.")
     private StoneType stoneType;
     @Schema(description = "Legacy exact size; AND with stoneSizes.")
     private StoneSize stoneSize;
-    @Schema(description = "Optional exact adoption status.")
+    @Schema(description = "Optional exact adoption status combined with mandatory AVAILABLE visibility; RESERVED or ADOPTED returns an empty page with totalElements 0.")
     private AdoptionStatus adoptionStatus;
     @Schema(description = "Optional sizes combined with OR; null or empty does not restrict results.")
     private List<@NotNull StoneSize> stoneSizes;

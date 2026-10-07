@@ -20,7 +20,7 @@ public class StoneSearchResponse {
     private String biography;
     @Schema(description = "Stone adoption status.")
     private AdoptionStatus adoptionStatus;
-    @Schema(description = "Stone admission timestamp.")
+    @Schema(description = "UTC admission timestamp; assigned by the backend during creation.")
     private Instant admissionDate;
     @Schema(description = "Stone size.")
     private StoneSize stoneSize;

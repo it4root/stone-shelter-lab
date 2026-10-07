@@ -1,4 +1,7 @@
-import { createMockStoneReservation, getMockCatalogStones, getMockStone } from '../mocks/api/mockStonesApi';
+import { createMockStone, createMockStoneReservation, getMockCatalogStones, getMockStone, uploadMockStonePhotoDraft } from '../mocks/api/mockStonesApi';
+import type { StoneCreateRequest } from './dto/StoneCreateRequest';
+import type { StoneCreateResponse } from './dto/StoneCreateResponse';
+import type { StonePhotoDraftUploadResponse } from './dto/StonePhotoDraftUploadResponse';
 import type { StoneReservationCreateRequest } from './dto/StoneReservationCreateRequest';
 import type { StoneReservationCreateResponse } from './dto/StoneReservationCreateResponse';
 import type { StoneResponse } from './dto/StoneResponse';
@@ -12,3 +15,5 @@ import type { StoneSearchFilter } from './dto/StoneSearchFilter';
 export const getCatalogStones: (page?: number, size?: number, sort?: SearchSort, filter?: StoneSearchFilter) => StonesSearchResponse = getMockCatalogStones;
 export const getStone: (id: number) => StoneResponse | undefined = getMockStone;
 export const createStoneReservation: (id: number, request: StoneReservationCreateRequest) => Promise<StoneReservationCreateResponse> = createMockStoneReservation;
+export const createStone: (request: StoneCreateRequest) => Promise<StoneCreateResponse> = createMockStone;
+export const uploadStonePhotoDraft: (file: File) => Promise<StonePhotoDraftUploadResponse> = uploadMockStonePhotoDraft;

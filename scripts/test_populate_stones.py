@@ -75,6 +75,7 @@ class PopulateStonesTest(unittest.TestCase):
             payload = json.loads(requests[2][2])
             self.assertEqual(payload["stoneType"], "BASALT")
             self.assertEqual(payload["adoptionStatus"], "AVAILABLE")
+            self.assertNotIn("admissionDate", payload)
             self.assertEqual(len(payload["photoUploadIds"]), 2)
 
     def test_all_input_is_validated_before_any_mutation(self):

@@ -1,7 +1,7 @@
 package lab.stoneshelter.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import lab.stoneshelter.enums.AdoptionStatus;
@@ -9,10 +9,10 @@ import lab.stoneshelter.enums.StoneSize;
 import lab.stoneshelter.enums.StoneType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
 import jakarta.validation.constraints.Size;
 
 @Schema(description = "Stone details for creating a catalog entry.")
+@JsonIgnoreProperties("admissionDate")
 public class StoneCreateRequest {
     @NotBlank @Size(max = 120)
     @Schema(description = "Stone name.")
@@ -29,9 +29,6 @@ public class StoneCreateRequest {
     @NotNull
     @Schema(description = "Stone adoption status.")
     private AdoptionStatus adoptionStatus;
-    @NotNull @PastOrPresent
-    @Schema(description = "Admission timestamp; requests require a value in the past or present.")
-    private Instant admissionDate;
     @NotNull
     @Schema(description = "Stone size.")
     private StoneSize stoneSize;
@@ -82,14 +79,6 @@ public class StoneCreateRequest {
 
     public void setAdoptionStatus(AdoptionStatus adoptionStatus) {
         this.adoptionStatus = adoptionStatus;
-    }
-
-    public Instant getAdmissionDate() {
-        return admissionDate;
-    }
-
-    public void setAdmissionDate(Instant admissionDate) {
-        this.admissionDate = admissionDate;
     }
 
     public StoneSize getStoneSize() {

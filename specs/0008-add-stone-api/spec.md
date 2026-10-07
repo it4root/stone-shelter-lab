@@ -129,7 +129,7 @@ the 24-hour lifetime.
 
 ### Create a Stone with Previously Uploaded Photos
 
-Extend `POST /api/v1/stones`, retaining `application/json` and the existing
+Extend `POST /api/v1/stones`, retaining `application/json` and the following
 `StoneCreateRequest` fields and validation:
 
 | Field | Requirement |
@@ -138,10 +138,21 @@ Extend `POST /api/v1/stones`, retaining `application/json` and the existing
 | stoneType | Required existing StoneType enum value |
 | stoneSize | Required SMALL, MEDIUM, or LARGE |
 | adoptionStatus | Required AVAILABLE, RESERVED, or ADOPTED; no default |
-| admissionDate | Required timestamp with an offset; not in the future |
 | biography | Optional, at most 2048 characters |
 | photo | Existing optional legacy string, at most 500 characters, preserved |
 | photoUploadIds | Optional ordered array of distinct draft UUIDs, at most 16 |
+
+Admission date is server-owned during creation. It is not a property of
+StoneCreateRequest and is not required from callers. The creation service sets
+the existing admissionDate to the current UTC instant using the injected Clock
+when creating the stone, before persistence. A legacy admissionDate property in
+JSON is ignored and cannot override the server timestamp. Creation, detail and
+search responses retain admissionDate as a UTC date-time.
+
+This revision does not change the existing full-replacement update contract,
+historical stored dates, search date filters or sorting. No database default,
+new column or migration is required. The operator loader omits admissionDate
+and receives the server-assigned timestamp like other creation clients.
 
 Omitted, null, or empty `photoUploadIds` creates a stone without a managed gallery
 and preserves the existing legacy creation behavior. No new minimum photo count

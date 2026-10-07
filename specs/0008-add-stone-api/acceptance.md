@@ -30,7 +30,7 @@ verification are complete; the evidence below records the actual test results.
 | AC-0008-016 | A draft already associated with a committed stone | Another creation request references it | HTTP 409 ProblemDetail; no second stone is created from that request and the first association remains intact | Persistence integration |
 | AC-0008-017 | Two concurrent requests referencing at least one common draft | Both attempt creation | At most one commits; the other receives 409; no draft belongs to two stones and the losing request creates no partial stone | Concurrent PostgreSQL integration |
 | AC-0008-018 | Valid drafts and a database failure during creation | Creation is attempted | HTTP 500 ProblemDetail; no partial stone or consumed references remain; the same drafts can be used after recovery before expiry | Controlled failure integration |
-| AC-0008-019 | Existing stone validation rules | Missing required fields, invalid enums, oversized strings, blank names, malformed timestamps, and future admission dates are submitted | Existing 400 ProblemDetail behavior remains; names may still be duplicated; adoptionStatus and admissionDate are not defaulted | Catalog regression integration |
+| AC-0008-019 | Existing stone validation rules | Missing required fields, invalid enums, oversized strings or blank names are submitted | Existing 400 ProblemDetail behavior remains; names may still be duplicated; adoptionStatus has no default; creation admissionDate is server-owned, while full-replacement update timestamp validation remains | Catalog regression integration |
 
 ## Permanent Copying and Gallery Projection
 
@@ -66,6 +66,7 @@ verification are complete; the evidence below records the actual test results.
 | AC-0008-037 | An invalid local type folder or a folder with more than 16 images, or no explicit target URL | The loader is invoked | It reports the input error before mutation requests; it does not silently skip unsupported input | Loader behavior verification |
 | AC-0008-038 | Successful draft uploads followed by a failed creation API call | The loader handles the failure | It stops, reports the error and reusable draft IDs, and does not resend file bytes or claim successful creation | Loader behavior verification |
 | AC-0008-039 | Normal application startup and ordinary backend verification | They run without explicit loader invocation | No real-database seed population occurs | Startup/loader invocation verification |
+| AC-0008-040 | Valid stone details with zero or uploaded photos and a controlled server clock | Creation omits admissionDate or includes an obsolete client value | HTTP 201 persists the current server UTC instant as admissionDate; create/detail/search agree, the client value cannot override it, generated create schemas omit the property, and loader requests send no date | Controlled-clock HTTP/persistence, generated-contract and loader checks |
 
 ## Verification Rules
 
@@ -119,3 +120,25 @@ The documented scope limits still apply: logical draft expiry is immediate,
 physical deletion follows successful bounded scheduled cleanup, and failed-copy
 sources stay associated indefinitely without automated repair or replication.
 These are intentional scope boundaries, not outstanding implementation tasks.
+
+## Server-Owned Creation Date Verification — T0008-009, 2026-10-08
+
+The revised creation requirements were documented before implementation.
+AC-0008-040 passes controlled-clock checks: photo-free and 16-photo creation
+persist the server instant, and create/detail/search responses agree. Obsolete
+past, future and malformed client date values cannot override it. Generated
+creation schemas omit admissionDate and response schemas retain date-time;
+the existing update validation and historical date/filter/order behavior remain.
+The loader's recorded HTTP request contains no date.
+
+On JDK 23.0.2, ./mvnw -q verify passed with 205 tests, zero failures, errors
+or skips. A concurrent targeted run subsequently replaced the catalog report;
+the full 95-case catalog suite was rerun successfully to retain complete
+evidence. Seven generated-contract cases pass, including whole-document
+JSON/YAML equivalence. Current generated documents were captured from isolated
+test infrastructure and compared with frontend DTOs. Four standalone Python
+loader tests and git diff --check passed.
+
+The lower backend test count reflects removal of obsolete creation-date
+validation cases and addition of server-clock checks; update-date cases remain.
+No dependency, migration, real database population, commit or push was added.

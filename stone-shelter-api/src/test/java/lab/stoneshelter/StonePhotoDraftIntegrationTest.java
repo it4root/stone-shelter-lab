@@ -223,11 +223,14 @@ class StonePhotoDraftIntegrationTest extends IntegrationTest {
 
     @Test
     void initialGalleryAcceptsSixteenPhotosInRequestOrderAndLegacyRequestsStayValid() throws Exception {
+        Instant serverTime = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.MICROS);
+        doReturn(serverTime).when(clock).instant();
         var uploadIds = new ArrayList<String>();
         for (int i = 0; i < 16; i++) uploadIds.add(uploadDraft("image/png", image("png"), 201).get("id").toString());
         java.util.Collections.reverse(uploadIds);
         long id = createStone(Map.of("photoUploadIds", uploadIds));
         var detail = detail(id);
+        assertThat(detail).containsEntry("admissionDate", serverTime.toString());
         var photos = photos(detail);
         assertThat(photos).hasSize(16);
         assertThat(photos).extracting(photo -> photo.get("position")).containsExactlyElementsOf(java.util.stream.IntStream.range(0,16).boxed().toList());
@@ -514,7 +517,7 @@ class StonePhotoDraftIntegrationTest extends IntegrationTest {
 
     private static Map<String, Object> stoneBody(Map<String, Object> extra) {
         var body = new java.util.HashMap<String, Object>(Map.of("name", "Draft Stone " + UUID.randomUUID(), "stoneType", "LIMESTONE",
-                "stoneSize", "SMALL", "adoptionStatus", "AVAILABLE", "admissionDate", "2000-01-01T00:00:00Z"));
+                "stoneSize", "SMALL", "adoptionStatus", "AVAILABLE"));
         body.putAll(extra);
         return body;
     }

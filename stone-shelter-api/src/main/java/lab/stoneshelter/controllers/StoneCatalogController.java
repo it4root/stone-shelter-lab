@@ -53,6 +53,8 @@ public class StoneCatalogController {
         return service.get(id);
     }
 
+    @Operation(summary = "Search AVAILABLE stones in the catalog",
+            description = "Only AVAILABLE stones are returned and counted before pagination. Filters combine with this restriction using AND; RESERVED or ADOPTED status filters return an empty page with totalElements 0.")
     @PostMapping("/search")
     public StonesSearchResponse searchStones(
             @Valid @RequestBody StonesSearchRequest request) {

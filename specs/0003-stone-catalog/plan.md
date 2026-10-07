@@ -312,3 +312,18 @@ without changing lookup or HTTP behavior.
 
 The scalar-response exception, toDto/toEntity method naming and lowerCamelCase
 local object names derived from their types are now explicit constitution rules.
+
+## AVAILABLE-only catalog — T0003-005
+
+Add an unconditional adoptionStatus = AVAILABLE predicate to the repository's
+search specification. Preserve the optional status predicate and all existing
+filter groups using AND. Reuse this same specification for paged content and
+count queries, including the large-offset fallback. Keep service/controller
+delegation and direct identifier lookup unchanged. Update controller and shared
+DTO descriptions so generated JSON/YAML describe the new visibility rule.
+
+Update the former reserved-results tests to the explicitly revised requirements.
+Verify mixed statuses, omitted/null/empty/explicit filters, page metadata and
+reservation removal with PostgreSQL Testcontainers, plus generated-contract
+descriptions/equivalence. Run ./mvnw verify on JDK 23.0.2 and git diff --check.
+No frontend/mock changes, migration, dependency, commit or push is authorized.
