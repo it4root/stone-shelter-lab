@@ -15,7 +15,7 @@ export function ApplicationPages() {
     <>
       {route.page === 'catalog' ? <CatalogPage />
         : route.page === 'add-stone' ? <AddStonePage key={pathname} onCreated={refreshCatalog} />
-          : route.page === 'stone-details' ? <StoneDetailsPage key={pathname} id={route.id} />
+          : route.page === 'stone-details' ? <StoneDetailsPage key={pathname} id={route.id} onCatalogChange={refreshCatalog} />
             : <PageNotFound />}
     </>
   );

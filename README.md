@@ -47,9 +47,9 @@ curl --fail-with-body -F 'file=@stone.png;type=image/png' \
 ```
 
 Read `/api/v1/stones/1` for ordered gallery metadata and temporary image URLs.
-The first successfully added photo supplies the catalog cover. The React UI
-continues to use independent mock data and the supplied placeholder; it has no
-volunteer upload interface. Run it using [UI instructions](stone-shelter-ui/README.md).
+The first successfully added photo supplies the catalog cover. The React UI uses the real API by default and supports optional photo uploads
+when creating a stone. It also offers an explicit standalone mock mode. Run both
+modes using the [UI instructions](stone-shelter-ui/README.md).
 
 Photo deletion is deferred to a scheduler inside the backend. By default it runs
 at 03:00 UTC daily, checks MinIO write readiness, and processes paced batches.
@@ -71,9 +71,11 @@ adoptionStatus and createdAt. The reservation and status change commit together;
 duplicates or unavailable stones return 409 ProblemDetail. Deleting the stone
 removes its dependent reservation. Generated OpenAPI remains the HTTP contract.
 
-The React details page provides this flow through the mock API boundary without
-a running backend. Live frontend/backend integration is deferred. Decisions and
-verification are in [0007-adopt-stone](specs/0007-adopt-stone/spec.md).
+The React details page submits adoption applications through the real API and
+refreshes details and the AVAILABLE-only catalog. Explicit mock mode and ordinary
+UI tests retain the same flow without a backend. Reservation decisions are in
+[0007-adopt-stone](specs/0007-adopt-stone/spec.md); integrated launch instructions
+and verification are in [0011-ui-api-integration](specs/0011-ui-api-integration/spec.md).
 
 ## Verify
     curl localhost:8080/actuator/health

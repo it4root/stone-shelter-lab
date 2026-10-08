@@ -24,12 +24,12 @@ const successText = 'Application submitted. Please wait for us to contact you.';
 
 test('submits selected identity, keeps the same modal and updates status across navigation', async () => {
   const submit = vi.spyOn(stonesApi, 'createStoneReservation');
-  render(<App />);
-  fireEvent.click(screen.getByRole('button', { name: 'View photo 3 of Mars' }));
+  await act(async () => { render(<App />); });
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'View photo 3 of Mars' })); });
   openAndFill();
   const dialog = screen.getByRole('dialog');
   expect(within(dialog).getByRole('img').getAttribute('src')).toBe('/placeholder-rock.png');
-  fireEvent.click(screen.getByRole('button', { name: 'Submit application' }));
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Submit application' })); });
   await waitFor(() => expect(within(dialog).getByRole('status').textContent).toBe(successText));
   expect(screen.getByRole('dialog')).toBe(dialog);
   expect(submit).toHaveBeenCalledWith(1, { applicantName: '  Visitor 石  ', contactDetails: 'Find me by the window' });
@@ -37,28 +37,31 @@ test('submits selected identity, keeps the same modal and updates status across 
   expect(dialog.querySelector('.adopt-stone-check')).toBeTruthy();
   expect(screen.queryByLabelText('Your name')).toBeNull();
   expect(screen.getByText('Reserved')).toBeTruthy();
-  expect(stonesApi.getStone(1)?.adoptionStatus).toBe('RESERVED');
-  fireEvent.click(screen.getByRole('button', { name: 'Close adoption dialog' }));
+  expect((await stonesApi.getStone(1))?.adoptionStatus).toBe('RESERVED');
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Close adoption dialog' })); });
   expect((screen.getByRole('button', { name: 'Adopt this stone' }) as HTMLButtonElement).disabled).toBe(true);
   expect(document.activeElement).toBe(screen.getByRole('group', { name: 'Adoption action' }));
-  fireEvent.click(screen.getByRole('link', { name: 'Back to catalog' }));
-  fireEvent.change(screen.getByLabelText('Sort stones'), { target: { value: 'OLDEST' } });
-  fireEvent.click(screen.getByRole('link', { name: 'View details for Mars' }));
+  await act(async () => { fireEvent.click(screen.getByRole('link', { name: 'Back to catalog' })); });
+  await act(async () => { fireEvent.change(screen.getByLabelText('Sort stones'), { target: { value: 'OLDEST' } }); });
+  expect(screen.queryByRole('link', { name: 'View details for Mars' })).toBeNull();
+  expect(screen.getByText((_, element) => element?.tagName === 'P' && element.textContent === 'Found 29 stones')).toBeTruthy();
+  window.history.back();
+  await screen.findByRole('main', { name: 'Mars' });
   expect(screen.getByText('Reserved')).toBeTruthy();
   expect((screen.getByRole('button', { name: 'Adopt this stone' }) as HTMLButtonElement).disabled).toBe(true);
 });
 
 test('retains both arbitrary fields after failure and succeeds on manual retry', async () => {
   const submit = vi.spyOn(stonesApi, 'createStoneReservation').mockRejectedValueOnce(new Error('temporary failure'));
-  render(<App />);
+  await act(async () => { render(<App />); });
   openAndFill();
-  fireEvent.click(screen.getByRole('button', { name: 'Submit application' }));
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Submit application' })); });
   await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Please try again'));
   expect((screen.getByLabelText('Your name') as HTMLInputElement).value).toBe('  Visitor 石  ');
   expect((screen.getByLabelText('Contact details') as HTMLTextAreaElement).value).toBe('Find me by the window');
   expect(screen.queryByText(successText)).toBeNull();
-  expect(stonesApi.getStone(1)?.adoptionStatus).toBe('AVAILABLE');
-  fireEvent.click(screen.getByRole('button', { name: 'Submit application' }));
+  expect((await stonesApi.getStone(1))?.adoptionStatus).toBe('AVAILABLE');
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Submit application' })); });
   await waitFor(() => expect(screen.getByRole('status').textContent).toBe(successText));
   expect(submit).toHaveBeenCalledTimes(2);
 });
@@ -66,14 +69,14 @@ test('retains both arbitrary fields after failure and succeeds on manual retry',
 test('prevents repeat submissions while pending including programmatic submit events', async () => {
   let resolve!: (response: StoneReservationCreateResponse) => void;
   const submit = vi.spyOn(stonesApi, 'createStoneReservation').mockImplementation(() => new Promise(result => { resolve = result; }));
-  render(<App />);
+  await act(async () => { render(<App />); });
   openAndFill();
   const form = screen.getByLabelText('Your name').closest('form')!;
-  fireEvent.submit(form);
+  await act(async () => { fireEvent.submit(form); });
   expect(screen.getByRole('status').textContent).toBe('Sending your application…');
   expect((screen.getByRole('button', { name: 'Submitting…' }) as HTMLButtonElement).disabled).toBe(true);
-  fireEvent.submit(form);
-  fireEvent.submit(form);
+  await act(async () => { fireEvent.submit(form); });
+  await act(async () => { fireEvent.submit(form); });
   expect(submit).toHaveBeenCalledTimes(1);
   await act(async () => resolve({ id: 1, stoneId: 1, adoptionStatus: 'RESERVED', createdAt: new Date().toISOString() }));
   expect(screen.getByRole('status').textContent).toBe(successText);
@@ -81,31 +84,31 @@ test('prevents repeat submissions while pending including programmatic submit ev
 
 test.each([404, 409])('rejects stale eligibility with %i and prevents a misleading retry', async status => {
   const submit = vi.spyOn(stonesApi, 'createStoneReservation').mockRejectedValue(new StoneReservationError(status, 'This stone is unavailable.'));
-  render(<App />);
+  await act(async () => { render(<App />); });
   openAndFill();
-  fireEvent.click(screen.getByRole('button', { name: 'Submit application' }));
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Submit application' })); });
   await waitFor(() => expect(screen.getByRole('alert').textContent).toBe('This stone is unavailable.'));
   expect(screen.queryByText(successText)).toBeNull();
   expect((screen.getByRole('button', { name: 'Submit application' }) as HTMLButtonElement).disabled).toBe(true);
-  fireEvent.submit(screen.getByLabelText('Your name').closest('form')!);
+  await act(async () => { fireEvent.submit(screen.getByLabelText('Your name').closest('form')!); });
   expect(submit).toHaveBeenCalledTimes(1);
 });
 
 test('rechecks availability at submission after another visitor reserved the stone', async () => {
-  render(<App />);
+  await act(async () => { render(<App />); });
   openAndFill();
   await stonesApi.createStoneReservation(1, { applicantName: 'Other visitor', contactDetails: 'elsewhere' });
-  fireEvent.click(screen.getByRole('button', { name: 'Submit application' }));
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Submit application' })); });
   await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('no longer available'));
   expect(screen.queryByText(successText)).toBeNull();
 });
 
-test('changes selected stone without retaining applicant data or previous success state', () => {
-  const view = render(<StoneDetailsPage id={1} />);
+test('changes selected stone without retaining applicant data or previous success state', async () => {
+  const view = await act(async () => render(<StoneDetailsPage id={1} />));
   openAndFill();
-  view.rerender(<StoneDetailsPage id={2} />);
+  await act(async () => { view.rerender(<StoneDetailsPage id={2} />); });
   expect(screen.queryByRole('dialog')).toBeNull();
-  fireEvent.click(screen.getByRole('button', { name: 'Adopt this stone' }));
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Adopt this stone' })); });
   const dialog = screen.getByRole('dialog');
   expect(within(dialog).getByRole('heading', { name: 'Olivia' })).toBeTruthy();
   expect((screen.getByLabelText('Your name') as HTMLInputElement).value).toBe('');

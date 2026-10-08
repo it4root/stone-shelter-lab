@@ -4,6 +4,7 @@ import * as stonesApi from '../../../../api/stonesApi';
 import type { StonePhotoDraftUploadResponse } from '../../../../api/dto/StonePhotoDraftUploadResponse';
 import { resetMockStoneCreations } from '../../../../mocks/api/mockStonesApi';
 import { AddStoneForm } from './AddStoneForm';
+import { ApiError } from '../../../../api/ApiError';
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); resetMockStoneCreations(); });
 
@@ -23,6 +24,31 @@ function details() {
   fireEvent.change(screen.getByLabelText('Stone type *'), { target: { value: 'BASALT' } });
   fireEvent.change(screen.getByLabelText('Size *'), { target: { value: 'SMALL' } });
 }
+
+test('retains successful uploads in selection order after a partial failure without resending prior photos', async () => {
+  const later = deferred<StonePhotoDraftUploadResponse>();
+  let fail!: (failure: Error) => void;
+  const failed = new Promise<StonePhotoDraftUploadResponse>((_, reject) => { fail = reject; });
+  const upload = vi.spyOn(stonesApi, 'uploadStonePhotoDraft').mockResolvedValueOnce(draft('existing'))
+    .mockReturnValueOnce(later.promise).mockReturnValueOnce(failed).mockResolvedValueOnce(draft('last'));
+  const onSubmit = vi.fn();
+  render(<AddStoneForm onSubmit={onSubmit} />);
+  details();
+  await act(async () => { select([photo('existing.png')]); });
+  select([photo('first.png'), photo('failed.png'), photo('last.png')]);
+  await act(async () => fail(new ApiError(503, 'Draft storage unavailable.')));
+  expect(screen.getByText('1 / 16 photos')).toBeTruthy();
+  expect((screen.getByRole('button', { name: 'Add stone' }) as HTMLButtonElement).disabled).toBe(true);
+  await act(async () => later.resolve(draft('first')));
+  expect(screen.getByRole('alert').textContent).toContain('Draft storage unavailable. Successful photos were retained.');
+  expect(screen.getAllByAltText(/Photo \d preview/).map(element => element.getAttribute('src')))
+    .toEqual(['existing', 'first', 'last'].map(id => draft(id).url));
+  expect((screen.getByLabelText('Name *') as HTMLInputElement).value).toBe('Photo stone');
+  fireEvent.submit(screen.getByRole('form'));
+  expect(onSubmit).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({ photoUploadIds: ['existing', 'first', 'last'] }));
+  expect(upload).toHaveBeenCalledTimes(4);
+  expect((screen.getByRole('button', { name: 'Add stone' }) as HTMLButtonElement).disabled).toBe(false);
+});
 
 test('batches retain order, repeated files get separate IDs and creation passes remaining references without reuploading', async () => {
   const upload = vi.spyOn(stonesApi, 'uploadStonePhotoDraft');

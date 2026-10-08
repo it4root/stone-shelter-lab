@@ -1,66 +1,122 @@
 # Stone Shelter UI
 
-React + TypeScript mock-first catalog, stone details and creation. Use Node 24.21.0 and
-npm 11.19.0.
+React + TypeScript catalog, details/gallery, stone creation and adoption. Use
+Node 24.21.0 and npm 11.19.0. Normal development and production builds use the
+real API; mocks are an explicit alternative.
+
+## Run with the Backend
+
+From the repository root, prepare `.env` from `.env.example` on first launch,
+then start the current backend:
+
+```sh
+cp .env.example .env # First launch only; preserve an existing .env.
+docker compose up -d --build
+```
+
+When updating an existing environment, retain its settings and add missing
+`MINIO_DRAFT_BUCKET` and `STONE_PHOTO_PLACEHOLDER_URL` values from `.env.example`.
+Rebuild an older API image: current UI creation requires draft uploads and the
+server-owned admission date. PostgreSQL and MinIO volumes persist across rebuilds.
+
+Then prepare and start the UI:
 
 ```sh
 cd stone-shelter-ui
 npm ci
-npm run dev
+cp .env.example .env.local # First launch only.
+npm run dev:api
 ```
 
-Open the local URL printed by Vite. To produce a production build:
+`npm run dev` also uses the API. Open the local URL printed by Vite and navigate
+to `/stone-shelter/catalog`. `API_PROXY_TARGET` in `.env.local` supplies the backend
+origin; its example is `http://localhost:8080`. Vite proxies `/api` and `/images`
+in development and preview. Keep `VITE_API_BASE_URL` empty for same-origin
+requests. Addresses are configurable; no MinIO/database credentials reach the UI.
+The backend's `MINIO_BROWSER_ENDPOINT` must be reachable from the browser.
+
+An empty real database displays an empty catalog. Add stones through the UI or
+explicitly use the existing [API data loader](../specs/0008-add-stone-api/data-loader.md).
+No launch or ordinary test command seeds the database automatically.
+
+## Run with Mocks
 
 ```sh
-npm run build
-npm run lint
-npm run test -- --run
+npm run dev:mock
 ```
 
-The catalog is at `/stone-shelter/catalog`; clicking a stone photo opens
-`/stone-shelter/stones/{id}`. The header's Stone catalog link returns to the
-catalog. Direct entry,
-browser history and an explicit back link are supported. Catalog filters, sort,
-pagination, sidebar and scroll are retained while navigating within the session.
-All 30 mock stones are available without the backend or MinIO. Galleries use
-`public/placeholder-rock.png`, with zero/one/multiple-photo examples.
+This selects Vite's `mock` mode. It needs neither backend nor MinIO and starts
+with 30 AVAILABLE stones. Mock-created stones, uploaded previews and reservations
+remain in memory until a full reload. API errors never silently enable mocks.
+The catalog shows only AVAILABLE stones in both modes; reserved stones stay
+readable through their detail URL.
 
-Vitest uses jsdom and React Testing Library to verify catalog, navigation,
-detail, gallery and reservation behavior. An available stone's details include
-`Adopt this stone`: enter arbitrary nonblank name/contact text in the modal and
-submit to reserve it. Confirmation stays in the same modal; failures retain the
-form and allow manual retry when the stone is still eligible. Reservations and
-`Reserved` status are shared by mock reads until a full reload. No backend is
-required and no live HTTP reservation requests are made.
+## Existing UI Flows
 
-Select `Add stone` in the catalog or open `/stone-shelter/add-stone` to create a stone.
-Photos are optional; without them the existing placeholder is used. Choose up to
-16 JPEG/PNG/WebP photos, up to 10 MiB each, across multiple selections. Photos
-appear in a 4 × 4 grid of 16 slots above the chooser and can be removed before creation.
-Empty slots have no visible numbers. Creation has no admission-date input;
-the backend assigns that timestamp, and the mock mirrors it in its response.
-The mock reads selected files locally and returns draft UUIDs; creation sends
-details and those references through the API boundary. It always succeeds for
-valid form input. Created stones and photos are available in the catalog and
-details until a full reload. Admission date is assigned at creation by the
-backend (or the mock adapter in this UI); the form has no date input and sends
-no admissionDate. There is no live upload, backend write or persistent
-browser storage. Feature scope and verification are in
-[0009-add-stone-ui](../specs/0009-add-stone-ui/spec.md) and
-[acceptance.md](../specs/0009-add-stone-ui/acceptance.md).
-Backend photo storage and real reservation persistence are verified independently;
-adoption UI scope remains in [0007-adopt-stone](../specs/0007-adopt-stone/spec.md).
-Opening `/` or `/stone-shelter` redirects to the catalog. Legacy `/stones/new`
-and numeric `/stones/{id}` URLs still work and redirect to the canonical URLs.
-Recognized trailing slashes are normalized away. Redirects replace the current
-history entry and retain query strings/fragments. Unknown pages show Page not
-found; invalid or missing stone identifiers show Stone not found.
+- Catalog: `/stone-shelter/catalog`, filters, six sort choices and page sizes
+  8/12/24. Counts and pagination use API response metadata.
+- Details: `/stone-shelter/stones/{id}`, complete biography, characteristics,
+  ordered photo gallery and adoption application.
+- Creation: `/stone-shelter/add-stone`, name/type/size, optional biography and
+  zero to 16 JPEG/PNG/WebP photos up to 10 MiB each in the existing 4 × 4 grid.
+  Draft files upload separately; creation sends ordered UUID references, and
+  the backend assigns admissionDate.
 
-The Vite development server serves the SPA entry document on direct UI routes.
-An eventual production host must serve `index.html` for these client routes
-while serving requested assets normally. The `/stone-shelter` prefix identifies
-UI pages; it does not relocate assets or backend API endpoints. Deployment is
-outside this feature. Routing scope and evidence are in
-[0010-ui-routing](../specs/0010-ui-routing/spec.md) and its
-[acceptance criteria](../specs/0010-ui-routing/acceptance.md).
-TypeScript 6.0.3 is selected for supported ESLint integration in ADR-0002.
+Loading, recoverable errors and manual retry are visible. Invalid IDs/HTTP 404
+show Stone not found. Creation failure retains the form and uploaded references;
+partial upload failure retains successful photos in selection order. No write is
+retried automatically. Successful creation/reservation refreshes the catalog
+without resetting session choices. Reserving a stone removes it from the
+AVAILABLE-only catalog and updates its details in the same modal flow.
+
+Existing SPA history, catalog scroll/session restoration, canonical links and
+legacy redirects remain. Missing/broken images use `/placeholder-rock.png`.
+
+## Build and Verify
+
+```sh
+npm run lint
+npm run test -- --run
+npm run build
+npm run preview
+```
+
+Ordinary UI tests explicitly use the mock adapter, with isolated runtime state;
+HTTP-boundary tests stub fetch. They require no running backend. The API build
+excludes mock datasets. To build a standalone mock variant:
+
+```sh
+npm run build:mock
+npm run preview -- --mode mock
+```
+
+The last build determines the contents of `dist`; run `npm run build` again to
+restore the API artifact. Backend/API base URL selection is made at build time.
+
+An explicitly invoked real transport test is also available:
+
+```sh
+API_PROXY_TARGET=http://127.0.0.1:8080 npm run test:api
+```
+
+Point this command at an isolated backend with photo storage enabled and an
+empty catalog. It executes the actual UI API adapter through a temporary Vite
+proxy, creates two test stones, verifies gallery bytes/readback/reservations,
+then deletes its stones and closes its proxy. Backend object cleanup follows the
+existing storage lifecycle; dispose isolated infrastructure to remove all test
+objects, including drafts from failed runs. This command is never part of the
+ordinary UI test suite or startup.
+
+## Production Routing
+
+Serve `index.html` for client page URLs while serving assets normally. Route
+`/api` and `/images` to the backend using a same-origin reverse proxy. An optional
+`VITE_API_BASE_URL` can instead specify a backend base URL at build time; that
+backend must permit the UI origin through CORS. Vite's development proxy is not
+included in static production assets. The `/stone-shelter` page prefix does not
+relocate API routes or assets. Hosting and backend CORS changes are outside this
+ticket.
+
+Decisions, scope and evidence are in
+[0011-ui-api-integration](../specs/0011-ui-api-integration/spec.md) and its
+[acceptance criteria](../specs/0011-ui-api-integration/acceptance.md).

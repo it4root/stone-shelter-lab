@@ -6,7 +6,7 @@ import './AddStonePage.css';
 import { catalogPath, stoneDetailsPath } from '../../../../App/navigation/pageRoutes';
 
 export function AddStonePage({ onCreated }: { onCreated: () => void }) {
-  const { result, submitting, submit, addAnother } = useStoneCreation(onCreated);
+  const { result, submitting, error, submit, addAnother } = useStoneCreation(onCreated);
   const heading = useRef<HTMLHeadingElement>(null);
   const confirmation = useRef<HTMLHeadingElement>(null);
 
@@ -18,6 +18,7 @@ export function AddStonePage({ onCreated }: { onCreated: () => void }) {
     <main className="add-stone-page" aria-labelledby="add-stone-heading">
       <nav className="add-stone-navigation" aria-label="Stone navigation"><a href={catalogPath}><span aria-hidden="true">←</span> Back to catalog</a></nav>
       <h1 id="add-stone-heading" ref={heading} tabIndex={-1}>Add a stone</h1>
+      {error && <p className="add-stone-error" role="alert">{error}</p>}
       {result ? <section className="add-stone-success" aria-label="Created stone">
         <StoneGallery name={result.name} photos={result.photos} photo={result.photo} />
         <div className="add-stone-confirmation">

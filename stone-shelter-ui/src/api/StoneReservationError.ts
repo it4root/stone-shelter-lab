@@ -1,6 +1,8 @@
-export class StoneReservationError extends Error {
-  constructor(public readonly status: number, message: string) {
-    super(message);
+import { ApiError } from './ApiError';
+
+export class StoneReservationError extends ApiError {
+  constructor(status: number, message: string) {
+    super(status, message);
     this.name = 'StoneReservationError';
   }
 }

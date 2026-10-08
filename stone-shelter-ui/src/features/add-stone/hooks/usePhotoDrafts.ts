@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { uploadStonePhotoDraft } from '../../../api/stonesApi';
 import type { StonePhotoDraftUploadResponse } from '../../../api/dto/StonePhotoDraftUploadResponse';
 import { validatePhotoFiles } from '../validation/photoFiles';
+import { ApiError } from '../../../api/ApiError';
 
 export function usePhotoDrafts() {
   const [photos, setPhotos] = useState<StonePhotoDraftUploadResponse[]>([]);
@@ -25,10 +26,14 @@ export function usePhotoDrafts() {
     busy.current = true;
     setUploading(true);
     try {
-      const uploads = await Promise.all(files.map(uploadStonePhotoDraft));
-      if (mounted.current && generation.current === currentGeneration) setPhotos(current => [...current, ...uploads]);
-    } catch {
-      if (mounted.current && generation.current === currentGeneration) setError('A photo could not be read. Please select the photos again.');
+      const uploads = await Promise.allSettled(files.map(uploadStonePhotoDraft));
+      if (mounted.current && generation.current === currentGeneration) {
+        setPhotos(current => [...current, ...uploads.flatMap(upload => upload.status === 'fulfilled' ? [upload.value] : [])]);
+        const failed = uploads.find(upload => upload.status === 'rejected');
+        if (failed?.status === 'rejected') {
+          setError(`${failed.reason instanceof ApiError ? failed.reason.message : 'A photo could not be uploaded.'} Successful photos were retained. Select failed photos again to retry.`);
+        }
+      }
     } finally {
       if (mounted.current && generation.current === currentGeneration) {
         busy.current = false;

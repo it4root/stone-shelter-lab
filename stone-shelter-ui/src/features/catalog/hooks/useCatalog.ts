@@ -1,5 +1,7 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { getCatalogStones } from '../../../api/stonesApi';
+import type { StonesSearchResponse } from '../../../api/dto/StonesSearchResponse';
+import { ApiError } from '../../../api/ApiError';
 
 import type { CatalogSortOption } from '../../../enums/CatalogSortOption';
 import { catalogSortOptions } from '../presentation/catalogSortOptions';
@@ -17,8 +19,34 @@ export function useCatalog() {
   const [sortOption, setSortOption] = useState<CatalogSortOption>('NEWEST');
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(8);
-  const [, setRevision] = useState(0);
+  const [revision, setRevision] = useState(0);
+  const [response, setResponse] = useState<StonesSearchResponse>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>();
   const refreshCatalog = useCallback(() => setRevision(current => current + 1), []);
+
+  useEffect(() => {
+    let current = true;
+    setLoading(true);
+    setError(undefined);
+    getCatalogStones(page, size, catalogSortOptions[sortOption].sort, filter)
+      .then(stonesSearchResponse => {
+        if (!current) return;
+        const lastPage = Math.max(0, Math.ceil(stonesSearchResponse.totalElements / stonesSearchResponse.size) - 1);
+        if (page > lastPage) {
+          setPage(lastPage);
+          return;
+        }
+        setResponse(stonesSearchResponse);
+        setLoading(false);
+      })
+      .catch(failure => {
+        if (!current) return;
+        setError(failure instanceof ApiError ? failure.message : 'The catalog could not be loaded. Please try again.');
+        setLoading(false);
+      });
+    return () => { current = false; };
+  }, [page, size, sortOption, filter, revision]);
 
   function changeSize(nextSize: number) {
     setSize(nextSize);
@@ -76,7 +104,11 @@ export function useCatalog() {
       + Number(Boolean(filter.admissionDateFrom || filter.admissionDateTo)),
     sortOption,
     onSortChange: changeSort,
-    response: getCatalogStones(page, size, catalogSortOptions[sortOption].sort, filter),
+    response,
+    loading,
+    error,
+    page,
+    size,
     onPageChange: setPage,
     onSizeChange: changeSize,
   };

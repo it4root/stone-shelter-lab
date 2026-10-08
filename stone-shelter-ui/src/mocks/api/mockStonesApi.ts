@@ -106,7 +106,8 @@ export function getMockCatalogStones(page = 0, size = 8,
   }));
   const matchingStones = [...mockStones, ...additions].map(withReservation).filter(stone => {
     const timestamp = Date.parse(stone.admissionDate);
-    return (!filter.stoneSizes?.length || filter.stoneSizes.includes(stone.stoneSize))
+    return stone.adoptionStatus === 'AVAILABLE'
+      && (!filter.stoneSizes?.length || filter.stoneSizes.includes(stone.stoneSize))
       && (!filter.stoneTypes?.length || filter.stoneTypes.includes(stone.stoneType))
       && (!filter.stoneSize || filter.stoneSize === stone.stoneSize)
       && (!filter.stoneType || filter.stoneType === stone.stoneType)

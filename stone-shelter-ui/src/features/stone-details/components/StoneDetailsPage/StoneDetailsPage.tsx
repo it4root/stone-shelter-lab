@@ -10,11 +10,14 @@ const dateFormat = new Intl.DateTimeFormat('en-US', {
   day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
 });
 
-export function StoneDetailsPage({ id }: { id?: number }) {
-  const { stone, refreshStone } = useStoneDetails(id);
+export function StoneDetailsPage({ id, onCatalogChange }: { id?: number; onCatalogChange?: () => void }) {
+  const { stone, loading, error, refreshStone } = useStoneDetails(id);
   const heading = useRef<HTMLHeadingElement>(null);
+  const pageReady = !stone && !loading;
 
-  useEffect(() => { heading.current?.focus({ preventScroll: true }); }, [id]);
+  useEffect(() => {
+    if (stone || pageReady) heading.current?.focus({ preventScroll: true });
+  }, [id, stone?.id, pageReady]);
 
   return (
     <main className="stone-details-page" aria-labelledby="stone-details-heading">
@@ -22,6 +25,8 @@ export function StoneDetailsPage({ id }: { id?: number }) {
         <a href={catalogPath}><span aria-hidden="true">←</span> Back to catalog</a>
         {stone && <><span aria-hidden="true">/</span><span aria-current="page">{stone.name}</span></>}
       </nav>
+      {loading && !stone && <div><h1 id="stone-details-heading" ref={heading} tabIndex={-1}>Stone details</h1><p role="status">Loading stone…</p></div>}
+      {error && <div>{!stone && <h1 id="stone-details-heading" ref={heading} tabIndex={-1}>Unable to load stone</h1>}<p role="alert">{error}</p><button type="button" onClick={refreshStone}>Retry stone</button></div>}
       {stone ? <div className="stone-details-grid">
         <StoneGallery key={stone.id} name={stone.name} photos={stone.photos} photo={stone.photo} />
         <div className="stone-details-information">
@@ -30,7 +35,7 @@ export function StoneDetailsPage({ id }: { id?: number }) {
             <p className="stone-details-id">ID {stone.id}</p>
             <span className="stone-status">{adoptionStatusLabels[stone.adoptionStatus]}</span>
           </div>
-          <AdoptStoneAction key={stone.id} stone={stone} onReserved={refreshStone} />
+          <AdoptStoneAction key={stone.id} stone={stone} onReserved={() => { refreshStone(); onCatalogChange?.(); }} />
           <section className="stone-details-characteristics" aria-labelledby="stone-characteristics-heading">
             <h2 id="stone-characteristics-heading">Characteristics</h2>
             <dl>
@@ -44,7 +49,7 @@ export function StoneDetailsPage({ id }: { id?: number }) {
             <p>{stone.biography?.trim() ? stone.biography : 'This stone’s story is coming soon.'}</p>
           </section>
         </div>
-      </div> : <div className="stone-details-not-found">
+      </div> : !loading && !error && <div className="stone-details-not-found">
         <h1 id="stone-details-heading" ref={heading} tabIndex={-1}>Stone not found</h1>
         <p>We could not find a stone at this address. Return to the catalog to meet our stones.</p>
       </div>}

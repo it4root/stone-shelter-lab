@@ -23,7 +23,7 @@ test.each([
   { mediaType: 'image/webp', bytes: Uint8Array.from(atob('UklGRh4AAABXRUJQVlA4TBEAAAAvAAAAAAfQ//73v/+BiOh/AAA='), character => character.charCodeAt(0)) },
   { mediaType: 'image/png', bytes: new Uint8Array(10 * 1024 * 1024).map((_, index) => png[index] ?? 0) },
 ])('reads selected $mediaType bytes through the draft boundary without creating a stone', async ({ mediaType, bytes }) => {
-  const initialCount = getCatalogStones().totalElements;
+  const initialCount = (await getCatalogStones()).totalElements;
   const draft = await uploadStonePhotoDraft(new File([bytes], 'photo', { type: mediaType }));
   expect(draft.id).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
   const [header, encoded] = draft.url.split(',');
@@ -37,15 +37,15 @@ test.each([
     expect(decoded).toBe(String.fromCharCode(...bytes));
   }
   expect(Date.parse(draft.expiresAt) - Date.parse(draft.uploadedAt)).toBe(24 * 60 * 60 * 1000);
-  expect(getCatalogStones().totalElements).toBe(initialCount);
+  expect((await getCatalogStones()).totalElements).toBe(initialCount);
 });
 
 test.each([undefined, null, []])('creates without photos for reference list %j and returns independent details', async photoUploadIds => {
   const created = await createStone({ ...request, photoUploadIds });
   expect(created).toEqual({ ...request, id: created.id, admissionDate: created.admissionDate, photo: null, photos: [] });
   expect(created.id).toBeGreaterThan(Math.max(...mockStones.map(stone => stone.id)));
-  expect(getStone(created.id)).toEqual(created);
-  expect(getCatalogStones().totalElements).toBe(mockStones.length + 1);
+  expect((await getStone(created.id))).toEqual(created);
+  expect((await getCatalogStones()).totalElements).toBe(mockStones.length + 1);
   expect(created).not.toHaveProperty('photoUploadIds');
 });
 
@@ -55,7 +55,7 @@ test('allows duplicate names and allocates distinct IDs for concurrent successfu
   for (const stone of created) {
     expect(stone.name).toBe(mockStones[0].name);
     expect(stone.id).toBeGreaterThan(Math.max(...mockStones.map(fixture => fixture.id)));
-    expect(getStone(stone.id)).toEqual(stone);
+    expect((await getStone(stone.id))).toEqual(stone);
   }
 });
 
@@ -73,7 +73,7 @@ test.each([1, 16])('creates an ordered gallery from %i uploaded references witho
     expect(photo.id).toBeGreaterThan(Math.max(...Object.values(mockStonePhotos).flat().map(fixture => fixture.id)));
     expect(Number.isNaN(Date.parse(photo.addedAt))).toBe(false);
   }
-  expect(getStone(created.id)).toEqual(created);
+  expect((await getStone(created.id))).toEqual(created);
   const next = await createStone({ ...request, photoUploadIds: [drafts[0].id] });
   expect(next.photos[0].id).toBeGreaterThan(Math.max(...created.photos.map(photo => photo.id)));
 });
@@ -86,18 +86,18 @@ test('includes additions in filtering, sorting, paging and totals without expand
     stoneTypes: ['BASALT'] as const, stoneSizes: ['SMALL'] as const,
     admissionDateFrom: alpha.admissionDate.slice(0, 10), admissionDateTo: alpha.admissionDate.slice(0, 10),
   };
-  const first = getCatalogStones(0, 1, { field: 'name', direction: 'asc' }, {
+  const first = (await getCatalogStones(0, 1, { field: 'name', direction: 'asc' }, {
     ...filter, stoneTypes: [...filter.stoneTypes], stoneSizes: [...filter.stoneSizes],
-  });
-  const second = getCatalogStones(1, 1, { field: 'name', direction: 'asc' }, {
+  }));
+  const second = (await getCatalogStones(1, 1, { field: 'name', direction: 'asc' }, {
     ...filter, stoneTypes: [...filter.stoneTypes], stoneSizes: [...filter.stoneSizes],
-  });
+  }));
   expect(first).toMatchObject({ page: 0, size: 1, totalElements: 2 });
   expect(second).toMatchObject({ page: 1, size: 1, totalElements: 2 });
   expect([...first.content, ...second.content].map(stone => stone.id)).toEqual([alpha.id, beta.id]);
   expect(first.content[0]).not.toHaveProperty('photos');
   expect(first.content[0]).not.toHaveProperty('photoUploadIds');
-  expect(getCatalogStones().totalElements).toBe(mockStones.length + 3);
+  expect((await getCatalogStones()).totalElements).toBe(mockStones.length + 3);
 });
 
 test('protects stored drafts and galleries from response/request mutation and keeps cover readback consistent', async () => {
@@ -112,18 +112,18 @@ test('protects stored drafts and galleries from response/request mutation and ke
   created.name = 'Changed response';
   created.photos.reverse();
   created.photos[0].url = '/mutated-created.png';
-  const detail = getStone(id)!;
+  const detail = (await getStone(id))!;
   expect(detail).toMatchObject({ name: request.name, photo: cover });
   expect(detail.photos.map(photo => photo.position)).toEqual([0, 1]);
   const galleryIds = detail.photos.map(photo => photo.id);
   detail.photos[0].url = '/mutated-details.png';
   detail.photos.pop();
-  const catalog = getCatalogStones(0, 24, undefined, { admissionDateFrom: created.admissionDate.slice(0, 10) });
+  const catalog = (await getCatalogStones(0, 24, undefined, { admissionDateFrom: created.admissionDate.slice(0, 10) }));
   expect(catalog.content[0]).toMatchObject({ id, name: request.name, photo: cover });
   catalog.content[0].name = 'Changed catalog';
-  expect(getStone(id)?.photos.map(photo => photo.id)).toEqual(galleryIds);
-  expect(getStone(id)?.photos[0].url).toBe(cover);
-  expect(getStone(id)?.name).toBe(request.name);
+  expect((await getStone(id))?.photos.map(photo => photo.id)).toEqual(galleryIds);
+  expect((await getStone(id))?.photos[0].url).toBe(cover);
+  expect((await getStone(id))?.name).toBe(request.name);
 });
 
 test('applies reservations to newly created stones and leaves both fixture datasets unchanged', async () => {
@@ -132,10 +132,10 @@ test('applies reservations to newly created stones and leaves both fixture datas
   const draft = await uploadStonePhotoDraft(new File([png], 'stone.png', { type: 'image/png' }));
   const created = await createStone({ ...request, photoUploadIds: [draft.id] });
   await createStoneReservation(created.id, { applicantName: 'Visitor', contactDetails: 'Window 2' });
-  expect(getStone(created.id)).toMatchObject({ adoptionStatus: 'RESERVED', photos: created.photos });
-  expect(getCatalogStones(0, 24, undefined, { adoptionStatus: 'RESERVED' }).content)
-    .toContainEqual({ ...request, id: created.id, admissionDate: created.admissionDate, photo: draft.url, adoptionStatus: 'RESERVED' });
-  expect(getCatalogStones(0, 24, undefined, { adoptionStatus: 'AVAILABLE' }).content.some(stone => stone.id === created.id)).toBe(false);
+  expect((await getStone(created.id))).toMatchObject({ adoptionStatus: 'RESERVED', photos: created.photos });
+  expect((await getCatalogStones(0, 24, undefined, { adoptionStatus: 'RESERVED' })).content)
+    .toEqual([]);
+  expect((await getCatalogStones(0, 24, undefined, { adoptionStatus: 'AVAILABLE' })).content.some(stone => stone.id === created.id)).toBe(false);
   await expect(createStoneReservation(created.id, { applicantName: 'Other', contactDetails: 'Window 3' }))
     .rejects.toMatchObject({ status: 409 });
   expect(JSON.stringify(mockStones)).toBe(initialStones);
@@ -147,12 +147,12 @@ test('resets new runtime state and its reservations without changing fixture res
   const created = await createStone(request);
   await createStoneReservation(created.id, { applicantName: 'New visitor', contactDetails: 'There' });
   resetMockStoneCreations();
-  expect(getStone(created.id)).toBeUndefined();
-  expect(getCatalogStones().totalElements).toBe(mockStones.length);
-  expect(getStone(1)?.adoptionStatus).toBe('RESERVED');
+  expect((await getStone(created.id))).toBeUndefined();
+  expect((await getCatalogStones()).totalElements).toBe(mockStones.length - 1);
+  expect((await getStone(1))?.adoptionStatus).toBe('RESERVED');
   const fresh = await createStone(request);
   expect(fresh.id).toBe(created.id);
-  expect(getStone(fresh.id)?.adoptionStatus).toBe('AVAILABLE');
+  expect((await getStone(fresh.id))?.adoptionStatus).toBe('AVAILABLE');
 });
 
 
@@ -162,8 +162,8 @@ test('mock creation assigns its current UTC instant and preserves it in detail a
   const legacyRequest = { ...request, admissionDate: '2000-01-01T00:00:00Z' };
   const created = await createStone(legacyRequest);
   expect(created.admissionDate).toBe('2026-01-02T07:30:12.345Z');
-  expect(getStone(created.id)?.admissionDate).toBe(created.admissionDate);
-  expect(getCatalogStones(0, 24, undefined, {
+  expect((await getStone(created.id))?.admissionDate).toBe(created.admissionDate);
+  expect((await getCatalogStones(0, 24, undefined, {
     admissionDateFrom: '2026-01-02', admissionDateTo: '2026-01-02',
-  }).content.find(stone => stone.id === created.id)?.admissionDate).toBe(created.admissionDate);
+  })).content.find(stone => stone.id === created.id)?.admissionDate).toBe(created.admissionDate);
 });

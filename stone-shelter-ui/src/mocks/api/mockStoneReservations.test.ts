@@ -13,13 +13,14 @@ test('reserves the precise stone through the boundary and projects status withou
   expect(response).toMatchObject({ stoneId: 1, adoptionStatus: 'RESERVED' });
   expect(response.id).toBeGreaterThan(0);
   expect(Number.isNaN(Date.parse(response.createdAt))).toBe(false);
-  expect(getStone(1)?.adoptionStatus).toBe('RESERVED');
-  expect(getCatalogStones(0, 24, undefined, { adoptionStatus: 'RESERVED' }).content.some(stone => stone.id === 1)).toBe(true);
-  expect(getCatalogStones(0, 24, undefined, { adoptionStatus: 'AVAILABLE' }).content.some(stone => stone.id === 1)).toBe(false);
+  expect((await getStone(1))?.adoptionStatus).toBe('RESERVED');
+  expect(await getCatalogStones(0, 24, undefined, { adoptionStatus: 'RESERVED' })).toMatchObject({ content: [], totalElements: 0 });
+  expect((await getCatalogStones()).totalElements).toBe(29);
+  expect((await getCatalogStones(0, 24, undefined, { adoptionStatus: 'AVAILABLE' })).content.some(stone => stone.id === 1)).toBe(false);
   expect(JSON.stringify(mockStones)).toBe(initial);
-  expect(getStone(1)).not.toHaveProperty('applicantName');
+  expect((await getStone(1))).not.toHaveProperty('applicantName');
   response.adoptionStatus = 'ADOPTED';
-  expect(getStone(1)?.adoptionStatus).toBe('RESERVED');
+  expect((await getStone(1))?.adoptionStatus).toBe('RESERVED');
 });
 
 test('permits the same applicant for different stones but refuses repeat or concurrent reservations', async () => {
@@ -36,7 +37,7 @@ test('permits the same applicant for different stones but refuses repeat or conc
 test.each(['applicantName', 'contactDetails'] as const)('rejects blank %s without writing then permits valid retry', async field => {
   for (const value of ['', ' ', '\t\n']) {
     await expect(createStoneReservation(1, { ...request, [field]: value })).rejects.toMatchObject({ status: 400 });
-    expect(getStone(1)?.adoptionStatus).toBe('AVAILABLE');
+    expect((await getStone(1))?.adoptionStatus).toBe('AVAILABLE');
   }
   await expect(createStoneReservation(1, request)).resolves.toMatchObject({ stoneId: 1 });
 });
@@ -45,7 +46,7 @@ test('rejects unknown and already unavailable stones', async () => {
   await expect(createStoneReservation(999, request)).rejects.toMatchObject({ status: 404 });
   for (const stone of mockStones.filter(stone => stone.adoptionStatus !== 'AVAILABLE')) {
     await expect(createStoneReservation(stone.id, request)).rejects.toMatchObject({ status: 409 });
-    expect(getStone(stone.id)?.adoptionStatus).toBe(stone.adoptionStatus);
+    expect((await getStone(stone.id))?.adoptionStatus).toBe(stone.adoptionStatus);
   }
   await expect(createStoneReservation(NaN, request)).rejects.toBeInstanceOf(StoneReservationError);
 });

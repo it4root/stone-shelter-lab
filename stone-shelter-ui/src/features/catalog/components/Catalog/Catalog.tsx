@@ -10,22 +10,29 @@ import { addStonePath } from '../../../../App/navigation/pageRoutes';
 interface CatalogProps {
   sortOption: CatalogSortOption;
   onSortChange: (value: CatalogSortOption) => void;
-  response: StonesSearchResponse;
+  response?: StonesSearchResponse;
+  loading: boolean;
+  error?: string;
+  onRetry: () => void;
+  page: number;
+  size: number;
   onPageChange: (page: number) => void;
   onSizeChange: (size: number) => void;
 }
 
-export function Catalog({ response, onPageChange, onSizeChange, sortOption, onSortChange }: CatalogProps) {
+export function Catalog({ response, loading, error, onRetry, page, size, onPageChange, onSizeChange, sortOption, onSortChange }: CatalogProps) {
   return (
-    <main className="catalog" aria-label="Stone catalog">
+    <main className="catalog" aria-label="Stone catalog" aria-busy={loading}>
       <div className="catalog-heading">
-        <p>Found <strong>{response.totalElements}</strong> stones</p>
+        {!loading && !error && response && <p>Found <strong>{response.totalElements}</strong> stones</p>}
         <div className="catalog-actions"><a className="catalog-add-stone" href={addStonePath}>Add stone</a><CatalogSort value={sortOption} onChange={onSortChange} /></div>
       </div>
-      {response.totalElements === 0 && <p role="status">No stones match your filters. Try changing or resetting them.</p>}
-      <div className="catalog-grid">{response.content.map((stone) => <StoneCard key={stone.id} stone={stone} />)}</div>
-      <Pagination page={response.page} size={response.size} totalElements={response.totalElements}
-        onPageChange={onPageChange} onSizeChange={onSizeChange} />
+      {loading && <p role="status">Loading stones…</p>}
+      {error && <div><p role="alert">{error}</p><button type="button" onClick={onRetry}>Retry catalog</button></div>}
+      {!loading && !error && response?.totalElements === 0 && <p role="status">No stones match your filters. Try changing or resetting them.</p>}
+      <div className="catalog-grid">{!loading && !error && response?.content.map((stone) => <StoneCard key={stone.id} stone={stone} />)}</div>
+      {!loading && !error && <Pagination page={response?.page ?? page} size={response?.size ?? size} totalElements={response?.totalElements ?? 0}
+        onPageChange={onPageChange} onSizeChange={onSizeChange} />}
     </main>
   );
 }

@@ -9,10 +9,14 @@
   },
   "scripts": {
     "dev": "vite",
+    "dev:api": "vite --mode api",
+    "dev:mock": "vite --mode mock",
     "build": "tsc --noEmit && vite build",
+    "build:mock": "tsc --noEmit && vite build --mode mock",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings 0",
-    "test": "vitest"
+    "test": "vitest",
+    "test:api": "node scripts/api-smoke.mjs"
   },
   "dependencies": {
     "react": "19.3.0",

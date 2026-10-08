@@ -22,6 +22,7 @@ export function CatalogPage() {
       onSizesChange={catalog.onSizesChange} onTypesChange={catalog.onTypesChange}
       onDatesChange={catalog.onDatesChange} onResetFilters={catalog.onResetFilters} /></FilterSidebar>}>
       <Catalog sortOption={catalog.sortOption} onSortChange={catalog.onSortChange}
+        loading={catalog.loading} error={catalog.error} onRetry={catalog.refreshCatalog} page={catalog.page} size={catalog.size}
         response={catalog.response} onPageChange={catalog.onPageChange} onSizeChange={catalog.onSizeChange} />
     </PageLayout>
   );

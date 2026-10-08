@@ -6,9 +6,9 @@ import { mockStones } from '../data/stones';
 vi.mock('../data/stones', () => ({
   mockStones: [
     { id: 4, name: 'Beta', stoneSize: 'SMALL', stoneType: 'GRANITE', adoptionStatus: 'AVAILABLE', admissionDate: '2020-01-02T00:00:00Z' },
-    { id: 3, name: 'Alpha', stoneSize: 'LARGE', stoneType: 'BASALT', admissionDate: '2020-01-01T10:00:00Z' },
-    { id: 2, name: 'Beta', stoneSize: 'SMALL', stoneType: 'BASALT', admissionDate: '2020-01-01T12:00:00+02:00' },
-    { id: 1, name: 'Zulu', stoneSize: 'MEDIUM', stoneType: 'GRANITE', admissionDate: '2020-01-01T10:30:00+02:00' },
+    { id: 3, name: 'Alpha', stoneSize: 'LARGE', stoneType: 'BASALT', adoptionStatus: 'AVAILABLE', admissionDate: '2020-01-01T10:00:00Z' },
+    { id: 2, name: 'Beta', stoneSize: 'SMALL', stoneType: 'BASALT', adoptionStatus: 'AVAILABLE', admissionDate: '2020-01-01T12:00:00+02:00' },
+    { id: 1, name: 'Zulu', stoneSize: 'MEDIUM', stoneType: 'GRANITE', adoptionStatus: 'AVAILABLE', admissionDate: '2020-01-01T10:30:00+02:00' },
   ],
 }));
 
