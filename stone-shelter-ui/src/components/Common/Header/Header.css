@@ -10,6 +10,8 @@
 .site-header ul { display: flex; flex-wrap: wrap; gap: 16px 36px; list-style: none; padding: 0; margin: 0; }
 .site-header li { font-size: 14px; line-height: 1.5; }
 .current-section { color: var(--color-accent); font-weight: 600; }
+.current-section a { color: inherit; text-decoration: none; }
+.current-section a:hover { text-decoration: underline; }
 @media (max-width: 1279px) {
   .brand { flex-basis: 160px; }
   .site-header ul { gap: 12px 24px; }

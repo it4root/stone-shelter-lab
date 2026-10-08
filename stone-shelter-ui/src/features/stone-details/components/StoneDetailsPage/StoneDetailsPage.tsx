@@ -4,6 +4,7 @@ import { adoptionStatusLabels, stoneSizeLabels, stoneTypeLabels } from '../../..
 import { useStoneDetails } from '../../hooks/useStoneDetails';
 import { AdoptStoneAction } from '../../../adopt-stone/components/AdoptStoneAction/AdoptStoneAction';
 import './StoneDetailsPage.css';
+import { catalogPath } from '../../../../App/navigation/pageRoutes';
 
 const dateFormat = new Intl.DateTimeFormat('en-US', {
   day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC',
@@ -18,7 +19,7 @@ export function StoneDetailsPage({ id }: { id?: number }) {
   return (
     <main className="stone-details-page" aria-labelledby="stone-details-heading">
       <nav className="stone-details-navigation" aria-label="Stone navigation">
-        <a href="/"><span aria-hidden="true">←</span> Back to catalog</a>
+        <a href={catalogPath}><span aria-hidden="true">←</span> Back to catalog</a>
         {stone && <><span aria-hidden="true">/</span><span aria-current="page">{stone.name}</span></>}
       </nav>
       {stone ? <div className="stone-details-grid">

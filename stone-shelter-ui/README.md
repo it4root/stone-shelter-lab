@@ -17,7 +17,9 @@ npm run lint
 npm run test -- --run
 ```
 
-The catalog is at `/`; clicking a stone photo opens `/stones/{id}`. Direct entry,
+The catalog is at `/stone-shelter/catalog`; clicking a stone photo opens
+`/stone-shelter/stones/{id}`. The header's Stone catalog link returns to the
+catalog. Direct entry,
 browser history and an explicit back link are supported. Catalog filters, sort,
 pagination, sidebar and scroll are retained while navigating within the session.
 All 30 mock stones are available without the backend or MinIO. Galleries use
@@ -31,7 +33,7 @@ form and allow manual retry when the stone is still eligible. Reservations and
 `Reserved` status are shared by mock reads until a full reload. No backend is
 required and no live HTTP reservation requests are made.
 
-Select `Add stone` in the catalog or open `/stones/new` to create a stone.
+Select `Add stone` in the catalog or open `/stone-shelter/add-stone` to create a stone.
 Photos are optional; without them the existing placeholder is used. Choose up to
 16 JPEG/PNG/WebP photos, up to 10 MiB each, across multiple selections. Photos
 appear in a 4 × 4 grid of 16 slots above the chooser and can be removed before creation.
@@ -48,6 +50,17 @@ browser storage. Feature scope and verification are in
 [acceptance.md](../specs/0009-add-stone-ui/acceptance.md).
 Backend photo storage and real reservation persistence are verified independently;
 adoption UI scope remains in [0007-adopt-stone](../specs/0007-adopt-stone/spec.md).
-An eventual production host must serve `index.html` for the documented client
-routes; deployment is outside the current feature.
+Opening `/` or `/stone-shelter` redirects to the catalog. Legacy `/stones/new`
+and numeric `/stones/{id}` URLs still work and redirect to the canonical URLs.
+Recognized trailing slashes are normalized away. Redirects replace the current
+history entry and retain query strings/fragments. Unknown pages show Page not
+found; invalid or missing stone identifiers show Stone not found.
+
+The Vite development server serves the SPA entry document on direct UI routes.
+An eventual production host must serve `index.html` for these client routes
+while serving requested assets normally. The `/stone-shelter` prefix identifies
+UI pages; it does not relocate assets or backend API endpoints. Deployment is
+outside this feature. Routing scope and evidence are in
+[0010-ui-routing](../specs/0010-ui-routing/spec.md) and its
+[acceptance criteria](../specs/0010-ui-routing/acceptance.md).
 TypeScript 6.0.3 is selected for supported ESLint integration in ADR-0002.

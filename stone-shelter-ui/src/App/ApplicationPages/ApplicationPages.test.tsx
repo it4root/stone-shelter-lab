@@ -29,7 +29,7 @@ test('photo links address the precise stone after sorting and paging, then retur
   expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: 'instant' });
   expect(document.activeElement?.tagName).toBe('H1');
   fireEvent.click(screen.getByRole('link', { name: 'Back to catalog' }));
-  expect(window.location.pathname).toBe('/');
+  expect(window.location.pathname).toBe('/stone-shelter/catalog');
   expect(within(screen.getByRole('main')).getAllByRole('heading', { level: 2 }).map(heading => heading.textContent)).toEqual(names);
   expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 412, behavior: 'instant' });
   expect(screen.getByRole('button', { name: 'Page 2' }).getAttribute('aria-current')).toBe('page');
@@ -44,7 +44,7 @@ test('photo links address the precise stone after sorting and paging, then retur
 });
 
 test('direct visits look up stones beyond the visible catalog and return to defaults', () => {
-  window.history.replaceState(null, '', '/stones/1');
+  window.history.replaceState(null, '', '/stone-shelter/stones/1');
   render(<App />);
   expect(within(screen.getByRole('main')).getByRole('heading', { name: 'Mars' })).toBeTruthy();
   expect(screen.getByText('ID 1')).toBeTruthy();
@@ -58,7 +58,7 @@ test('direct visits look up stones beyond the visible catalog and return to defa
   expect((screen.getByLabelText('Sort stones') as HTMLSelectElement).value).toBe('NEWEST');
 });
 
-test.each(['/stones/999', '/stones/not-an-id', '/stones/0', '/stones/1/extra', '/stones/9007199254740993'])('shows a recoverable not-found state for %s', path => {
+test.each(['/stone-shelter/stones/999', '/stone-shelter/stones/not-an-id', '/stone-shelter/stones/0', '/stone-shelter/stones/1/extra', '/stone-shelter/stones/9007199254740993'])('shows a recoverable not-found state for %s', path => {
   window.history.replaceState(null, '', path);
   render(<App />);
   expect(screen.getByRole('heading', { name: 'Stone not found' })).toBeTruthy();
@@ -93,7 +93,80 @@ test('modified clicks retain native link behavior without changing the current r
   try {
     fireEvent.click(link, { ctrlKey: true });
     expect(preventedBeforeNativeDefault).toBe(false);
-    expect(window.location.pathname).toBe('/');
-    expect(link.getAttribute('href')).toBe('/stones/30');
+    expect(window.location.pathname).toBe('/stone-shelter/catalog');
+    expect(link.getAttribute('href')).toBe('/stone-shelter/stones/30');
   } finally { document.removeEventListener('click', cancelBrowserDefault); }
+});
+
+test.each([
+  ['/', '/stone-shelter/catalog', 'Stone catalog'],
+  ['/stone-shelter/', '/stone-shelter/catalog', 'Stone catalog'],
+  ['/stone-shelter/catalog/', '/stone-shelter/catalog', 'Stone catalog'],
+  ['/stones/new/', '/stone-shelter/add-stone', 'Add a stone'],
+  ['/stones/1/', '/stone-shelter/stones/1', 'Mars'],
+  ['/stone-shelter/stones/1/', '/stone-shelter/stones/1', 'Mars'],
+])('normalizes %s without adding history entries or losing query/fragment', (path, canonical, pageName) => {
+  window.history.replaceState({ source: 'direct' }, '', `${path}?source=bookmark#content`);
+  const historyLength = window.history.length;
+  render(<App />);
+  expect(window.location.pathname).toBe(canonical);
+  expect(window.location.search).toBe('?source=bookmark');
+  expect(window.location.hash).toBe('#content');
+  expect(window.history.length).toBe(historyLength);
+  expect(window.history.state).toEqual({ source: 'direct' });
+  expect(screen.getByRole('main', { name: pageName })).toBeTruthy();
+});
+
+test('header catalog link navigates from a direct stone visit and participates in history', async () => {
+  window.history.replaceState(null, '', '/stone-shelter/stones/1');
+  render(<App />);
+  const link = within(screen.getByRole('navigation', { name: 'Main navigation' })).getByRole('link', { name: 'Stone catalog' });
+  expect(link.getAttribute('href')).toBe('/stone-shelter/catalog');
+  const historyLength = window.history.length;
+  fireEvent.click(link);
+  expect(window.location.pathname).toBe('/stone-shelter/catalog');
+  expect(screen.getByRole('main', { name: 'Stone catalog' })).toBeTruthy();
+  expect(window.history.length).toBe(historyLength + 1);
+  fireEvent.click(link);
+  expect(window.history.length).toBe(historyLength + 1);
+  window.history.back();
+  await waitFor(() => expect(screen.getByRole('main', { name: 'Mars' })).toBeTruthy());
+});
+
+test('unknown pages offer canonical recovery with shared layout and heading focus', () => {
+  window.history.replaceState(null, '', '/stone-shelter/missing');
+  render(<App />);
+  expect(screen.getByRole('banner')).toBeTruthy();
+  expect(screen.getByRole('contentinfo')).toBeTruthy();
+  expect(document.activeElement).toBe(screen.getByRole('heading', { name: 'Page not found' }));
+  expect(screen.queryByRole('heading', { name: 'Stone not found' })).toBeNull();
+  fireEvent.click(screen.getByRole('link', { name: 'Back to catalog' }));
+  expect(window.location.pathname).toBe('/stone-shelter/catalog');
+  expect(screen.getAllByRole('article')).toHaveLength(8);
+});
+
+test('native external, download, target and modified link actions are not intercepted', () => {
+  render(<App />);
+  const link = screen.getByRole('link', { name: 'Add stone' });
+  let prevented = true;
+  const cancelNative = (event: Event) => { prevented = event.defaultPrevented; event.preventDefault(); };
+  document.addEventListener('click', cancelNative);
+  try {
+    for (const modifiers of [{ ctrlKey: true }, { metaKey: true }, { shiftKey: true }, { altKey: true }, { button: 1 }]) {
+      fireEvent.click(link, modifiers);
+      expect(prevented).toBe(false);
+    }
+    link.setAttribute('target', '_blank');
+    fireEvent.click(link);
+    expect(prevented).toBe(false);
+    link.removeAttribute('target');
+    link.setAttribute('download', '');
+    fireEvent.click(link);
+    expect(prevented).toBe(false);
+    link.removeAttribute('download');
+    link.setAttribute('href', 'https://example.com/stone-shelter/catalog');
+    fireEvent.click(link);
+    expect(prevented).toBe(false);
+    expect(window.location.pathname).toBe('/stone-shelter/catalog');
+  } finally { document.removeEventListener('click', cancelNative); }
 });

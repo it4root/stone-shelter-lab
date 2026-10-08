@@ -37,7 +37,7 @@ test.each([
   render(<StoneDetailsPage id={7} />);
   expect(screen.getByText(label)).toBeTruthy();
   expect(screen.getByText('This stone’s story is coming soon.')).toBeTruthy();
-  expect(screen.getByRole('link', { name: 'Back to catalog' }).getAttribute('href')).toBe('/');
+  expect(screen.getByRole('link', { name: 'Back to catalog' }).getAttribute('href')).toBe('/stone-shelter/catalog');
 });
 
 test('accepts explicit null legacy photo and biography from the backend without fabricating gallery entries', () => {

@@ -9,7 +9,7 @@ import { resetMockStoneReservations } from '../../../../mocks/api/mockStonesApi'
 
 beforeEach(() => {
   resetMockStoneReservations();
-  window.history.replaceState(null, '', '/stones/1');
+  window.history.replaceState(null, '', '/stone-shelter/stones/1');
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); resetMockStoneReservations(); });
@@ -33,7 +33,7 @@ test('submits selected identity, keeps the same modal and updates status across 
   await waitFor(() => expect(within(dialog).getByRole('status').textContent).toBe(successText));
   expect(screen.getByRole('dialog')).toBe(dialog);
   expect(submit).toHaveBeenCalledWith(1, { applicantName: '  Visitor 石  ', contactDetails: 'Find me by the window' });
-  expect(window.location.pathname).toBe('/stones/1');
+  expect(window.location.pathname).toBe('/stone-shelter/stones/1');
   expect(dialog.querySelector('.adopt-stone-check')).toBeTruthy();
   expect(screen.queryByLabelText('Your name')).toBeNull();
   expect(screen.getByText('Reserved')).toBeTruthy();

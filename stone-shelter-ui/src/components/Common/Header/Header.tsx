@@ -1,4 +1,5 @@
 import './Header.css';
+import { catalogPath } from '../../../App/navigation/pageRoutes';
 
 const navigation = ['Stone catalog', 'How it works', 'About the shelter', 'Blog', 'Contact'];
 
@@ -15,7 +16,9 @@ export function Header() {
         </div>
         <nav aria-label="Main navigation">
           <ul>{navigation.map((label, index) => (
-            <li key={label} className={index === 0 ? 'current-section' : undefined}>{label}</li>
+            <li key={label} className={index === 0 ? 'current-section' : undefined}>
+              {index === 0 ? <a href={catalogPath}>{label}</a> : label}
+            </li>
           ))}</ul>
         </nav>
       </header>

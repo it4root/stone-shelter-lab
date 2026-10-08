@@ -1,13 +1,14 @@
 import type { StoneSearchResponse } from '../../../../api/dto/StoneSearchResponse';
 import { stoneSizeLabels, stoneTypeLabels } from '../../presentation/stoneLabels';
 import './StoneCard.css';
+import { stoneDetailsPath } from '../../../../App/navigation/pageRoutes';
 
 const placeholder = '/placeholder-rock.png';
 
 export function StoneCard({ stone }: { stone: StoneSearchResponse }) {
   return (
     <article className="stone-card" aria-labelledby={`stone-${stone.id}`}>
-      <a className="stone-photo-link" href={`/stones/${stone.id}`} aria-label={`View details for ${stone.name}`}>
+      <a className="stone-photo-link" href={stoneDetailsPath(stone.id)} aria-label={`View details for ${stone.name}`}>
         <img
         className="stone-photo"
         src={stone.photo || placeholder}

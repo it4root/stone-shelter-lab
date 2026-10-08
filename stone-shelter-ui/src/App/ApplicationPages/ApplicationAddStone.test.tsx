@@ -27,7 +27,7 @@ function deferred<T>() {
 }
 const photo = new File(['local image bytes'], 'stone.png', { type: 'image/png' });
 
-test.each(['/stones/new', '/stones/new/'])('direct and refreshed entry at %s renders a fresh accessible creation page before ID parsing', path => {
+test.each(['/stone-shelter/add-stone', '/stone-shelter/add-stone/'])('direct and refreshed entry at %s renders a fresh accessible creation page before ID parsing', path => {
   window.history.replaceState(null, '', path);
   const first = render(<App />);
   expect(screen.getByRole('main', { name: 'Add a stone' })).toBeTruthy();
@@ -46,11 +46,11 @@ test('catalog entry, success, detail and refreshed catalog all support a stone w
   const create = vi.spyOn(stonesApi, 'createStone');
   render(<App />);
   fireEvent.click(screen.getByRole('link', { name: 'Add stone' }));
-  expect(window.location.pathname).toBe('/stones/new');
+  expect(window.location.pathname).toBe('/stone-shelter/add-stone');
   fillDetails();
   submit();
   await confirmation();
-  expect(window.location.pathname).toBe('/stones/new');
+  expect(window.location.pathname).toBe('/stone-shelter/add-stone');
   expect(screen.queryByRole('form')).toBeNull();
   expect(screen.queryByRole('button', { name: 'Add stone' })).toBeNull();
   expect(document.activeElement).toBe(screen.getByRole('status'));
@@ -60,7 +60,7 @@ test('catalog entry, success, detail and refreshed catalog all support a stone w
   expect(create.mock.calls[0][0]).not.toHaveProperty('admissionDate');
   expect(upload).not.toHaveBeenCalled();
   fireEvent.click(screen.getByRole('link', { name: 'View stone' }));
-  expect(window.location.pathname).toBe('/stones/31');
+  expect(window.location.pathname).toBe('/stone-shelter/stones/31');
   expect(screen.getByRole('heading', { name: 'Photo-free stone' })).toBeTruthy();
   expect(screen.getByAltText('Photo coming soon for Photo-free stone').getAttribute('src')).toBe('/placeholder-rock.png');
   expect(screen.queryByRole('group', { name: 'Photo thumbnails' })).toBeNull();
@@ -73,7 +73,7 @@ test('catalog entry, success, detail and refreshed catalog all support a stone w
 test.each([1, 16])('creation with %i photos uses uploaded references once and exposes the returned gallery across views', async count => {
   const create = vi.spyOn(stonesApi, 'createStone');
   const upload = vi.spyOn(stonesApi, 'uploadStonePhotoDraft');
-  window.history.replaceState(null, '', '/stones/new');
+  window.history.replaceState(null, '', '/stone-shelter/add-stone');
   render(<App />);
   fillDetails('Gallery stone');
   fireEvent.change(screen.getByLabelText('Choose photos'), { target: { files: Array.from({ length: count }, () => photo) } });
@@ -94,7 +94,7 @@ test.each([1, 16])('creation with %i photos uses uploaded references once and ex
 test('creation pending guards click/Enter submissions, locks all input and changes to confirmation exactly once', async () => {
   const pending = deferred<StoneCreateResponse>();
   const create = vi.spyOn(stonesApi, 'createStone').mockReturnValue(pending.promise);
-  window.history.replaceState(null, '', '/stones/new');
+  window.history.replaceState(null, '', '/stone-shelter/add-stone');
   render(<App />);
   fillDetails();
   submit();
@@ -114,7 +114,7 @@ test('creation pending guards click/Enter submissions, locks all input and chang
 
 test('Add another stone resets details and uploaded references instead of reusing the previous request', async () => {
   const create = vi.spyOn(stonesApi, 'createStone');
-  window.history.replaceState(null, '', '/stones/new');
+  window.history.replaceState(null, '', '/stone-shelter/add-stone');
   render(<App />);
   fillDetails('First stone');
   fireEvent.change(screen.getByLabelText('Biography (optional)'), { target: { value: 'Story' } });
@@ -194,8 +194,8 @@ test('modified creation links keep native behavior', () => {
   try {
     fireEvent.click(link, { metaKey: true });
     expect(prevented).toBe(false);
-    expect(window.location.pathname).toBe('/');
-    expect(link.getAttribute('href')).toBe('/stones/new');
+    expect(window.location.pathname).toBe('/stone-shelter/catalog');
+    expect(link.getAttribute('href')).toBe('/stone-shelter/add-stone');
   } finally { document.removeEventListener('click', cancelNative); }
 });
 
@@ -203,7 +203,7 @@ test('a creation completing after navigation refreshes catalog without replacing
   const originalCreate = stonesApi.createStone;
   const pending = deferred<StoneCreateResponse>();
   vi.spyOn(stonesApi, 'createStone').mockReturnValue(pending.promise);
-  window.history.replaceState(null, '', '/stones/new');
+  window.history.replaceState(null, '', '/stone-shelter/add-stone');
   render(<App />);
   fillDetails('Late stone');
   submit();

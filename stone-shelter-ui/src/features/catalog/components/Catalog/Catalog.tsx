@@ -5,6 +5,7 @@ import { Pagination } from '../../../../components/Common/Pagination/Pagination'
 import type { CatalogSortOption } from '../../../../enums/CatalogSortOption';
 import { CatalogSort } from '../CatalogSort/CatalogSort';
 import './Catalog.css';
+import { addStonePath } from '../../../../App/navigation/pageRoutes';
 
 interface CatalogProps {
   sortOption: CatalogSortOption;
@@ -19,7 +20,7 @@ export function Catalog({ response, onPageChange, onSizeChange, sortOption, onSo
     <main className="catalog" aria-label="Stone catalog">
       <div className="catalog-heading">
         <p>Found <strong>{response.totalElements}</strong> stones</p>
-        <div className="catalog-actions"><a className="catalog-add-stone" href="/stones/new">Add stone</a><CatalogSort value={sortOption} onChange={onSortChange} /></div>
+        <div className="catalog-actions"><a className="catalog-add-stone" href={addStonePath}>Add stone</a><CatalogSort value={sortOption} onChange={onSortChange} /></div>
       </div>
       {response.totalElements === 0 && <p role="status">No stones match your filters. Try changing or resetting them.</p>}
       <div className="catalog-grid">{response.content.map((stone) => <StoneCard key={stone.id} stone={stone} />)}</div>

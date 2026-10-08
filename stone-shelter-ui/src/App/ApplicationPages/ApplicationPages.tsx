@@ -3,18 +3,20 @@ import { StoneDetailsPage } from '../../features/stone-details/components/StoneD
 import { usePageNavigation } from '../navigation/usePageNavigation';
 import { AddStonePage } from '../../features/add-stone/components/AddStonePage/AddStonePage';
 import { useCatalogSession } from '../../features/catalog/state/CatalogSessionProvider/CatalogSessionProvider';
+import { resolvePageRoute } from '../navigation/pageRoutes';
+import { PageNotFound } from '../PageNotFound/PageNotFound';
 
 export function ApplicationPages() {
-  const { pathname, onNavigate } = usePageNavigation();
+  const { pathname } = usePageNavigation();
   const { refreshCatalog } = useCatalogSession();
-  const match = /^\/stones\/([1-9]\d*)\/?$/.exec(pathname);
-  const id = match && Number.isSafeInteger(Number(match[1])) ? Number(match[1]) : undefined;
+  const route = resolvePageRoute(pathname);
 
   return (
-    <div onClick={onNavigate}>
-      {pathname === '/' ? <CatalogPage />
-        : /^\/stones\/new\/?$/.test(pathname) ? <AddStonePage key={pathname} onCreated={refreshCatalog} />
-          : <StoneDetailsPage key={pathname} id={id} />}
-    </div>
+    <>
+      {route.page === 'catalog' ? <CatalogPage />
+        : route.page === 'add-stone' ? <AddStonePage key={pathname} onCreated={refreshCatalog} />
+          : route.page === 'stone-details' ? <StoneDetailsPage key={pathname} id={route.id} />
+            : <PageNotFound />}
+    </>
   );
 }
