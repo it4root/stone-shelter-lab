@@ -6,6 +6,26 @@ real API; mocks are an explicit alternative.
 
 ## Run with the Backend
 
+The UI supports both the full Docker stack and standalone host development
+with hot updates. For the full stack, from the repository root:
+
+```sh
+docker compose --profile frontend up -d --build --wait --wait-timeout 180
+```
+
+Open http://localhost:5173/stone-shelter/catalog; override `FRONTEND_PORT` for
+another published port. Vite inside the frontend container proxies to
+`http://stone-shelter-api:8080`. The base Compose command omits the frontend.
+Before using the host command on the same port, stop only the frontend service:
+
+```sh
+docker compose --profile frontend stop stone-shelter-ui
+```
+
+The host mode described below retains Vite hot updates without Docker rebuilds
+or backend restarts. Stop the host Vite process before returning to Docker mode.
+Backend/data services and their volumes remain running while modes switch.
+
 From the repository root, prepare `.env` from `.env.example` on first launch,
 then start the current backend:
 

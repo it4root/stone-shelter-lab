@@ -116,6 +116,25 @@ services:
       timeout: 5s
       start_period: 30s
       retries: 12
+  stone-shelter-ui:
+    image: stone-shelter-ui:0.0.1
+    profiles: [frontend]
+    build:
+      context: ./stone-shelter-ui
+    environment:
+      API_PROXY_TARGET: http://stone-shelter-api:8080
+      VITE_API_BASE_URL: ""
+    depends_on:
+      stone-shelter-api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:5173"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173/stone-shelter/catalog').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      start_period: 10s
+      retries: 12
 volumes:
   postgres-data:
   minio-data:

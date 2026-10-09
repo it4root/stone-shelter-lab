@@ -76,6 +76,42 @@ curl --fail http://localhost:8080/actuator/health
 Feature scope and evidence live in
 [0014-llm-search-infrastructure](specs/0014-llm-search-infrastructure/spec.md).
 
+## Frontend Startup Modes
+
+For the complete Docker stack, including the frontend:
+
+```sh
+docker compose --profile frontend up -d --build --wait --wait-timeout 180
+```
+
+Open http://localhost:5173/stone-shelter/catalog. `FRONTEND_PORT` changes the
+published port. The frontend profile uses pinned Node/npm and the existing
+Vite API-mode server, proxying `/api` and `/images` to the Docker backend.
+SPA page URLs support direct navigation/reload. This is local development
+infrastructure, not a production static-web deployment.
+
+For fast host UI edits, stop only the frontend container if it is running:
+
+```sh
+docker compose --profile frontend stop stone-shelter-ui
+docker compose up -d --build --wait --wait-timeout 180
+cd stone-shelter-ui
+npm ci
+# First launch only; preserve an existing .env.local.
+cp .env.example .env.local
+npm run dev:api
+```
+
+Use Node 24.21.0 and npm 11.19.0. Host Vite proxies to `http://localhost:8080`
+through `API_PROXY_TARGET`; keep `VITE_API_BASE_URL` empty. Source edits receive
+Vite hot updates without rebuilding Docker or restarting the backend. To choose
+a different host port, use `npm run dev:api -- --port 5174 --strictPort`.
+
+To switch back, stop the host Vite process and enable the Compose frontend
+profile again. Switching frontend modes does not stop infrastructure or remove
+its volumes. Existing `npm run dev` and explicit `npm run dev:mock` remain
+available; API errors do not switch to mocks.
+
 ## User-Managed Host Ollama
 
 Ollama CLI 0.40.2 is installed on the host. The backend uses
