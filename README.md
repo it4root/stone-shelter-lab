@@ -76,6 +76,52 @@ curl --fail http://localhost:8080/actuator/health
 Feature scope and evidence live in
 [0014-llm-search-infrastructure](specs/0014-llm-search-infrastructure/spec.md).
 
+## User-Managed Host Ollama
+
+Ollama CLI 0.40.2 is installed on the host. The backend uses
+`SPRING_AI_OLLAMA_BASE_URL=http://host.docker.internal:11434`, not container
+localhost. If the server is not running, start it yourself in a host terminal
+with a Docker-accessible listen address:
+
+```sh
+OLLAMA_HOST=0.0.0.0:11434 ollama serve
+```
+
+If using the macOS Ollama app instead, configure its host environment and restart
+it yourself following the [official host configuration instructions](https://docs.ollama.com/faq).
+Use one running server, not both app and terminal instances on the same port.
+The browser calls the backend; it does not need direct Ollama access or new CORS
+settings. Docker Desktop resolves [host.docker.internal](https://docs.docker.com/desktop/features/networking/networking-how-tos/).
+
+In another host terminal, download only the selected model when ready:
+
+```sh
+ollama --version
+ollama pull qwen2.5:3b
+ollama list
+curl --fail http://localhost:11434/api/version
+```
+
+The published model is about 1.9 GB, Q4_K_M; allow additional disk space for the
+host runtime. The repository never installs Ollama or pulls models at startup.
+Host models survive container rebuilds. To remove only this model deliberately:
+
+```sh
+ollama rm qwen2.5:3b
+```
+
+Check version and model inventory from the backend container without generating
+answers or downloading anything:
+
+```sh
+docker compose exec stone-shelter-api curl --fail --max-time 5 http://host.docker.internal:11434/api/version
+docker compose exec stone-shelter-api curl --fail --max-time 5 http://host.docker.internal:11434/api/tags
+```
+
+If host Ollama is unavailable, these checks remain pending; the Docker stack and
+existing API still start. Spring AI auto-pulling and embeddings are disabled.
+No model capability or business-logic test belongs to infrastructure setup.
+
 ## Stone Photo Storage
 
 Compose builds a pinned MinIO release from official binaries with checksum
