@@ -168,6 +168,7 @@ test('return after creation refreshes totals with all catalog choices preserved 
   await act(async () => { render(<App />); });
   await act(async () => { fireEvent.change(screen.getByLabelText('Stones per page'), { target: { value: '12' } }); });
   await act(async () => { fireEvent.change(screen.getByLabelText('Sort stones'), { target: { value: 'OLDEST' } }); });
+  fireEvent.click(screen.getByRole('button', { name: 'Size 0' }));
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Small' })); });
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Medium' })); });
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Page 2' })); });
@@ -182,6 +183,7 @@ test('return after creation refreshes totals with all catalog choices preserved 
   expect(screen.getByRole('button', { name: 'Page 2' }).getAttribute('aria-current')).toBe('page');
   expect((screen.getByLabelText('Stones per page') as HTMLSelectElement).value).toBe('12');
   expect((screen.getByLabelText('Sort stones') as HTMLSelectElement).value).toBe('OLDEST');
+  fireEvent.click(screen.getByRole('button', { name: 'Size 2' }));
   expect((screen.getByRole('checkbox', { name: 'Small' }) as HTMLInputElement).checked).toBe(true);
   expect((screen.getByRole('checkbox', { name: 'Medium' }) as HTMLInputElement).checked).toBe(true);
   expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 280, behavior: 'instant' });

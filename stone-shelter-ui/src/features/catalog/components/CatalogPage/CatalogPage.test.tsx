@@ -6,6 +6,11 @@ import { ApiError } from '../../../../api/ApiError';
 import type { StonesSearchResponse } from '../../../../api/dto/StonesSearchResponse';
 import { mockStones } from '../../../../mocks/data/stones';
 
+function openFilterDropdown(label: string) {
+  const trigger = screen.getByRole('button', { name: new RegExp(`^${label} \\d+$`) });
+  if (trigger.getAttribute('aria-expanded') === 'false') fireEvent.click(trigger);
+}
+
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 function deferred() {
@@ -44,6 +49,7 @@ test('ignores stale filter results and uses current response metadata instead of
   const newer = deferred();
   const search = vi.spyOn(stonesApi, 'getCatalogStones').mockReturnValueOnce(older.promise).mockReturnValueOnce(newer.promise);
   catalog();
+  openFilterDropdown('Size');
   fireEvent.click(screen.getByRole('checkbox', { name: 'Small' }));
   expect(search).toHaveBeenLastCalledWith(0, 8, { field: 'admissionDate', direction: 'desc' }, { stoneSizes: ['SMALL'] });
   await act(async () => newer.resolve({ content: [mockStones[0]], page: 0, size: 8, totalElements: 17 }));
@@ -60,6 +66,7 @@ test('refresh corrects an empty last page without resetting filters, sort or siz
   const search = vi.spyOn(stonesApi, 'getCatalogStones');
   await act(async () => { catalog(); });
   await act(async () => { fireEvent.change(screen.getByLabelText('Sort stones'), { target: { value: 'OLDEST' } }); });
+  openFilterDropdown('Size');
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Small' })); });
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Page 2' })); });
   const link = within(screen.getByRole('main')).getAllByRole('link', { name: /View details for/ })[0];
@@ -74,6 +81,7 @@ test('refresh corrects an empty last page without resetting filters, sort or siz
   expect(search).toHaveBeenLastCalledWith(0, 8, { field: 'admissionDate', direction: 'asc' }, { stoneSizes: ['SMALL'] });
   expect(screen.getByRole('button', { name: 'Page 1' }).getAttribute('aria-current')).toBe('page');
   expect((screen.getByLabelText('Sort stones') as HTMLSelectElement).value).toBe('OLDEST');
+  openFilterDropdown('Size');
   expect((screen.getByRole('checkbox', { name: 'Small' }) as HTMLInputElement).checked).toBe(true);
   expect((screen.getByLabelText('Stones per page') as HTMLSelectElement).value).toBe('8');
 });

@@ -6,13 +6,20 @@ beforeEach(() => {
   window.history.replaceState(null, '', '/');
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
 });
+function openFilterDropdown(label: string) {
+  const trigger = screen.getByRole('button', { name: new RegExp(`^${label} \\d+$`) });
+  if (trigger.getAttribute('aria-expanded') === 'false') fireEvent.click(trigger);
+}
+
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 test('photo links address the precise stone after sorting and paging, then return with catalog state and scroll', async () => {
   await act(async () => { render(<App />); });
   await act(async () => { fireEvent.change(screen.getByLabelText('Stones per page'), { target: { value: '12' } }); });
   await act(async () => { fireEvent.change(screen.getByLabelText('Sort stones'), { target: { value: 'OLDEST' } }); });
+  openFilterDropdown('Size');
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Small' })); });
+  openFilterDropdown('Size');
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Medium' })); });
   await act(async () => { fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-09-01' } }); });
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Page 2' })); });
@@ -37,7 +44,9 @@ test('photo links address the precise stone after sorting and paging, then retur
   expect((screen.getByLabelText('Sort stones') as HTMLSelectElement).value).toBe('OLDEST');
   expect(screen.getByRole('button', { name: 'Open filters' })).toBeTruthy();
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Open filters' })); });
+  openFilterDropdown('Size');
   expect((screen.getByRole('checkbox', { name: 'Small' }) as HTMLInputElement).checked).toBe(true);
+  openFilterDropdown('Size');
   expect((screen.getByRole('checkbox', { name: 'Medium' }) as HTMLInputElement).checked).toBe(true);
   expect((screen.getByLabelText('To') as HTMLInputElement).value).toBe('2026-08-31');
   expect(screen.getByRole('alert').textContent).toBe('From must be on or before To.');

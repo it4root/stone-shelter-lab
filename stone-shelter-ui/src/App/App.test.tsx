@@ -8,6 +8,11 @@ beforeEach(() => {
   window.history.replaceState(null, '', '/');
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
 });
+function openFilterDropdown(label: string) {
+  const trigger = screen.getByRole('button', { name: new RegExp(`^${label} \\d+$`) });
+  if (trigger.getAttribute('aria-expanded') === 'false') fireEvent.click(trigger);
+}
+
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 test('displays the application name', async () => {
@@ -117,11 +122,16 @@ test('combines size/type selections, counts groups and resets after reopening', 
   await act(async () => { render(<App />); });
   await act(async () => { fireEvent.change(screen.getByLabelText('Stones per page'), { target: { value: '24' } }); });
   await act(async () => { fireEvent.change(screen.getByLabelText('Sort stones'), { target: { value: 'OLDEST' } }); });
+  openFilterDropdown('Size');
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Small' })); });
+  openFilterDropdown('Size');
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Medium' })); });
   expect(screen.getAllByRole('article')).toHaveLength(20);
+  openFilterDropdown('Stone type');
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Basalt' })); });
+  openFilterDropdown('Stone type');
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Granite' })); });
+  openFilterDropdown('Stone type');
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Obsidian' })); });
   await act(async () => { fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-09-01' } }); });
   expect(screen.getAllByRole('article')).toHaveLength(6);
@@ -148,6 +158,7 @@ test('invalid date draft preserves applied range and page until corrected or res
   expect(screen.getByLabelText('To').getAttribute('aria-invalid')).toBe('true');
   expect(within(screen.getByRole('main', { name: 'Stone catalog' })).getAllByRole('heading', { level: 2 }).map(h => h.textContent)).toEqual(previousNames);
   expect(screen.getByRole('button', { name: 'Page 2' }).getAttribute('aria-current')).toBe('page');
+  openFilterDropdown('Size');
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Small' })); });
   expect(screen.getAllByRole('article')).toHaveLength(7);
   await act(async () => { fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-09-10' } }); });
@@ -166,13 +177,16 @@ test('invalid date draft preserves applied range and page until corrected or res
 test('empty matches disable navigation and retain reset; sort and paging preserve filters', async () => {
   await act(async () => { render(<App />); });
   await act(async () => { fireEvent.change(screen.getByLabelText('Stones per page'), { target: { value: '12' } }); });
+  openFilterDropdown('Size');
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Small' })); });
+  openFilterDropdown('Size');
   await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Medium' })); });
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Next' })); });
   expect(screen.getAllByRole('article')).toHaveLength(8);
   await act(async () => { fireEvent.change(screen.getByLabelText('Sort stones'), { target: { value: 'OLDEST' } }); });
   expect(screen.getAllByRole('article')).toHaveLength(12);
   expect(screen.getByRole('heading', { name: 'Mars' })).toBeTruthy();
+  openFilterDropdown('Size');
   expect((screen.getByRole('checkbox', { name: 'Small' }) as HTMLInputElement).checked).toBe(true);
   await act(async () => { fireEvent.change(screen.getByLabelText('From'), { target: { value: '2030-01-01' } }); });
   expect(screen.queryAllByRole('article')).toHaveLength(0);
@@ -218,6 +232,7 @@ test('mobile sidebar is modal, traps focus and restores the opening control', as
     expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Reset filters' }));
     await act(async () => { fireEvent.keyDown(document, { key: 'Tab' }); });
     expect(document.activeElement).toBe(close);
+    openFilterDropdown('Size');
     await act(async () => { fireEvent.click(screen.getByRole('checkbox', { name: 'Small' })); });
     await act(async () => { fireEvent.keyDown(document, { key: 'Escape' }); });
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -226,6 +241,7 @@ test('mobile sidebar is modal, traps focus and restores the opening control', as
     expect(document.body.style.overflow).toBe('');
     expect((document.querySelector('.catalog-slot') as HTMLElement).inert).toBe(false);
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Open filters' })); });
+    openFilterDropdown('Size');
     expect((screen.getByRole('checkbox', { name: 'Small' }) as HTMLInputElement).checked).toBe(true);
     await act(async () => { fireEvent.click(document.querySelector('.sidebar-backdrop')!); });
     expect(screen.queryByRole('dialog')).toBeNull();

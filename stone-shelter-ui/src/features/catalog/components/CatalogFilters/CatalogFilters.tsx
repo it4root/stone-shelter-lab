@@ -1,4 +1,5 @@
-import { useId } from 'react';
+import { useId, useRef, useState } from 'react';
+import { MultiSelectDropdown } from '../../../../components/Common/MultiSelectDropdown/MultiSelectDropdown';
 import type { StoneSearchFilter } from '../../../../api/dto/StoneSearchFilter';
 import type { StoneSize } from '../../../../enums/StoneSize';
 import type { StoneType } from '../../../../enums/StoneType';
@@ -15,26 +16,19 @@ interface CatalogFiltersProps {
   onResetFilters: () => void;
 }
 
-function toggleValue<T>(values: T[], value: T): T[] {
-  return values.includes(value) ? values.filter(item => item !== value) : [...values, value];
-}
+const sizeOptions = (Object.keys(stoneSizeLabels) as StoneSize[]).map(value => ({ value, label: stoneSizeLabels[value] }));
+const typeOptions = (Object.keys(stoneTypeLabels) as StoneType[]).map(value => ({ value, label: stoneTypeLabels[value] }));
 
 export function CatalogFilters(props: CatalogFiltersProps) {
   const errorId = useId();
+  const resetButtonRef = useRef<HTMLButtonElement>(null);
+  const [resetSignal, setResetSignal] = useState(0);
   return (
     <section className="catalog-filters" aria-label="Filters">
-        <fieldset><legend>Size</legend>
-          {(Object.keys(stoneSizeLabels) as StoneSize[]).map(value => (
-            <label key={value}><input type="checkbox" checked={props.filter.stoneSizes?.includes(value) ?? false}
-              onChange={() => props.onSizesChange(toggleValue(props.filter.stoneSizes ?? [], value))} />{stoneSizeLabels[value]}</label>
-          ))}
-        </fieldset>
-        <fieldset><legend>Stone type</legend>
-          {(Object.keys(stoneTypeLabels) as StoneType[]).map(value => (
-            <label key={value}><input type="checkbox" checked={props.filter.stoneTypes?.includes(value) ?? false}
-              onChange={() => props.onTypesChange(toggleValue(props.filter.stoneTypes ?? [], value))} />{stoneTypeLabels[value]}</label>
-          ))}
-        </fieldset>
+      <MultiSelectDropdown label="Size" options={sizeOptions} values={props.filter.stoneSizes ?? []}
+        onChange={props.onSizesChange} resetSignal={resetSignal} resetButtonRef={resetButtonRef} />
+      <MultiSelectDropdown label="Stone type" options={typeOptions} values={props.filter.stoneTypes ?? []}
+        onChange={props.onTypesChange} resetSignal={resetSignal} resetButtonRef={resetButtonRef} />
         <fieldset className="date-fields"><legend>Admission date</legend>
           <label>From<input type="date" value={props.dateDraft.from} aria-invalid={Boolean(props.dateError)}
             aria-describedby={props.dateError ? errorId : undefined}
@@ -44,7 +38,10 @@ export function CatalogFilters(props: CatalogFiltersProps) {
             onChange={event => props.onDatesChange(props.dateDraft.from, event.target.value, event.target.validity.badInput)} /></label>
           {props.dateError && <p id={errorId} className="date-error" role="alert">{props.dateError}</p>}
         </fieldset>
-      <button type="button" className="reset-filters" onClick={props.onResetFilters}>Reset filters</button>
+      <button ref={resetButtonRef} type="button" className="reset-filters" onClick={() => {
+        setResetSignal(current => current + 1);
+        props.onResetFilters();
+      }}>Reset filters</button>
     </section>
   );
 }

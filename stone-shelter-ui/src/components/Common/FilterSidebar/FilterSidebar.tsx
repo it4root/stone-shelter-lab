@@ -42,10 +42,11 @@ export function FilterSidebar({ id, open, onClose, triggerRef, children }: Filte
     }
     panel.querySelector<HTMLButtonElement>('button')?.focus();
     function keydown(event: KeyboardEvent) {
+      if (event.defaultPrevented) return;
       if (event.key === 'Escape') { event.preventDefault(); onClose(); }
       if (event.key !== 'Tab') return;
       const controls = [...panel.querySelectorAll<HTMLElement>('button, input, select, [tabindex="0"]')]
-        .filter(control => !control.hasAttribute('disabled'));
+        .filter(control => !control.hasAttribute('disabled') && !control.closest('[hidden], [inert], [aria-hidden="true"]'));
       const first = controls[0];
       const last = controls[controls.length - 1];
       if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
