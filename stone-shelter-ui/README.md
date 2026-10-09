@@ -117,6 +117,33 @@ included in static production assets. The `/stone-shelter` page prefix does not
 relocate API routes or assets. Hosting and backend CORS changes are outside this
 ticket.
 
+## Stone Chatbot Demo
+
+Catalog and stone details include a collapsible chat demo. Its UUID, messages,
+draft and pending request survive client-side navigation through a shared
+provider. Reload starts a new conversation. API mode calls
+`POST /api/v1/chat/messages`; explicit mock mode returns the same fixed answer.
+The two demo links address Mars (1) and Luna (3) in the mock catalog. A real
+catalog may not contain them and uses the ordinary not-found page. Spring AI
+and server history are deferred to a later feature.
+
+Run only the chatbot UI tests with:
+
+```sh
+npm run test -- --run src/api/chatbotApi.test.ts src/features/stone-chatbot
+```
+
+After an API build, the chatbot transport smoke can run against any backend
+exposing the stub, without creating or changing catalog data:
+
+```sh
+API_PROXY_TARGET=http://127.0.0.1:8080 node scripts/chatbot-smoke.mjs
+```
+
+This checks the actual adapter, development/preview proxies, validation and
+standalone mock mode. Scope and acceptance evidence live in
+[0012-stone-chatbot](../specs/0012-stone-chatbot/spec.md).
+
 Decisions, scope and evidence are in
 [0011-ui-api-integration](../specs/0011-ui-api-integration/spec.md) and its
 [acceptance criteria](../specs/0011-ui-api-integration/acceptance.md).

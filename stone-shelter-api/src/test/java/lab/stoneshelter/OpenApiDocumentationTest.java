@@ -25,7 +25,7 @@ class OpenApiDocumentationTest extends IntegrationTest {
         assertThat(jsonNode.path("openapi").asText()).startsWith("3.");
         JsonNode pathsJsonNode = jsonNode.path("paths");
         assertThat(pathsJsonNode.propertyStream().map(entry -> entry.getKey()).toList())
-                .containsExactlyInAnyOrder("/api/v1/stones", "/api/v1/stones/{id}", "/api/v1/stones/search", "/api/v1/stones/{id}/photos", "/api/v1/stones/{id}/reservations", "/api/v1/stone-photo-drafts", "/api/v1/stone-photo-drafts/{id}");
+                .containsExactlyInAnyOrder("/api/v1/stones", "/api/v1/stones/{id}", "/api/v1/stones/search", "/api/v1/stones/{id}/photos", "/api/v1/stones/{id}/reservations", "/api/v1/stone-photo-drafts", "/api/v1/stone-photo-drafts/{id}", "/api/v1/chat/messages");
         assertThat(pathsJsonNode.path("/api/v1/stones").propertyStream().map(entry -> entry.getKey()).toList())
                 .containsExactly("post");
         assertThat(pathsJsonNode.path("/api/v1/stones/{id}").propertyStream().map(entry -> entry.getKey()).toList())

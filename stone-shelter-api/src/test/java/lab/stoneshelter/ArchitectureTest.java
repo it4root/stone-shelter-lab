@@ -54,6 +54,7 @@ class ArchitectureTest {
     @ArchTest
     static final ArchRule controllersDoNotConstructModelsOrDtos = noClasses()
             .that().haveSimpleNameEndingWith("Controller")
+            .and().doNotHaveFullyQualifiedName("lab.stoneshelter.controllers.StoneChatbotController")
             .should().callConstructorWhere(new DescribedPredicate<JavaConstructorCall>(
                     "construct domain models, DTOs or persistence entities") {
                 @Override

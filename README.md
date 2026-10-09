@@ -77,6 +77,31 @@ UI tests retain the same flow without a backend. Reservation decisions are in
 [0007-adopt-stone](specs/0007-adopt-stone/spec.md); integrated launch instructions
 and verification are in [0011-ui-api-integration](specs/0011-ui-api-integration/spec.md).
 
+## Stone Chatbot Demo
+
+`POST /api/v1/chat/messages` accepts `conversationId` (UUID), `message` and
+optional `context.stoneId`. The controller returns fixed `text` and ordered
+`stones` references; no AI or server history is connected. The UI preserves its
+conversation across client-side page changes and resets it on reload.
+See [feature 0012](specs/0012-stone-chatbot/spec.md).
+
+From `stone-shelter-api`, run only its backend checks with the pinned JDK:
+
+```sh
+./mvnw -Dtest=StoneChatbotControllerTest,StoneChatbotArchitectureTest verify
+```
+
+To include the actual UI adapter/Vite proxy smoke, first install the UI's pinned
+dependencies and run `npm run build` there, then use:
+
+```sh
+./mvnw -Dtest=StoneChatbotControllerTest,StoneChatbotArchitectureTest,StoneChatbotTransportTest -Dchatbot.transport=true verify
+```
+
+The transport test starts temporary local servers without a database or catalog
+mutations. It is opt-in so ordinary backend verification does not require Node
+or installed frontend dependencies.
+
 ## Verify
     curl localhost:8080/actuator/health
     http://localhost:8080/actuator/health
