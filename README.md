@@ -30,6 +30,52 @@ Compose loads `.env` automatically. The template contains development-only
 database and MinIO credentials; edit `.env` if needed. Existing `.env` files
 need the new MinIO settings from `.env.example`. Keep this file out of Git.
 
+## Local AI Infrastructure
+
+The backend, PostgreSQL 18.6 with pgvector 0.8.6, MinIO, Redis and a single
+Kafka 4.2.2 KRaft broker run in Compose. Ollama runs on the host and is managed
+by the user. Existing chatbot responses remain fixed; infrastructure does not
+implement LLM search, RAG, conversation memory, analytics or streaming.
+
+Preserve an existing `.env`; manually add the non-secret settings documented
+in `.env.example` when updating an older setup. To use the published local
+examples explicitly without loading a private env file, add
+`--env-file .env.example` to each Compose command.
+
+```sh
+docker compose up -d --build --wait --wait-timeout 180
+docker compose ps
+docker compose stop
+docker compose start
+```
+
+Start only the infrastructure when the backend is not needed:
+
+```sh
+docker compose up -d --wait postgres minio redis kafka
+```
+
+PostgreSQL and MinIO keep their existing named volumes; Kafka also has a
+persistent volume. Normal `stop`, `start` and rebuild commands preserve them.
+Do not use `down -v` for routine setup or frontend mode switching. Redis is an
+ephemeral local cache with AOF/RDB disabled; its data can disappear on restart.
+`CHAT_MEMORY_TTL=PT24H` is a future application setting, not implemented memory.
+
+The backend connects to Redis at `redis:6379`, Kafka at `kafka:9092`, and the
+host Ollama server at `http://host.docker.internal:11434`. Kafka's external
+listener is `localhost:29092`, overridable by `KAFKA_EXTERNAL_PORT`; controller
+traffic and Redis remain internal. Broker logs retain 24 hours by default,
+controlled by `KAFKA_LOG_RETENTION_HOURS`. No application topics are created.
+
+```sh
+docker compose exec redis redis-cli ping
+docker compose exec kafka /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server kafka:9092
+curl --fail http://localhost:8080/actuator/health
+```
+
+Feature scope and evidence live in
+[0014-llm-search-infrastructure](specs/0014-llm-search-infrastructure/spec.md).
+
 ## Stone Photo Storage
 
 Compose builds a pinned MinIO release from official binaries with checksum
