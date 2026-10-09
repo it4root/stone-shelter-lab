@@ -8,7 +8,7 @@ below; documentation preparation is not runtime verification.
 | --- | --- | --- | --- |
 | AC-0010-001 | Each canonical URL is opened directly | `/stone-shelter/catalog` renders the catalog, `/stone-shelter/stones/1` renders stone 1, and `/stone-shelter/add-stone` renders creation, with shared Header/Footer | Application tests and browser direct-entry checks |
 | AC-0010-002 | Root, application root, legacy creation/detail paths or recognized trailing-slash variants are opened | The specified canonical URL is displayed; redirect uses history replacement, preserves query/fragment and does not create a Back loop | Navigation tests and browser history check |
-| AC-0010-003 | Card photos, Add stone, Back to catalog, View stone or the header Stone catalog link are activated | Every link has a canonical href and opens the intended page or exact stone; other header labels remain static | Link and application interaction tests |
+| AC-0010-003 | Card photos, Add stone, Back to catalog, View stone or either the top-left header image or Stone Shelter text are activated | Every link has a canonical href and opens the intended page or exact stone; the header contains only the shared brand link, with no menu or former menu entries | Link and application interaction tests |
 | AC-0010-004 | Normal internal navigation followed by browser Back/Forward | URL and rendered page agree without document reload; creation-page revisits start a fresh form | Application history tests and browser check |
 | AC-0010-005 | A link is activated by keyboard, modified click, new-tab action, or an external/download link is used | Internal links are keyboard-accessible; native browser behavior remains available where appropriate | Interaction tests and real keyboard/new-tab checks |
 | AC-0010-006 | Catalog choices and scroll are set before visiting details or creation and returning | Filters, sorting, page, size, sidebar state and catalog scroll remain; details begin at the top; direct entry uses existing defaults | Session regression tests and browser scroll check |
@@ -29,6 +29,19 @@ The user explicitly limited test execution on 2026-10-08. Run the affected
 navigation/creation application tests, the changed header-link assertion and
 detail back-link checks; do not run unrelated backend, mock-boundary, validation,
 form, gallery or adoption suites. Keep this verification limitation visible.
+
+## Header Revision Evidence — 2026-10-09
+
+AC-0010-003: automated checks confirm the header contains only the shared
+`Stone Shelter` anchor and no menu. Clicking its SVG image or heading returns
+from details to the canonical catalog. AC-0010-004: the same interaction check
+confirms history navigation and no duplicate entry on a same-page click.
+AC-0010-005: the existing native-link guard regression passed; the brand uses a
+real anchor with visible keyboard focus. Real browser keyboard checks remain
+pending. AC-0010-010: four selected checks passed (26 unrelated cases skipped),
+lint and production build passed on the pinned runtime, and the reused Vite
+server at `http://127.0.0.1:5175/stone-shelter/catalog` returned the entry HTML.
+No real browser rendering check was performed for this revision.
 
 ## Verification Evidence — 2026-10-08
 

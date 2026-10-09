@@ -126,20 +126,24 @@ test.each([
   expect(screen.getByRole('main', { name: pageName })).toBeTruthy();
 });
 
-test('header catalog link navigates from a direct stone visit and participates in history', async () => {
+test('header brand image and text navigate from a direct stone visit and participate in history', async () => {
   window.history.replaceState(null, '', '/stone-shelter/stones/1');
   await act(async () => { render(<App />); });
-  const link = within(screen.getByRole('navigation', { name: 'Main navigation' })).getByRole('link', { name: 'Stone catalog' });
+  const link = within(screen.getByRole('banner')).getByRole('link', { name: 'Stone Shelter' });
   expect(link.getAttribute('href')).toBe('/stone-shelter/catalog');
   const historyLength = window.history.length;
-  await act(async () => { fireEvent.click(link); });
+  await act(async () => { fireEvent.click(link.querySelector('svg')!); });
   expect(window.location.pathname).toBe('/stone-shelter/catalog');
   expect(screen.getByRole('main', { name: 'Stone catalog' })).toBeTruthy();
   expect(window.history.length).toBe(historyLength + 1);
-  await act(async () => { fireEvent.click(link); });
+  await act(async () => { fireEvent.click(within(link).getByRole('heading', { name: 'Stone Shelter' })); });
   expect(window.history.length).toBe(historyLength + 1);
   window.history.back();
   await waitFor(() => expect(screen.getByRole('main', { name: 'Mars' })).toBeTruthy());
+  await act(async () => { fireEvent.click(within(link).getByRole('heading', { name: 'Stone Shelter' })); });
+  expect(window.location.pathname).toBe('/stone-shelter/catalog');
+  expect(screen.getByRole('main', { name: 'Stone catalog' })).toBeTruthy();
+  expect(window.history.length).toBe(historyLength + 1);
 });
 
 test('unknown pages offer canonical recovery with shared layout and heading focus', async () => {

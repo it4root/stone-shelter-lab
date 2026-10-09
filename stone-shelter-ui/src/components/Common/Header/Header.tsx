@@ -1,26 +1,17 @@
 import './Header.css';
 import { catalogPath } from '../../../App/navigation/pageRoutes';
 
-const navigation = ['Stone catalog', 'How it works', 'About the shelter', 'Blog', 'Contact'];
-
 export function Header() {
   return (
       <header className="site-header">
-        <div className="brand">
+        <a className="brand" href={catalogPath}>
           <svg viewBox="0 0 48 48" width="42" height="42" aria-hidden="true">
             <path d="M5 21 24 5l19 16" fill="none" stroke="currentColor" strokeWidth="1.6" />
             <path d="M9 36 15 25 25 21 35 27 39 36 33 40H14Z" fill="#e1e3de" stroke="currentColor" strokeWidth="1.4" />
             <path d="m15 34 9-7 10 7" fill="none" stroke="#939c91" />
           </svg>
           <h1>Stone Shelter</h1>
-        </div>
-        <nav aria-label="Main navigation">
-          <ul>{navigation.map((label, index) => (
-            <li key={label} className={index === 0 ? 'current-section' : undefined}>
-              {index === 0 ? <a href={catalogPath}>{label}</a> : label}
-            </li>
-          ))}</ul>
-        </nav>
+        </a>
       </header>
   );
 }

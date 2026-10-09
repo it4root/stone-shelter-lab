@@ -34,6 +34,23 @@ subjects start with `0010-ui-routing:` and reference the complete task ID.
   - Acceptance references: AC-0010-001–AC-0010-010.
   - Dependencies: T0010-002.
 
+## Header Revision — 2026-10-09
+
+- [x] **T0010-004 — Replace header menu with brand catalog navigation.**
+  - Implement the user's header revision documented in spec.md; remove unused
+    menu styles and keep the existing responsive brand presentation.
+  - Update affected assertions and verify image/text navigation through history.
+  - Verification: lint, affected header/link tests, build, whitespace check and
+    local development server response; keep the server running.
+  - Acceptance references: AC-0010-003, AC-0010-004, AC-0010-005, AC-0010-010.
+  - Dependencies: T0010-002. This request authorizes only this revision.
+
+T0010-004 verification: four selected header/name/native-link tests passed
+across two files; 26 unrelated cases were skipped. Lint, production build and
+whitespace checks passed on Node 24.21.0 / npm 11.19.0. The existing Vite server
+returned the catalog entry document and remains running at
+`http://127.0.0.1:5175/stone-shelter/catalog`. No commits or pushes were created.
+
 ## Preparation Evidence
 
 2026-10-08: inspected existing routing and link consumers and prepared this

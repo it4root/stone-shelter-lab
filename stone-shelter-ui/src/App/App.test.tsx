@@ -34,13 +34,16 @@ test('renders the initial 8 stones with required content and total count', async
   expect(screen.getAllByText(mockStones[29].biography!)).toHaveLength(8);
 });
 
-test('links the header catalog entry and exposes canonical detail and creation links', async () => {
+test('links only the header brand and exposes canonical detail and creation links', async () => {
   await act(async () => { render(<App />); });
-  expect(screen.getByRole('navigation', { name: 'Main navigation' }).textContent).toContain('Stone catalog');
-  expect(within(screen.getByRole('navigation', { name: 'Main navigation' })).queryAllByRole('link')).toHaveLength(1);
+  const header = screen.getByRole('banner');
+  expect(within(header).getAllByRole('link')).toHaveLength(1);
+  expect(within(header).getByRole('link', { name: 'Stone Shelter' }).getAttribute('href')).toBe('/stone-shelter/catalog');
+  expect(within(header).queryByRole('navigation')).toBeNull();
+  expect(header.textContent?.trim()).toBe('Stone Shelter');
   expect(screen.getAllByRole('link', { name: /View details for/ })).toHaveLength(8);
   expect(screen.getByRole('link', { name: 'Add stone' }).getAttribute('href')).toBe('/stone-shelter/add-stone');
-  expect(within(screen.getByRole('navigation', { name: 'Main navigation' })).queryAllByRole('button')).toHaveLength(0);
+  expect(within(header).queryAllByRole('button')).toHaveLength(0);
   expect(screen.queryByRole('button', { name: /adopt|favorite|details/i })).toBeNull();
 });
 

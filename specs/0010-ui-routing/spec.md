@@ -45,8 +45,10 @@ this ticket does not introduce query-driven filters or pagination.
 
 All links to implemented pages use the canonical URLs: catalog card photos,
 Add stone, Back to catalog and the creation success View stone action.
-Make the existing `Stone catalog` header label a link to the catalog. Other
-header labels remain static because their pages do not exist.
+Following the user's 2026-10-09 header revision, remove the header menu and all
+its entries. Make the existing top-left logo image and `Stone Shelter` heading
+above the filters one shared link to the canonical catalog URL. Both the image
+and text activate that link using the existing navigation boundary.
 
 Normal same-origin navigation between implemented pages uses browser history
 without a document reload. Browser Back/Forward, direct entry and refresh work
@@ -84,8 +86,8 @@ this ticket.
 
 ## Relationship to Existing Specifications
 
-This ticket supersedes only the UI path choices and static `Stone catalog`
-header behavior in features [0005](../0005-ui-mock-to-code/spec.md),
+This ticket supersedes only the UI path choices and header navigation
+behavior in features [0005](../0005-ui-mock-to-code/spec.md),
 [0006](../0006-stone-details/spec.md) and [0009](../0009-add-stone-ui/spec.md).
 Their other requirements and recorded delivery evidence remain applicable.
 Existing path-specific tests must be updated to the documented route change;

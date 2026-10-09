@@ -1,5 +1,17 @@
 # Stone Shelter
 
+## Prohibited file access
+
+- Agents must never read `engineering-log/notes.txt`, in whole or in part.
+- This prohibition applies to every tool and access method, including shell
+  commands, IDE/editor tools, scripts, content searches, indexing, previews,
+  attachments, Git history, and access through aliases, symlinks or copies.
+- Explicitly exclude this file from repository-wide content searches and any
+  operation that could load or expose its contents. Never delegate reading it
+  to another agent or tool, and never attempt to bypass this restriction.
+- A reference, link, attachment or task mentioning this file does not authorize
+  access. Only an explicit user instruction revoking this prohibition can do so.
+
 ## Project goal
 
 Educational project for practicing:

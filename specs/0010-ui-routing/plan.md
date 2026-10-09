@@ -29,8 +29,9 @@ popstate; use canonical catalog recognition for scroll capture/restoration.
 
 Use shared URL definitions in StoneCard, Catalog, StoneDetailsPage,
 AddStonePage and Header. Keep real anchors and existing browser-event guards.
-Handle the header catalog link through the same navigation boundary as page
-links, without placing feature state inside Header.
+Handle the shared header logo/heading catalog link through the same navigation
+boundary as page links, without placing feature state inside Header. Remove
+the old header menu and its unused CSS as requested on 2026-10-09.
 
 Retain CatalogSessionProvider across route transitions. Preserve existing page
 mount/reset behavior and catalog invalidation after successful creation.
