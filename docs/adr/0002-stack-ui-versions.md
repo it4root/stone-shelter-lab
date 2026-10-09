@@ -88,3 +88,16 @@ linting conflict without changing React, Vite, Node or ESLint versions.
 - Use prereleases or floating dependency ranges: rejected by the stable-release
   requirement and the repository's explicit-version rule.
 - Implement the UI during version research: outside T0002-001.
+
+## Feature 0014 Frontend Container (2026-10-09)
+
+Use `node:24.21.0-bookworm-slim@sha256:d6aa754f16b3197301076f047b5def2f02ea1dbbc2ca920407d46d7ec7f87b20`
+for the local frontend container. Registry manifest inspection confirms amd64
+and arm64 support; preserve Node 24.21.0, npm 11.19.0 and the existing lockfile.
+Verify both versions in the build rather than installing a different runtime.
+The [official Node image inventory](https://hub.docker.com/_/node) lists the
+selected concrete tag.
+
+Use the existing Vite API-mode server under the Compose `frontend` profile.
+Standalone `npm run dev:api` remains available for host hot updates against the
+Docker backend. No additional server package or frontend dependency is required.

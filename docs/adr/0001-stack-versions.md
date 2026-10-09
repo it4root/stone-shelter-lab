@@ -168,3 +168,36 @@ that decoder; structural headers alone accepted a corrupt payload during review.
 [Official release](https://github.com/haraldk/TwelveMonkeys/releases/tag/twelvemonkeys-3.12.0)
 and [supported formats](https://github.com/haraldk/TwelveMonkeys) were verified
 before adding the dependency. It does not add image editing functionality.
+
+## Feature 0014 Infrastructure Pins (2026-10-09)
+
+The user authorized all tasks in
+[0014-llm-search-infrastructure](../../specs/0014-llm-search-infrastructure/spec.md).
+Preserve JDK 23.0.2, Boot 4.1.1, PostgreSQL 18.6 and Liquibase 5.0.4.
+
+| Component | Selection | Reason / official reference |
+| --- | --- | --- |
+| PostgreSQL / pgvector image | `pgvector/pgvector:0.8.6-pg18-trixie@sha256:78bf48b801e792f99e3ac62b5036fd3876e9be48afda16c1e331af1c75ceb2ff` | Ready-made PostgreSQL 18.6 / pgvector 0.8.6; [publisher metadata](https://hub.docker.com/r/pgvector/pgvector/tags?name=0.8.6-pg18-trixie); immutable multi-platform digest |
+| Redis image | `redis:8.2.10-alpine3.22` | Explicit patch and compact Alpine variant from the [official inventory](https://hub.docker.com/_/redis) |
+| Kafka image | `apache/kafka:4.2.2` | Supported patch near Boot's managed client generation; [Apache inventory](https://kafka.apache.org/community/downloads/) |
+| Spring AI BOM / Ollama starter | 2.0.1 / 2.0.1 | Existing approved AI pin; Maven Central artifacts and configuration metadata verified |
+| Boot Redis / Kafka starters | 4.1.1 / 4.1.1 | Match the Boot parent; connection support absent from current dependencies |
+| Ollama host CLI / model | 0.40.2 / `qwen2.5:3b` | User-managed host installation and explicit model choice; no Ollama container or automatic model download |
+
+Manifest inspection confirms pgvector's amd64/arm64 platforms and index digest.
+The current host is x86_64. Keep `postgres-data:/var/lib/postgresql`; enable
+`vector` using a new Liquibase changeset, without vector/analytics tables.
+Readiness and migration checks remain distinct from model/RAG functionality.
+
+Boot 4.1.1 manages Spring Kafka 4.1.1, kafka-clients 4.2.1 and Lettuce
+7.5.2.RELEASE. Preserve those transitive versions. Add explicit direct starter
+versions and AI BOM 2.0.1, without redundant database or WebFlux dependencies.
+The Spring AI 2.0.1 jar confirms the base-url, chat model and never-pull
+configuration properties. Disable embeddings; Redis memory TTL is configuration
+only, not an implemented ChatMemory adapter.
+
+The Trixie variant preserves the existing PostgreSQL volume's glibc 2.41
+collation provider. A read-only check rejected Bookworm (glibc 2.36) before
+application migrations; no collation metadata/indexes or catalog data were
+changed. Testcontainers uses the same index digest without a tag because its
+image-name parser rejects combined tag-plus-digest syntax.
