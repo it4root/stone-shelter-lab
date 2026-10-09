@@ -178,3 +178,33 @@ Never interpret the existence of subsequent tasks in `tasks.md` as permission to
 - Name local object variables descriptively after their type in lowerCamelCase,
   for example StoneSearchCriteria -> stoneSearchCriteria. Do not introduce a
   single-use forwarding variable solely to satisfy this naming convention.
+
+
+## Context Management
+
+Start with the task specification and relevant project instructions.
+Inspect only files needed for the current change and their direct dependencies.
+Prefer targeted symbol and filename searches over reading complete directories.
+Do not load entire documentation trees or large logs without justification.
+Reuse information already established in the current session.
+Expand investigation only when a concrete dependency or blocker requires it.
+Do not perform speculative refactoring or proactive cleanup.
+Stop and request approval when the required changes exceed the agreed scope.
+Do not read build outputs, system logs, pom.xml / build.gradle, or framework configuration files unless the task ticket specifically mentions dependency changes
+
+
+
+##  Validation
+
+Run the smallest relevant test set.
+Do not run the full test suite unless explicitly requested or required by the agreed validation level.
+Avoid repeating successful checks when their relevant inputs have not changed.
+When a check fails, diagnose before retrying.
+Do not repeat failed commands without a new hypothesis or a justified transient-failure retry.
+Summarize logs; inspect full output only when necessary.
+
+### Token Economy & Execution Constraints
+1. **Scope Lockdown:** You are acting as a Surgical Code Editor, not an Architect.
+2. **File Isolation:** Modify ONLY the file(s) listed in the prompt ticket. Touching any other file is a Constitution violation.
+3. **No Unrequested Tests:** Run ONLY the specific test class provided in the ticket. Never run the full test suite.
+4. **No Spurious Output:** Keep your explanation under 2 sentences. Do NOT output long summaries of what you did. Return the file diff and stop.

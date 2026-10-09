@@ -19,7 +19,7 @@ added during this review.
   then create or update the YAML and verify it against those requirements and
   the implemented public API. This is a deliberate exception to the repository's
   contract-first workflow.
-- The existing `contracts/stone-shelter-api.yaml` remains a draft rather than
+- The existing `../../stone-rules/stone-shelter-api.yaml` remains a draft rather than
   an approved source of truth for this implementation stage. Retain it for later
   revision; this decision does not delete it or authorize additional implementation
   tasks. Final contract completion is deferred, not cancelled.
