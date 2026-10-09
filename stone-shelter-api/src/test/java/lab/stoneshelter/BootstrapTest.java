@@ -9,7 +9,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
+        properties = "spring.ai.ollama.base-url=http://127.0.0.1:1")
 @AutoConfigureRestTestClient
 class BootstrapTest extends IntegrationTest {
     @Autowired

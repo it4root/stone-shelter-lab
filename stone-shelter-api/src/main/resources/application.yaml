@@ -5,6 +5,19 @@ spring:
       max-request-size: 11MB
   application:
     name: stone-shelter-api
+  ai:
+    model:
+      embedding: none
+    ollama:
+      base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://host.docker.internal:11434}
+      chat:
+        model: ${SPRING_AI_OLLAMA_CHAT_MODEL:qwen2.5:3b}
+      init:
+        pull-model-strategy: never
+  data:
+    redis:
+      repositories:
+        enabled: false
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -18,6 +31,9 @@ spring:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
 management:
+  health:
+    redis:
+      enabled: ${REDIS_HEALTH_ENABLED:false}
   endpoints:
     web:
       exposure:
@@ -29,6 +45,9 @@ springdoc:
   override-with-generic-response: false
 
 stone:
+  ai:
+    chat-memory:
+      ttl: ${CHAT_MEMORY_TTL:PT24H}
   photos:
     enabled: ${PHOTO_STORAGE_ENABLED:false}
     endpoint: ${MINIO_ENDPOINT:}
