@@ -14,9 +14,7 @@
   equivalence, all five catalog operations and successful statuses, DTO
   descriptions, and supported validation constraints. Reviewed AC-1 through
   AC-9 against the tests and shared configuration.
-- Started the backend and PostgreSQL through Docker Compose and saved the
-  generated YAML to [engineering-log/openapi.yml](../../engineering-log/openapi.yml)
-  for visual inspection: OpenAPI 3.1.0, 516 lines. The backend reported `UP`.
+
 
 ## Questions asked before implementation
 

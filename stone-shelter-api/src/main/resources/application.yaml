@@ -16,6 +16,8 @@ spring:
         pull-model-strategy: never
   data:
     redis:
+      timeout: ${CHAT_REDIS_TIMEOUT:PT1S}
+      connect-timeout: ${CHAT_REDIS_TIMEOUT:PT1S}
       repositories:
         enabled: false
   datasource:

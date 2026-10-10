@@ -1,8 +1,10 @@
-import { afterEach, expect, test, vi } from 'vitest';
-import { sendChatMessage } from './chatbotApi';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
+import { getChatHistory, sendChatMessage } from './chatbotApi';
 
-const request = { conversationId: '9960a79a-ae24-4c89-9f54-51103bcb00c9', message: '  A stone please  ', context: { stoneId: 3 } };
+const request = { turnId: '8103df2b-dad2-4f4c-9701-5e88739a2dda', conversationId: '9960a79a-ae24-4c89-9f54-51103bcb00c9', message: '  A stone please  ', context: { stoneId: 3 } };
 const response = { text: 'Here are some stones you might like.', stones: [{ id: 1, name: 'Mars' }, { id: 3, name: 'Luna' }] };
+
+beforeEach(() => { sessionStorage.clear(); });
 
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.stubEnv('MODE', 'mock'); });
 
@@ -13,7 +15,7 @@ test('API mode posts only the new message and context through the configured tra
   vi.stubGlobal('fetch', fetch);
   expect(await sendChatMessage(request)).toEqual(response);
   expect(fetch).toHaveBeenCalledExactlyOnceWith('https://backend.example/api/v1/chat/messages', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request),
+    credentials: 'include', method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(request),
   });
 });
 
@@ -23,7 +25,7 @@ test('mock mode returns an independent fixed response without fetch', async () =
   const first = await sendChatMessage(request);
   expect(first).toEqual(response);
   first.stones.reverse();
-  expect(await sendChatMessage({ ...request, message: 'Other topic' })).toEqual(response);
+  expect(await sendChatMessage({ ...request, turnId: crypto.randomUUID(), message: 'Other topic' })).toEqual(response);
   expect(fetch).not.toHaveBeenCalled();
 });
 
@@ -46,7 +48,7 @@ test.each([
   vi.stubEnv('MODE', 'api');
   const fetch = vi.fn().mockResolvedValue(Response.json(body));
   vi.stubGlobal('fetch', fetch);
-  await expect(sendChatMessage(request)).rejects.toThrow('invalid response');
+  await expect(sendChatMessage(request)).rejects.toMatchObject({ code: 'CHAT_UNAVAILABLE' });
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 
@@ -60,4 +62,31 @@ test('preserves ProblemDetail and normalizes network/non-JSON errors without moc
   fetch.mockResolvedValueOnce(new Response('<html>Error</html>', { status: 502 }));
   await expect(sendChatMessage(request)).rejects.toMatchObject({ status: 502 });
   expect(fetch).toHaveBeenCalledTimes(3);
+});
+
+
+test('mock reload restores pair IDs and exact ordered references; replay and reads do not extend retention', async () => {
+  vi.stubEnv('MODE', 'mock');
+  await sendChatMessage(request);
+  const key = `stone-chat-mock:${request.conversationId}`;
+  const original = sessionStorage.getItem(key);
+  expect(await getChatHistory(request.conversationId)).toMatchObject({ messages: [
+    { role: 'USER', text: request.message, turnId: request.turnId, context: request.context },
+    { role: 'ASSISTANT', ...response, turnId: request.turnId, context: null },
+  ] });
+  await sendChatMessage(request);
+  expect(sessionStorage.getItem(key)).toBe(original);
+  await expect(sendChatMessage({ ...request, message: 'changed' })).rejects.toMatchObject({ status: 409, code: 'CHAT_TURN_CONFLICT' });
+  const stored = JSON.parse(original!); stored.expiresAt = Date.now() - 1;
+  sessionStorage.setItem(key, JSON.stringify(stored));
+  expect((await getChatHistory(request.conversationId)).messages).toEqual([]);
+});
+
+test('API metadata preserves Retry-After and malformed history fails closed without fallback', async () => {
+  vi.stubEnv('MODE', 'api');
+  const fetch = vi.fn().mockResolvedValue(Response.json({ code: 'CHAT_RATE_LIMITED', detail: 'Wait' }, { status: 429, headers: { 'Retry-After': '6' } }));
+  vi.stubGlobal('fetch', fetch);
+  await expect(sendChatMessage(request)).rejects.toMatchObject({ status: 429, code: 'CHAT_RATE_LIMITED', retryAfter: 6 });
+  fetch.mockResolvedValueOnce(Response.json({ conversationId: request.conversationId, messages: [{ role: 'USER' }] }));
+  await expect(getChatHistory(request.conversationId)).rejects.toMatchObject({ code: 'CHAT_UNAVAILABLE' });
 });

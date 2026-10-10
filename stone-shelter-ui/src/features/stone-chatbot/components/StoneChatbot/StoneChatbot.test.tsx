@@ -4,18 +4,20 @@ import * as chatbotApi from '../../../../api/chatbotApi';
 import { ChatSessionProvider } from '../../state/ChatSessionProvider/ChatSessionProvider';
 import { StoneChatbot } from './StoneChatbot';
 
-beforeEach(() => { window.history.replaceState(null, '', '/stone-shelter/catalog'); });
+beforeEach(() => { sessionStorage.clear(); window.history.replaceState(null, '', '/stone-shelter/catalog');
+  vi.spyOn(chatbotApi, 'getChatHistory').mockImplementation(async id => ({ conversationId: id, messages: [] }));
+});
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
-function openChat() {
-  render(<ChatSessionProvider><StoneChatbot visible /></ChatSessionProvider>);
+async function openChat() {
+  await act(async () => { render(<ChatSessionProvider><StoneChatbot visible /></ChatSessionProvider>); });
   fireEvent.click(screen.getByRole('button', { name: 'Open chat' }));
   return screen.getByRole('region', { name: 'Stone Shelter Chat' });
 }
 
-test('starts collapsed, opens without a request and preserves draft through launcher/close/Escape', () => {
+test('starts collapsed, opens without a request and preserves draft through launcher/close/Escape', async () => {
   const send = vi.spyOn(chatbotApi, 'sendChatMessage');
-  const panel = openChat();
+  const panel = await openChat();
   expect(send).not.toHaveBeenCalled();
   const input = screen.getByRole('textbox', { name: 'Message' });
   expect(document.activeElement).toBe(input);
@@ -35,7 +37,7 @@ test('starts collapsed, opens without a request and preserves draft through laun
 
 test.each(['Help me choose a stone', 'Tell me about stone properties', 'How do I care for a stone?', 'Another topic'])('quick prompt sends through the normal boundary: %s', async prompt => {
   const send = vi.spyOn(chatbotApi, 'sendChatMessage').mockResolvedValue({ text: 'Demo reply', stones: [] });
-  const panel = openChat();
+  const panel = await openChat();
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: prompt })); });
   expect(send).toHaveBeenCalledTimes(1);
   expect(send.mock.calls[0][0]).toMatchObject({ message: prompt, context: { stoneId: null } });
@@ -47,7 +49,7 @@ test('composer guards IME, blank/oversized input and renders plain text with ord
   const send = vi.spyOn(chatbotApi, 'sendChatMessage').mockResolvedValue({
     text: '<img src=x onerror=alert(1)>', stones: [{ id: 3, name: 'Luna' }, { id: 1, name: 'Mars' }],
   });
-  const panel = openChat();
+  const panel = await openChat();
   const input = screen.getByRole('textbox', { name: 'Message' });
   expect((screen.getByRole('button', { name: 'Send message' }) as HTMLButtonElement).disabled).toBe(true);
   fireEvent.keyDown(input, { key: 'Enter' });
@@ -69,9 +71,9 @@ test('composer guards IME, blank/oversized input and renders plain text with ord
 });
 
 test('send button exposes failure and retries the original turn without duplicating the user bubble', async () => {
-  const send = vi.spyOn(chatbotApi, 'sendChatMessage').mockRejectedValueOnce(new Error('Backend unavailable'))
+  const send = vi.spyOn(chatbotApi, 'sendChatMessage').mockRejectedValueOnce(new chatbotApi.ChatApiError(400, 'HTTP_400', 'Backend unavailable'))
     .mockResolvedValueOnce({ text: 'Recovered', stones: [] });
-  const panel = openChat();
+  const panel = await openChat();
   fireEvent.change(screen.getByRole('textbox'), { target: { value: 'First question' } });
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Send message' })); });
   expect(screen.getByRole('alert').textContent).toBe('Backend unavailable');

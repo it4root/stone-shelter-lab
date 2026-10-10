@@ -7,10 +7,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.UUID;
 
-@Schema(description = "A new chat message; history stays in the UI during the stub phase.")
+@Schema(description = "A demo chat turn persisted with its completed response.")
 public record StoneChatMessageRequest(
         @NotNull @Schema(description = "Client conversation UUID; correlation only, not authentication.",
                 requiredMode = Schema.RequiredMode.REQUIRED) UUID conversationId,
+        @NotNull @Schema(description = "Client-generated UUID reused for retries of the exact original payload.",
+                requiredMode = Schema.RequiredMode.REQUIRED) UUID turnId,
         @NotBlank @Size(max = 2000) @Schema(description = "Nonblank message, preserved without normalization.",
                 requiredMode = Schema.RequiredMode.REQUIRED) String message,
         @Valid @Schema(description = "Optional page context captured at submission time.", nullable = true)

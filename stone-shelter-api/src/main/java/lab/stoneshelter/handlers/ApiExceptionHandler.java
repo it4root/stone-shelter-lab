@@ -1,6 +1,13 @@
 package lab.stoneshelter.handlers;
 
 import java.net.URI;
+import jakarta.servlet.http.HttpServletResponse;
+import lab.stoneshelter.exceptions.StoneChatUnavailableException;
+import lab.stoneshelter.exceptions.StoneChatRateLimitedException;
+import lab.stoneshelter.exceptions.StoneChatConversationBusyException;
+import lab.stoneshelter.exceptions.StoneChatConversationNotFoundException;
+import lab.stoneshelter.exceptions.StoneChatOriginRejectedException;
+import lab.stoneshelter.exceptions.StoneChatTurnConflictException;
 
 import lab.stoneshelter.exceptions.InvalidAdmissionDateRangeException;
 import lab.stoneshelter.exceptions.InvalidPhotoException;
@@ -83,6 +90,36 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(DataAccessException.class)
     public ProblemDetail handlePersistenceFailure(DataAccessException exception) {
         return problemDetail(HttpStatus.INTERNAL_SERVER_ERROR, "The operation could not be saved. Try again later.");
+    }
+
+    @ExceptionHandler(StoneChatUnavailableException.class)
+    public ProblemDetail chatUnavailable(StoneChatUnavailableException exception) {
+        return chatProblem(HttpStatus.SERVICE_UNAVAILABLE, "CHAT_UNAVAILABLE", exception.getMessage());
+    }
+    @ExceptionHandler(StoneChatOriginRejectedException.class)
+    public ProblemDetail chatOrigin(StoneChatOriginRejectedException exception) {
+        return chatProblem(HttpStatus.FORBIDDEN, "CHAT_ORIGIN_REJECTED", exception.getMessage());
+    }
+    @ExceptionHandler(StoneChatConversationNotFoundException.class)
+    public ProblemDetail chatNotFound(StoneChatConversationNotFoundException exception) {
+        return chatProblem(HttpStatus.NOT_FOUND, "CHAT_CONVERSATION_NOT_FOUND", exception.getMessage());
+    }
+    @ExceptionHandler(StoneChatTurnConflictException.class)
+    public ProblemDetail chatConflict(StoneChatTurnConflictException exception) {
+        return chatProblem(HttpStatus.CONFLICT, "CHAT_TURN_CONFLICT", exception.getMessage());
+    }
+    @ExceptionHandler(StoneChatRateLimitedException.class)
+    public ProblemDetail chatRate(StoneChatRateLimitedException exception, HttpServletResponse response) {
+        response.setHeader(HttpHeaders.RETRY_AFTER, Long.toString(exception.getRetryAfter()));
+        return chatProblem(HttpStatus.TOO_MANY_REQUESTS, "CHAT_RATE_LIMITED", exception.getMessage());
+    }
+    @ExceptionHandler(StoneChatConversationBusyException.class)
+    public ProblemDetail chatBusy(StoneChatConversationBusyException exception, HttpServletResponse response) {
+        response.setHeader(HttpHeaders.RETRY_AFTER, "1");
+        return chatProblem(HttpStatus.TOO_MANY_REQUESTS, "CHAT_CONVERSATION_BUSY", exception.getMessage());
+    }
+    private ProblemDetail chatProblem(HttpStatus status, String code, String detail) {
+        ProblemDetail problem = problemDetail(status, detail); problem.setProperty("code", code); return problem;
     }
 
     private ProblemDetail problemDetail(HttpStatus status, String detail) {

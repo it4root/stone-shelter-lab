@@ -3,8 +3,8 @@
 Use the existing React, TypeScript and Vite stack without additional dependencies.
 
 ## Data
-
-Use the generated YAML snapshot `engineering-log/openapi.yml`, specifically
+Started the backend and PostgreSQL through Docker Compose
+Use the generated YAML snapshot , specifically
 `StoneSearchResponse`, as the reference for local mock entries. Keep 30 entries in the local dataset and expose contract-shaped pages through
 the data source, with a UI/mock default size of 8 and a maximum of 24. No network requests or mock HTTP server are needed.
 Use the contract enum values for stone types, sizes and adoption statuses.

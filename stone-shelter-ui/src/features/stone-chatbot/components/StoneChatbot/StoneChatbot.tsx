@@ -14,7 +14,7 @@ export function StoneChatbot({ visible }: { visible: boolean }) {
   const history = useRef<HTMLDivElement>(null);
   const { open, setOpen, messages, pending, error } = chatSession;
   const lastMessage = messages.at(-1);
-  const blocked = pending || Boolean(error);
+  const blocked = pending || Boolean(error) || chatSession.restoring || chatSession.unavailable || chatSession.cooldown > 0;
   const inputError = chatSession.inputError ?? (chatSession.draft.length > 2000 ? 'Use at most 2000 characters.' : undefined);
 
   useEffect(() => {
@@ -49,20 +49,27 @@ export function StoneChatbot({ visible }: { visible: boolean }) {
           <button className="chat-close" type="button" aria-label="Close chat" onClick={close}>×</button>
         </header>
         <div className="chat-history" role="log" aria-label="Chat messages" aria-live="off" tabIndex={0} ref={history}>
-          <p className="chat-bubble chat-assistant">Hello! I can help you explore our stones. What would you like to know?</p>
+          {messages.length === 0 && !chatSession.restoring && !chatSession.unavailable && <p className="chat-bubble chat-assistant">Hello! I can help you explore our stones. What would you like to know?</p>}
           {messages.map((chatMessage, index) => (
-            <div key={index} className={`chat-bubble ${chatMessage.role === 'USER' ? 'chat-user' : 'chat-assistant'}`}>
+            <div key={`${chatMessage.turnId}-${chatMessage.role}-${index}`} className={`chat-bubble ${chatMessage.role === 'USER' ? 'chat-user' : 'chat-assistant'}`}>
               <span className="chat-speaker">{chatMessage.role === 'USER' ? 'You' : 'Stone Shelter'}</span>
               <p>{chatMessage.text}</p>
               {chatMessage.stones.length > 0 && <ul className="chat-stones">{chatMessage.stones.map((stoneChatStone, index) =>
                 <li key={`${stoneChatStone.id}-${index}`}><a href={stoneDetailsPath(stoneChatStone.id)}>{stoneChatStone.name}<span aria-hidden="true"> ↗</span></a></li>)}</ul>}
             </div>
           ))}
-          {messages.length === 0 && <div className="chat-prompts" aria-label="Suggested questions">{quickPrompts.map(prompt =>
+          {messages.length === 0 && !chatSession.restoring && !chatSession.unavailable && <div className="chat-prompts" aria-label="Suggested questions">{quickPrompts.map(prompt =>
             <button type="button" key={prompt} disabled={blocked} onClick={() => chatSession.send(prompt)}>{prompt}</button>)}</div>}
           {pending && <p className="chat-waiting" aria-hidden="true">Waiting for a reply…</p>}
           {error && <div className="chat-error"><p role="alert">{error}</p>
-            <button type="button" disabled={pending} onClick={chatSession.retry}>Retry message</button></div>}
+            <button type="button" disabled={pending || chatSession.restoring || chatSession.unavailable || chatSession.cooldown > 0} onClick={chatSession.retry}>Retry message</button></div>}
+          {chatSession.restoring && <p role="status">Restoring conversation…</p>}
+          {chatSession.cooldown > 0 && <p role="status">Try again in {chatSession.cooldown} seconds.</p>}
+          {chatSession.restoreCooldown > 0 && <p role="status">Restore history in {chatSession.restoreCooldown} seconds.</p>}
+          {(chatSession.unavailable || chatSession.restoreError) && <div className="chat-error">
+            <p role="alert">{chatSession.restoreError ?? 'Chat is unavailable. Restore history before retrying.'}</p>
+            <button type="button" disabled={pending || chatSession.restoring || chatSession.restoreCooldown > 0} onClick={() => void chatSession.restore()}>Restore history</button>
+          </div>}
         </div>
         <form className="chat-composer" onSubmit={event => { event.preventDefault(); chatSession.send(); }}>
           <label htmlFor={`${panelId}-message`} className="chat-sr-only">Message</label>

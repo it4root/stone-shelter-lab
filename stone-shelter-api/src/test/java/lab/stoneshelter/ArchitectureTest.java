@@ -54,7 +54,6 @@ class ArchitectureTest {
     @ArchTest
     static final ArchRule controllersDoNotConstructModelsOrDtos = noClasses()
             .that().haveSimpleNameEndingWith("Controller")
-            .and().doNotHaveFullyQualifiedName("lab.stoneshelter.controllers.StoneChatbotController")
             .should().callConstructorWhere(new DescribedPredicate<JavaConstructorCall>(
                     "construct domain models, DTOs or persistence entities") {
                 @Override
@@ -156,6 +155,6 @@ class ArchitectureTest {
     @ArchTest
     static final ArchRule repositoriesDoNotInvokeMappers = noClasses()
             .that().haveSimpleNameEndingWith("Repository")
-            .should().dependOnClassesThat().haveSimpleNameEndingWith("Mapper")
+            .should().dependOnClassesThat().resideInAnyPackage("lab.stoneshelter.mappers..")
             .allowEmptyShould(true);
 }

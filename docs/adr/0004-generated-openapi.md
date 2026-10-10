@@ -33,9 +33,7 @@ implementation.
 - Enable Swagger UI and OpenAPI in all application profiles. Keep the package,
   path, and response-generation settings in the shared `application.yaml`.
 - Expose `/swagger-ui.html`, `/v3/api-docs`, and `/v3/api-docs.yaml`.
-- A downloaded file such as [engineering-log/openapi.yml](../../engineering-log/openapi.yml)
-  is a generated snapshot for inspection. Regenerate it from the running backend
-  rather than editing it as an independent contract.
+
 
 ## Consequences
 

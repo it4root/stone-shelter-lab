@@ -15,10 +15,9 @@ class StoneChatbotArchitectureTest {
     }
 
     @Test
-    void stubDoesNotDependOnApplicationProcessingOrPersistence() {
+    void chatControllerDoesNotDependOnMappingOrPersistence() {
         noClasses().that().haveFullyQualifiedName(StoneChatbotController.class.getName())
-                .should().dependOnClassesThat().resideInAnyPackage("lab.stoneshelter.services..",
-                        "lab.stoneshelter.mappers..", "lab.stoneshelter.entities..",
+                .should().dependOnClassesThat().resideInAnyPackage("lab.stoneshelter.mappers..", "lab.stoneshelter.entities..",
                         "lab.stoneshelter.repositories..", "lab.stoneshelter.criteria..")
                 .check(new ClassFileImporter().importClasses(StoneChatbotController.class));
     }

@@ -5,6 +5,7 @@ import * as chatbotApi from '../../../../api/chatbotApi';
 import type { StoneChatMessageResponse } from '../../../../api/dto/StoneChatMessageResponse';
 
 beforeEach(() => {
+  sessionStorage.clear();
   window.history.replaceState(null, '', '/stone-shelter/catalog');
   vi.spyOn(window, 'scrollTo').mockImplementation(() => {});
 });
@@ -32,7 +33,7 @@ test('chat links open mock stone details and Back/Forward preserve conversation,
   expect(within(screen.getByRole('main')).getByRole('heading', { level: 1, name: 'Luna' })).toBeTruthy();
   expect((screen.getByRole('textbox') as HTMLInputElement).value).toBe('What about this one?');
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Send message' })); });
-  expect(send.mock.calls[1][0]).toEqual({ conversationId: uuid, message: 'What about this one?', context: { stoneId: 3 } });
+  expect(send.mock.calls[1][0]).toEqual({ conversationId: uuid, turnId: expect.any(String), message: 'What about this one?', context: { stoneId: 3 } });
   window.history.back();
   await waitFor(() => expect(screen.getByRole('main', { name: 'Stone catalog' })).toBeTruthy());
   expect(screen.getByRole('button', { name: 'Collapse chat' })).toBeTruthy();

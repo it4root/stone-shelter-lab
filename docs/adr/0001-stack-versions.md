@@ -201,3 +201,20 @@ collation provider. A read-only check rejected Bookworm (glibc 2.36) before
 application migrations; no collation metadata/indexes or catalog data were
 changed. Testcontainers uses the same index digest without a tag because its
 image-name parser rejects combined tag-plus-digest syntax.
+
+## Feature 0016 Request Protection Pins (2026-10-10)
+
+Pin `com.bucket4j:bucket4j_jdk17-core`, `bucket4j_jdk17-redis-common` and
+`bucket4j_jdk17-lettuce` to 8.21.0, and
+`io.github.resilience4j:resilience4j-bulkhead` to 2.4.0. Use the existing
+Boot-managed Lettuce 7.5.2.RELEASE connection; no second Redis client or
+Resilience4j Spring starter is introduced.
+
+On JDK 23.0.2, StoneChatRateLimiterRepositoryTest passed all three tests with
+Redis 8.2.10: concurrent consumers respect capacity, idle retention includes
+full refill plus grace, and send/history budgets remain separate.
+StoneChatConversationSerializationServiceTest and StoneChatActiveTurnRepositoryTest
+passed three tests for conversation exclusion, actual-exit permit lifetime,
+independent conversations, safe retirement and owner-checked Redis leases.
+These qualify the selected integrations within one backend process; model
+invocation capacity and provider cancellation remain future work.

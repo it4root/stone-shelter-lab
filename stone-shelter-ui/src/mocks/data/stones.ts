@@ -1,7 +1,6 @@
 import type { StoneSearchResponse } from '../../api/dto/StoneSearchResponse';
 
 // Field names and enum values follow StoneSearchResponse in the generated
-// backend YAML snapshot: engineering-log/openapi.yml.
 export const mockStones: StoneSearchResponse[] = [
   {
     "id": 1,
