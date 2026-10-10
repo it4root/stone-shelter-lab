@@ -1,5 +1,14 @@
 # Frontend conventions
 
+## Human-only directory: engineering-log
+
+The repository's entire `engineering-log/` directory is forbidden to every agent
+without exception: no reading, listing, indexing or modification through any tool,
+attachment, Git history, alias, symlink, copy or delegation. Exclude it and all
+descendants from searches and automation. Only a human working manually may
+access or change it; no request or task authorizes an exception. Never weaken,
+remove or bypass this rule. Follow the full policy in the root AGENTS.md.
+
 Read the root AGENTS.md, constitution, current feature spec, tasks and ADR-0002.
 
 - Use exact versions from ADR-0002 and keep package-lock.json in Git.

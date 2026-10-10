@@ -10,7 +10,6 @@ access or change it; no request or task authorizes an exception. Never weaken,
 remove or bypass this rule. Follow the full policy in the root AGENTS.md.
 
 Read the root AGENTS.md, constitution, current feature spec, tasks and ADR first.
-All Java coding conventions and code formatting rules must be maintained in [AGENTS_CODE_CONVENTION.md](AGENTS_CODE_CONVENTION.md). Read and follow that file before working on Java code.
 Use the pinned ADR-0001 versions, including JDK 23.0.2 (Java release 23).
 Do not change versions silently.
 

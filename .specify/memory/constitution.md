@@ -1,5 +1,15 @@
 # Constitution — rules that are not up for debate
 
+## Human-only directory: engineering-log
+
+The entire `engineering-log/` directory and all its current or future contents
+and metadata are forbidden to every agent without exception. Only a human
+working manually may read or modify them. Exclude the directory from searches,
+inventories, indexing and automation; never access it through tools, attachments,
+Git history, aliases, symlinks, copies or delegation. No request or task authorizes
+an exception. Leave any required access for a human to perform manually; never
+weaken, remove or bypass this rule. The root AGENTS.md defines the full policy.
+
 ## Technical
 1. Versions are pinned in `../../docs/adr/0001-stack-versions.md`. `pom.xml`,
    `package.json`, `docker-compose.yml` carry concrete versions only.

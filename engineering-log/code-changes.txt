@@ -1,0 +1,266 @@
+Подход Java 8: enum + объект результата
+enum AdoptionStatus {
+    SUCCESS,
+    ALREADY_ADOPTED,
+    NOT_FOUND
+}
+
+class AdoptionResult {
+    private AdoptionStatus status;
+    private UUID stoneId;
+    private Instant adoptedAt;
+    private String previousOwner;
+}
+
+Вполне привычная конструкция.
+Но возникает проблема: компилятор никак не связывает статус и допустимый набор полей.
+
+
+Альтернативный старый подход: наследование
+interface AdoptionResult {}
+
+class Adopted implements AdoptionResult {}
+class AlreadyAdopted implements AdoptionResult {}
+class StoneNotFound implements AdoptionResult {}
+
+
+Теперь у нас разные типы результатов.
+Но любой другой класс тоже может реализовать AdoptionResult.
+
+
+
+public sealed interface AdoptionResult
+    permits Adopted, AlreadyAdopted, StoneNotFound {
+}
+
+public record Adopted(
+    UUID stoneId,
+    Instant adoptedAt
+) implements AdoptionResult {}
+
+public record AlreadyAdopted(
+    UUID stoneId,
+    String currentOwner
+) implements AdoptionResult {}
+
+public record StoneNotFound(
+    UUID stoneId
+) implements AdoptionResult {}
+
+
+
+String describe(AdoptionResult result) {
+    return switch (result) {
+        case Adopted(var id, var adoptedAt) ->
+            "Adopted: " + id;
+
+        case AlreadyAdopted(var id, var owner) ->
+            "Already adopted by " + owner;
+
+        case StoneNotFound(var id) ->
+            "Stone not found: " + id;
+    };
+}
+
+Здесь одновременно работают все три технологии.
+AdoptionResult — sealed interface.
+Каждый результат — record.
+А конструкция case Adopted(var id, var adoptedAt) — record pattern, который извлекает поля объекта прямо в переменные.
+И самое интересное: здесь нет default.
+Он не нужен!
+Компилятор знает, что AdoptionResult допускает только три реализации. И видит, что все три обработаны.
+
+
+
+А теперь добавим четвёртый результат
+Например:
+public record AdoptionPending(
+    UUID stoneId,
+    Instant estimatedCompletion
+) implements AdoptionResult {}
+
+
+И добавим его в permits.
+Что произойдёт?
+Compilation error
+
+Существующий switch больше не обрабатывает все допустимые варианты AdoptionResult.
+the switch expression does not cover all possible input values
+
+
+
+
+
+Null Safety в современной Java: от Optional до JSpecify и статического анализа
+
+И важное уточнение: статический null-анализ существовал задолго до Java 17. Новое здесь прежде всего появление общего стандарта аннотаций JSpecify и его принятие крупными библиотеками, включая Spring Framework 7.
+1. Как мы боролись с null во времена Java 8
+Помнишь этот классический код?
+public String getStoneName(UUID id) {
+    Stone stone = repository.findById(id);
+
+    if (stone != null) {
+        if (stone.getName() != null) {
+            return stone.getName();
+        }
+    }
+
+    return "Unknown";
+}
+
+
+Главное изменение: вместо того чтобы везде защищаться от null во время выполнения программы, мы стараемся ещё на этапе компиляции обнаружить места, где null может нарушить контракт.
+
+
+
+У нас несколько проблем.
+Во-первых, из сигнатуры findById() неясно, может ли метод вернуть null.
+Во-вторых, мы не знаем, допустим ли null в поле name.
+
+В Java 8 мы получили возможность писать:
+public Optional<Stone> findById(UUID id);
+Это тоже компилируется обычным Java-компилятором.
+Optional выражает отсутствие значения, но не делает систему типов Java автоматически null-safe.
+
+Что такое JSpecify
+JSpecify — проект стандартизации аннотаций, которые позволяют описывать nullability Java-типов единообразно.
+
+У JSpecify четыре основные аннотации:
+Аннотация	Значение
+@Nullable	Значение может быть null
+@NonNull	Значение не должно быть null
+@NullMarked	В данной области неаннотированные типы по умолчанию считаются non-null
+@NullUnmarked	Отменяет @NullMarked для выбранной области
+
+
+@NullMarked
+public class StoneService {
+
+    public String getName() {
+        return null;
+    }
+}
+
+
+может успешно скомпилироваться без подключённого анализатора.
+Чтобы контракт реально контролировался, нужен инструмент вроде NullAway или поддерживаемая проверка в IDE.
+
+ullMarked можно поставить на весь пакет
+Вот это мне особенно нравится.
+Не нужно аннотировать каждый метод, параметр и поле.
+Создаёшь package-info.java:
+
+
+List<String> names;
+
+
+В обычной Java элементы такого списка технически могут быть null.
+А в области @NullMarked этот тип означает список строк, для которого элементы должны быть non-null.
+Если нужно разрешить nullable-элементы:
+List<@Nullable String> names;
+
+Разные контракты
+Тип внутри @NullMarked	Значение
+List<String>	Список не null, элементы не null
+@Nullable List<String>	Список может быть null, элементы не должны
+List<@Nullable String>	Список не null, элементы могут быть null
+@Nullable List<@Nullable String>	И список, и элементы могут быть null
+
+
+@Nullable String[] names;
+
+означает, что элементы массива могут быть null, а сам массив в @NullMarked-области не должен быть null.
+А:
+String @Nullable [] names;
+
+
+
+означает, что сам массив может быть null, но его элементы не должны.
+Причина в синтаксисе Java для type-use-аннотаций массивов. Не самое интуитивное решение человечества, мягко говоря.
+Это прямо поясняется в документации Spring Framework 7
+
+Моё практическое правило
+Тип операции	Что предпочесть
+findById()	Optional<T>
+Необязательное значение в инфраструктурном API	@Nullable T, если это уместно
+getRequired...()	T или исключение
+findAll()	List<T>, пустой при отсутствии
+Команда с разными бизнес-исходами	Явный результат, enum или sealed hierarchy
+Необязательное поле DTO	@Nullable T
+Значение, которое обязательно должно существовать	T под @NullMarked
+
+
+
+Три совершенно разные гарантии
+Механизм	Что проверяет
+JSpecify + статический анализ	Согласованность nullability-контрактов в анализируемом коде
+Jakarta Bean Validation	Валидность входных данных во время выполнения
+SQL NOT NULL	Ограничение данных на уровне БД
+
+
+
+
+Java Null Safety Conventions
+
+1. Never return null from Optional-returning methods.
+
+2. Prefer Optional<T> when absence is a normal
+   outcome of a lookup operation.
+
+3. Return empty collections instead of null.
+
+4. Use @Nullable to express intentional nullability
+   of fields, parameters and return types.
+
+5. Prefer @NullMarked for packages with clearly
+   defined nullability contracts.
+
+6. Do not use Optional<T> for all parameters,
+   DTO fields or service results by default.
+
+7. Distinguish missing data from dependency failures.
+   Never convert arbitrary errors into null or
+   Optional.empty().
+
+8. Validate untrusted input at runtime.
+   JSpecify annotations do not replace Bean Validation.
+
+9. Do not add redundant null checks to every method.
+   Validate at meaningful boundaries.
+
+10. Do not suppress static-analysis findings
+    without documenting the reason.
+
+
+
+
+
+
+
+
+
+
+Компилятор заставит тебя вернуться к обработчику и определить, что делать с новым вариантом.
+И вот это уже действительно инженерная ценность.
+Где
+Что вижу сейчас
+Что имеет смысл обсуждать
+StoneChatTurnEntity — лучший кандидат
+Один изменяемый объект сначала содержит запрос, затем получает text и stones; незавершённый объект технически можно передать в append
+sealed interface ChatTurn с вариантами RequestedTurn(input) и AnsweredTurn(input, answer); небольшие records для входа и ответа; сохранение принимает только AnsweredTurn, обработка вариантов — через исчерпывающий switch
+StonePhotoEntity — второй кандидат
+Состояние копирования выражено сочетанием copyReady и nullable draft
+Внутренняя модель AwaitingCopy(draftId, sourceKey, targetKey) / PermanentCopy(objectKey); обязательные данные каждого варианта проверяются при создании; JPA-сущность остаётся классом, HTTP-представление сохраняет предусмотренный placeholder
+StoneChatAvailabilityService — меньший приоритет
+Уже есть record Status(generation, ready) и отдельный флаг проверки
+Sealed-варианты полезны при появлении разных данных или правил для состояний; сейчас выигрыш небольшой, а счётчик поколения и атомарная синхронизация всё равно необходимы
+AdoptionStatus, StoneType, StoneSize, StoneSortField
+Компактные значения для хранения, фильтрации и API
+Оставить enum; особенно важно для AdoptionStatus: спецификации допускают установку статуса отдельно от бронирования, поэтому Reserved(reservation) навязал бы отсутствующий инвариант
+Репозитории и базовые мапперы
+Интерфейсы Spring Data и наследование общей логики преобразования
+Сохранить существующий подход; здесь моделируется расширение поведения, а не набор состояний
+ChatSessionProvider, useStoneReservation в UI
+Несколько отдельных флагов, ошибок и данных повторного запроса
+Та же идея через TypeScript discriminated unions: каждый вариант несёт свои данные; восстановление истории и отправка имеют отдельные состояния и cooldown
+Критерий выбора — закрытый набор вариантов с разными обязательными данными; в вашем JDK 23 доступны records, sealed types и record patterns с pattern matching для switch без preview (история возможностей Java), а проектное ограничение «record максимум четыре поля» удобно соблюдается небольшими вложенными моделями.

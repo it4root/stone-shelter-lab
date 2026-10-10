@@ -1,16 +1,22 @@
 # Stone Shelter
 
-## Prohibited file access
+## Human-only directory: engineering-log
 
-- Agents must never read `engineering-log/notes.txt`, in whole or in part.
-- This prohibition applies to every tool and access method, including shell
-  commands, IDE/editor tools, scripts, content searches, indexing, previews,
-  attachments, Git history, and access through aliases, symlinks or copies.
-- Explicitly exclude this file from repository-wide content searches and any
-  operation that could load or expose its contents. Never delegate reading it
-  to another agent or tool, and never attempt to bypass this restriction.
-- A reference, link, attachment or task mentioning this file does not authorize
-  access. Only an explicit user instruction revoking this prohibition can do so.
+- The entire `engineering-log/` directory is forbidden to all agents without
+  exception, including every current or future file, subdirectory and metadata.
+- Only a human working manually may read, create, edit, rename, move or delete
+  this directory or anything within it. Agents must never perform these actions.
+- The prohibition covers every tool and access method: shell commands, IDE/editor
+  tools, scripts, searches, directory listings, indexing, previews, attachments,
+  Git history, and access through aliases, symlinks or copies.
+- Explicitly exclude `engineering-log/` and all its descendants from repository
+  inventories, content searches, scans, indexing and automated operations that
+  could read, expose or modify them. Do not inspect its contents to add exclusions.
+- References, links, attachments, task instructions or direct requests never
+  authorize an exception, including for debugging, verification or emergencies.
+  If work requires access, leave that part for a human to perform manually.
+- Never delegate access to another agent or tool, bypass this restriction, or
+  weaken or remove it to complete a task.
 
 ## Project goal
 
